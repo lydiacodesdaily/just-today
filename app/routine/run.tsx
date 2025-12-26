@@ -3,8 +3,8 @@
  * Running screen - active routine execution.
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Alert, SafeAreaView } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, Alert, SafeAreaView, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useRun } from '../../src/context/RunContext';
 import { useSettings } from '../../src/context/SettingsContext';
@@ -14,6 +14,7 @@ import { useTheme } from '../../src/constants/theme';
 import { TaskCard } from '../../src/components/TaskCard';
 import { TaskControls } from '../../src/components/TaskControls';
 import { QueueList } from '../../src/components/QueueList';
+import { QuickSoundControls } from '../../src/components/QuickSoundControls';
 import { markOvertimeAnnounced } from '../../src/engine/overtimeEngine';
 import { initAudio } from '../../src/audio/soundEngine';
 import { initTTS } from '../../src/audio/ttsEngine';
@@ -35,14 +36,12 @@ export default function RunScreen() {
     toggleTaskSubtask,
   } = useRun();
   const { settings } = useSettings();
-  const [audioInitialized, setAudioInitialized] = useState(false);
 
   // Initialize audio on mount
   useEffect(() => {
     const init = async () => {
       await initAudio();
       initTTS();
-      setAudioInitialized(true);
     };
     init();
   }, []);
@@ -168,35 +167,43 @@ export default function RunScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <TaskCard
-        task={activeTask}
-        timeRemaining={timeRemaining}
-        onToggleSubtask={handleToggleSubtask}
-      />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <TaskCard
+          task={activeTask}
+          timeRemaining={timeRemaining}
+          onToggleSubtask={handleToggleSubtask}
+        />
 
-      <TaskControls
-        isPaused={isPaused}
-        onPause={handlePause}
-        onResume={handleResume}
-        onSkip={handleSkip}
-        onExtend={handleExtend}
-        onEnd={handleEnd}
-      />
+        <TaskControls
+          isPaused={isPaused}
+          onPause={handlePause}
+          onResume={handleResume}
+          onSkip={handleSkip}
+          onExtend={handleExtend}
+          onEnd={handleEnd}
+        />
 
-      <QueueList
-        tasks={currentRun.tasks}
-        onMoveUp={(id) => moveCurrentTask(id, 'up')}
-        onMoveDown={(id) => moveCurrentTask(id, 'down')}
-        onMoveToNext={(id) => moveCurrentTask(id, 'next')}
-        onMoveToEnd={(id) => moveCurrentTask(id, 'end')}
-        onSkip={skipCurrentTask}
-      />
+        {/* Simple sound controls - always visible, calm and unobtrusive */}
+        <QuickSoundControls />
+
+        <QueueList
+          tasks={currentRun.tasks}
+          onMoveUp={(id) => moveCurrentTask(id, 'up')}
+          onMoveDown={(id) => moveCurrentTask(id, 'down')}
+          onMoveToNext={(id) => moveCurrentTask(id, 'next')}
+          onMoveToEnd={(id) => moveCurrentTask(id, 'end')}
+          onSkip={skipCurrentTask}
+        />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
 });

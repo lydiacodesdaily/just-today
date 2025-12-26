@@ -149,16 +149,27 @@ export async function stopTicking(): Promise<void> {
   isTickingPlaying = false;
   isTickPhase = true; // Reset to tick
 
-  // Stop any playing sounds
+  // Stop any playing sounds with proper status checking
   try {
     if (tickSound) {
-      await tickSound.stopAsync();
-    }
-    if (tokSound) {
-      await tokSound.stopAsync();
+      const tickStatus = await tickSound.getStatusAsync();
+      if (tickStatus.isLoaded && tickStatus.isPlaying) {
+        await tickSound.stopAsync();
+      }
     }
   } catch (error) {
-    console.error('Failed to stop ticking:', error);
+    // Silently ignore - sound may be unloaded or interrupted
+  }
+
+  try {
+    if (tokSound) {
+      const tokStatus = await tokSound.getStatusAsync();
+      if (tokStatus.isLoaded && tokStatus.isPlaying) {
+        await tokSound.stopAsync();
+      }
+    }
+  } catch (error) {
+    // Silently ignore - sound may be unloaded or interrupted
   }
 }
 
@@ -168,10 +179,21 @@ export async function stopTicking(): Promise<void> {
 export async function duckTicking(): Promise<void> {
   if (isTickingPlaying && tickSound && tokSound) {
     try {
-      await tickSound.setVolumeAsync(duckedVolume);
-      await tokSound.setVolumeAsync(duckedVolume);
+      const tickStatus = await tickSound.getStatusAsync();
+      if (tickStatus.isLoaded) {
+        await tickSound.setVolumeAsync(duckedVolume);
+      }
     } catch (error) {
-      console.error('Failed to duck ticking:', error);
+      // Silently ignore - sound may be unloaded
+    }
+
+    try {
+      const tokStatus = await tokSound.getStatusAsync();
+      if (tokStatus.isLoaded) {
+        await tokSound.setVolumeAsync(duckedVolume);
+      }
+    } catch (error) {
+      // Silently ignore - sound may be unloaded
     }
   }
 }
@@ -182,10 +204,21 @@ export async function duckTicking(): Promise<void> {
 export async function unduckTicking(): Promise<void> {
   if (isTickingPlaying && tickSound && tokSound) {
     try {
-      await tickSound.setVolumeAsync(tickingVolume);
-      await tokSound.setVolumeAsync(tickingVolume);
+      const tickStatus = await tickSound.getStatusAsync();
+      if (tickStatus.isLoaded) {
+        await tickSound.setVolumeAsync(tickingVolume);
+      }
     } catch (error) {
-      console.error('Failed to unduck ticking:', error);
+      // Silently ignore - sound may be unloaded
+    }
+
+    try {
+      const tokStatus = await tokSound.getStatusAsync();
+      if (tokStatus.isLoaded) {
+        await tokSound.setVolumeAsync(tickingVolume);
+      }
+    } catch (error) {
+      // Silently ignore - sound may be unloaded
     }
   }
 }
@@ -197,10 +230,21 @@ export async function setTickingVolume(volume: number): Promise<void> {
   tickingVolume = Math.max(0, Math.min(1, volume));
   if (tickSound && tokSound) {
     try {
-      await tickSound.setVolumeAsync(tickingVolume);
-      await tokSound.setVolumeAsync(tickingVolume);
+      const tickStatus = await tickSound.getStatusAsync();
+      if (tickStatus.isLoaded) {
+        await tickSound.setVolumeAsync(tickingVolume);
+      }
     } catch (error) {
-      console.error('Failed to set ticking volume:', error);
+      // Silently ignore - sound may be unloaded
+    }
+
+    try {
+      const tokStatus = await tokSound.getStatusAsync();
+      if (tokStatus.isLoaded) {
+        await tokSound.setVolumeAsync(tickingVolume);
+      }
+    } catch (error) {
+      // Silently ignore - sound may be unloaded
     }
   }
 }
