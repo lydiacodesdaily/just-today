@@ -48,61 +48,115 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Text style={[styles.header, { color: theme.colors.text }]}>
-          Just Today
-        </Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Gentle, supportive header */}
+        <View style={styles.headerSection}>
+          <Text style={[styles.header, { color: theme.colors.text }]}>
+            Just Today
+          </Text>
+          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+            One step at a time
+          </Text>
+        </View>
 
-        <EnergyPicker selectedMode={energyMode} onSelect={handleEnergyChange} />
+        {/* Energy picker with breathing room */}
+        <View style={styles.energySection}>
+          <EnergyPicker selectedMode={energyMode} onSelect={handleEnergyChange} />
+        </View>
 
-        <View style={styles.routines}>
+        {/* Routines section */}
+        <View style={styles.routinesSection}>
           <View style={styles.routinesHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              Routines
-            </Text>
+            <View>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                Your Routines
+              </Text>
+              <Text style={[styles.sectionSubtitle, { color: theme.colors.textSecondary }]}>
+                Choose one to begin
+              </Text>
+            </View>
             <TouchableOpacity
-              style={[styles.createButton, { backgroundColor: theme.colors.primary }]}
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor: theme.colors.primarySubtle,
+                  borderColor: theme.colors.primary,
+                },
+              ]}
               onPress={() => router.push('/routine/new')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.createButtonText}>+ New</Text>
+              <Text style={[styles.createButtonText, { color: theme.colors.primary }]}>
+                + New
+              </Text>
             </TouchableOpacity>
           </View>
+
           {templates.length === 0 ? (
             <View
               style={[
                 styles.emptyState,
                 {
                   backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
+                  borderColor: theme.colors.borderSubtle,
                 },
               ]}
             >
-              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                No routines yet. Create one to get started.
+              <Text style={styles.emptyIcon}>🌱</Text>
+              <Text style={[styles.emptyText, { color: theme.colors.text }]}>
+                Ready to start?
+              </Text>
+              <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary }]}>
+                Create your first routine to begin
               </Text>
             </View>
           ) : (
-            templates.map((template) => (
-              <RoutineCard
-                key={template.id}
-                routine={template}
-                onStart={() => handleStartRoutine(template)}
-                onEdit={() => handleEditRoutine(template)}
-              />
-            ))
+            <View style={styles.routinesList}>
+              {templates.map((template) => (
+                <RoutineCard
+                  key={template.id}
+                  routine={template}
+                  onStart={() => handleStartRoutine(template)}
+                  onEdit={() => handleEditRoutine(template)}
+                />
+              ))}
+            </View>
           )}
         </View>
 
+        {/* Resume button - gentle but present */}
         {currentRun && (
-          <TouchableOpacity
-            style={[styles.resumeButton, { backgroundColor: theme.colors.warning }]}
-            onPress={() => router.push('/routine/run')}
-          >
-            <Text style={styles.resumeButtonText}>
-              Resume {currentRun.templateName}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.resumeSection}>
+            <TouchableOpacity
+              style={[
+                styles.resumeButton,
+                {
+                  backgroundColor: theme.colors.warningSubtle,
+                  borderColor: theme.colors.warning,
+                },
+              ]}
+              onPress={() => router.push('/routine/run')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.resumeLabel, { color: theme.colors.warning }]}>
+                In Progress
+              </Text>
+              <Text style={[styles.resumeText, { color: theme.colors.text }]}>
+                {currentRun.templateName}
+              </Text>
+              <Text style={[styles.resumeAction, { color: theme.colors.warning }]}>
+                Tap to continue →
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
+
+        {/* Spacer for bottom padding */}
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </View>
   );
@@ -116,53 +170,107 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
-    gap: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  headerSection: {
+    paddingTop: 8,
+    paddingBottom: 24,
+    gap: 6,
   },
   header: {
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: '700',
+    letterSpacing: -0.5,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    letterSpacing: 0.2,
   },
-  routines: {
-    gap: 12,
+  energySection: {
+    marginBottom: 32,
+  },
+  routinesSection: {
+    gap: 16,
   },
   routinesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    marginTop: 4,
   },
   createButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1.5,
   },
   createButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   emptyState: {
-    padding: 24,
-    borderRadius: 12,
+    padding: 32,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: 'center',
+    gap: 12,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 8,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
   },
-  resumeButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+  emptySubtext: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
   },
-  resumeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+  routinesList: {
+    gap: 12,
+  },
+  resumeSection: {
+    marginTop: 24,
+  },
+  resumeButton: {
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: 'center',
+    gap: 8,
+  },
+  resumeLabel: {
+    fontSize: 13,
     fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  resumeText: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  resumeAction: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  bottomSpacer: {
+    height: 20,
   },
 });

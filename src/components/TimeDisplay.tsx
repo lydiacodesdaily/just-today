@@ -1,6 +1,6 @@
 /**
  * TimeDisplay.tsx
- * Timer display with overtime indicator.
+ * Timer display with gentle, encouraging overtime messaging.
  */
 
 import React from 'react';
@@ -19,6 +19,17 @@ export function TimeDisplay({ timeRemaining }: TimeDisplayProps) {
     return null;
   }
 
+  const overtimeMessages = [
+    'It\'s okay to take your time',
+    'No rush, keep going',
+    'You\'re doing great',
+  ];
+
+  const getOvertimeMessage = () => {
+    const minutes = Math.floor(timeRemaining.overtimeMs / 60000);
+    return overtimeMessages[Math.min(Math.floor(minutes / 5), overtimeMessages.length - 1)];
+  };
+
   return (
     <View style={styles.container}>
       <Text
@@ -27,16 +38,21 @@ export function TimeDisplay({ timeRemaining }: TimeDisplayProps) {
           {
             color: timeRemaining.isOvertime
               ? theme.colors.warning
-              : theme.colors.text,
+              : theme.colors.primary,
           },
         ]}
       >
         {formatTimeRemaining(timeRemaining)}
       </Text>
       {timeRemaining.isOvertime && (
-        <Text style={[styles.label, { color: theme.colors.warning }]}>
-          Overtime
-        </Text>
+        <View style={styles.overtimeContainer}>
+          <Text style={[styles.overtimeLabel, { color: theme.colors.warning }]}>
+            Extra time
+          </Text>
+          <Text style={[styles.supportMessage, { color: theme.colors.textSecondary }]}>
+            {getOvertimeMessage()}
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -45,15 +61,26 @@ export function TimeDisplay({ timeRemaining }: TimeDisplayProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
+    gap: 12,
   },
   time: {
-    fontSize: 48,
+    fontSize: 56,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
+    letterSpacing: -1,
   },
-  label: {
+  overtimeContainer: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  overtimeLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    textTransform: 'lowercase',
+  },
+  supportMessage: {
     fontSize: 14,
-    fontWeight: '500',
-    marginTop: 4,
+    fontWeight: '400',
+    fontStyle: 'italic',
   },
 });

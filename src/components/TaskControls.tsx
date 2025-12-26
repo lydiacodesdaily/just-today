@@ -1,9 +1,9 @@
 /**
  * TaskControls.tsx
- * Pause/skip/extend controls for active task.
+ * Simplified, calm controls with reduced decision fatigue.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../constants/theme';
 
@@ -25,70 +25,146 @@ export function TaskControls({
   onEnd,
 }: TaskControlsProps) {
   const theme = useTheme();
+  const [showExtendOptions, setShowExtendOptions] = useState(false);
+
+  const handleExtend = (ms: number) => {
+    onExtend(ms);
+    setShowExtendOptions(false);
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.primaryControls}>
+      {/* Primary action - always visible, large target */}
+      <View style={styles.primarySection}>
         <TouchableOpacity
           style={[
             styles.primaryButton,
-            { backgroundColor: theme.colors.primary },
+            {
+              backgroundColor: isPaused
+                ? theme.colors.primarySubtle
+                : theme.colors.surface,
+              borderColor: theme.colors.primary,
+            },
           ]}
           onPress={isPaused ? onResume : onPause}
+          activeOpacity={0.7}
         >
-          <Text style={styles.primaryButtonText}>
-            {isPaused ? 'Resume' : 'Pause'}
+          <Text
+            style={[
+              styles.primaryButtonText,
+              { color: theme.colors.primary },
+            ]}
+          >
+            {isPaused ? '▶ Continue' : '⏸ Pause'}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            { backgroundColor: theme.colors.success },
-          ]}
-          onPress={onSkip}
-        >
-          <Text style={styles.primaryButtonText}>Skip</Text>
-        </TouchableOpacity>
       </View>
 
-      <View style={styles.extendButtons}>
-        <Text style={[styles.sectionLabel, { color: theme.colors.textSecondary }]}>
-          Extend Time
-        </Text>
-        <View style={styles.extendRow}>
-          <TouchableOpacity
-            style={[styles.extendButton, { borderColor: theme.colors.border }]}
-            onPress={() => onExtend(60 * 1000)}
-          >
-            <Text style={[styles.extendButtonText, { color: theme.colors.text }]}>
-              +1m
+      {/* Secondary actions - grouped and less prominent */}
+      <View style={styles.secondarySection}>
+        {!showExtendOptions ? (
+          <View style={styles.secondaryRow}>
+            <TouchableOpacity
+              style={[
+                styles.secondaryButton,
+                {
+                  backgroundColor: theme.colors.successSubtle,
+                  borderColor: theme.colors.success,
+                },
+              ]}
+              onPress={onSkip}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.success }]}>
+                Done with this →
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.secondaryButton,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+              onPress={() => setShowExtendOptions(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
+                Need more time
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.extendSection}>
+            <Text style={[styles.extendLabel, { color: theme.colors.textSecondary }]}>
+              Add more time
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.extendButton, { borderColor: theme.colors.border }]}
-            onPress={() => onExtend(5 * 60 * 1000)}
-          >
-            <Text style={[styles.extendButtonText, { color: theme.colors.text }]}>
-              +5m
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.extendButton, { borderColor: theme.colors.border }]}
-            onPress={() => onExtend(10 * 60 * 1000)}
-          >
-            <Text style={[styles.extendButtonText, { color: theme.colors.text }]}>
-              +10m
-            </Text>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.extendRow}>
+              <TouchableOpacity
+                style={[
+                  styles.extendButton,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={() => handleExtend(60 * 1000)}
+              >
+                <Text style={[styles.extendButtonText, { color: theme.colors.text }]}>
+                  +1 min
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.extendButton,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={() => handleExtend(5 * 60 * 1000)}
+              >
+                <Text style={[styles.extendButtonText, { color: theme.colors.text }]}>
+                  +5 min
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.extendButton,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={() => handleExtend(10 * 60 * 1000)}
+              >
+                <Text style={[styles.extendButtonText, { color: theme.colors.text }]}>
+                  +10 min
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={styles.cancelExtend}
+              onPress={() => setShowExtendOptions(false)}
+            >
+              <Text style={[styles.cancelExtendText, { color: theme.colors.textSecondary }]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
+      {/* Tertiary action - minimal, tucked away */}
       <TouchableOpacity
-        style={[styles.endButton, { borderColor: theme.colors.danger }]}
+        style={styles.endButton}
         onPress={onEnd}
+        activeOpacity={0.7}
       >
-        <Text style={[styles.endButtonText, { color: theme.colors.danger }]}>
-          End Routine
+        <Text style={[styles.endButtonText, { color: theme.colors.textTertiary }]}>
+          End routine
         </Text>
       </TouchableOpacity>
     </View>
@@ -97,41 +173,68 @@ export function TaskControls({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    gap: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 20,
   },
-  primaryControls: {
+  primarySection: {
+    gap: 8,
+  },
+  primaryButton: {
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: 'center',
+    minHeight: 56,
+    justifyContent: 'center',
+  },
+  primaryButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  secondarySection: {
+    gap: 12,
+  },
+  secondaryRow: {
     flexDirection: 'row',
     gap: 12,
   },
-  primaryButton: {
+  secondaryButton: {
     flex: 1,
-    padding: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: 12,
+    borderWidth: 1.5,
     alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
   },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  secondaryButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
   },
-  extendButtons: {
-    gap: 8,
+  extendSection: {
+    gap: 12,
+    paddingVertical: 8,
   },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  extendLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 4,
   },
   extendRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   extendButton: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
   },
@@ -139,14 +242,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  endButton: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
+  cancelExtend: {
+    paddingVertical: 10,
     alignItems: 'center',
   },
+  cancelExtendText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  endButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
   endButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
+    textTransform: 'lowercase',
   },
 });

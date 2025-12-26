@@ -1,6 +1,6 @@
 /**
  * EnergyPicker.tsx
- * Care / Steady / Flow selector component.
+ * Care / Steady / Flow selector with supportive, neurodivergent-friendly design.
  */
 
 import React from 'react';
@@ -16,19 +16,57 @@ interface EnergyPickerProps {
 export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
   const theme = useTheme();
 
-  const modes: { mode: EnergyMode; label: string; description: string }[] = [
-    { mode: 'care', label: 'Care', description: 'Gentle essentials' },
-    { mode: 'steady', label: 'Steady', description: 'Normal routine' },
-    { mode: 'flow', label: 'Flow', description: 'Full energy' },
+  const modes: {
+    mode: EnergyMode;
+    icon: string;
+    label: string;
+    description: string;
+    supportText: string;
+    color: string;
+    bgColor: string;
+  }[] = [
+    {
+      mode: 'care',
+      icon: '🌙',
+      label: 'Care',
+      description: 'Just the essentials',
+      supportText: "It's okay to take it slow",
+      color: theme.colors.energyCare,
+      bgColor: theme.colors.energyCareSubtle,
+    },
+    {
+      mode: 'steady',
+      icon: '🌿',
+      label: 'Steady',
+      description: 'Your usual pace',
+      supportText: 'One step at a time',
+      color: theme.colors.energySteady,
+      bgColor: theme.colors.energySteadySubtle,
+    },
+    {
+      mode: 'flow',
+      icon: '✨',
+      label: 'Flow',
+      description: 'Feeling good today',
+      supportText: 'Enjoy the momentum',
+      color: theme.colors.energyFlow,
+      bgColor: theme.colors.energyFlowSubtle,
+    },
   ];
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: theme.colors.text }]}>
-        Today's Energy
-      </Text>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: theme.colors.text }]}>
+          How are you feeling today?
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+          Choose what feels right for you right now
+        </Text>
+      </View>
+
       <View style={styles.buttons}>
-        {modes.map(({ mode, label, description }) => {
+        {modes.map(({ mode, icon, label, description, supportText, color, bgColor }) => {
           const isSelected = selectedMode === mode;
           return (
             <TouchableOpacity
@@ -36,21 +74,22 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
               style={[
                 styles.button,
                 {
-                  backgroundColor: isSelected
-                    ? theme.colors.primary
-                    : theme.colors.surface,
-                  borderColor: theme.colors.border,
+                  backgroundColor: isSelected ? bgColor : theme.colors.surface,
+                  borderColor: isSelected ? color : theme.colors.borderSubtle,
+                  borderWidth: isSelected ? 2 : 1,
+                  minHeight: theme.touchTarget.comfortable,
                 },
               ]}
               onPress={() => onSelect(mode)}
+              activeOpacity={0.7}
             >
+              <Text style={styles.icon}>{icon}</Text>
               <Text
                 style={[
                   styles.buttonLabel,
                   {
-                    color: isSelected
-                      ? '#FFFFFF'
-                      : theme.colors.text,
+                    color: isSelected ? color : theme.colors.text,
+                    fontWeight: isSelected ? theme.fontWeight.semibold : theme.fontWeight.medium,
                   },
                 ]}
               >
@@ -60,14 +99,26 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
                 style={[
                   styles.buttonDescription,
                   {
-                    color: isSelected
-                      ? '#FFFFFF'
-                      : theme.colors.textSecondary,
+                    color: theme.colors.textSecondary,
+                    lineHeight: theme.lineHeight.relaxed * theme.fontSize.sm,
                   },
                 ]}
               >
                 {description}
               </Text>
+              {isSelected && (
+                <Text
+                  style={[
+                    styles.supportText,
+                    {
+                      color: color,
+                      lineHeight: theme.lineHeight.relaxed * theme.fontSize.xs,
+                    },
+                  ]}
+                >
+                  {supportText}
+                </Text>
+              )}
             </TouchableOpacity>
           );
         })}
@@ -78,11 +129,19 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    gap: 16,
+  },
+  header: {
+    gap: 6,
   },
   title: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   buttons: {
     flexDirection: 'row',
@@ -91,16 +150,26 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 14,
     alignItems: 'center',
+    gap: 6,
+  },
+  icon: {
+    fontSize: 28,
+    marginBottom: 4,
   },
   buttonLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
   },
   buttonDescription: {
-    fontSize: 12,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  supportText: {
+    fontSize: 11,
+    textAlign: 'center',
+    fontWeight: '500',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
