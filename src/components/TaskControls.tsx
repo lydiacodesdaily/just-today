@@ -3,7 +3,7 @@
  * Simplified, calm controls with reduced decision fatigue.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Vibration } from 'react-native';
 import { useTheme } from '../constants/theme';
 
@@ -27,12 +27,6 @@ export function TaskControls({
   onEnd,
 }: TaskControlsProps) {
   const theme = useTheme();
-  const [showExtendOptions, setShowExtendOptions] = useState(false);
-
-  const handleExtend = (ms: number) => {
-    onExtend(ms);
-    setShowExtendOptions(false);
-  };
 
   const handleComplete = () => {
     // Gentle haptic feedback on task completion
@@ -86,101 +80,89 @@ export function TaskControls({
 
       {/* Secondary actions - adjust current task */}
       <View style={styles.secondarySection}>
-        {!showExtendOptions ? (
-          <View style={styles.secondaryRow}>
-            <TouchableOpacity
-              style={[
-                styles.secondaryButton,
-                {
-                  backgroundColor: isPaused
-                    ? theme.colors.primarySubtle
-                    : theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-              onPress={isPaused ? onResume : onPause}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
-                {isPaused ? '▶ Resume' : '⏸ Pause'}
-              </Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.pauseButton,
+            {
+              backgroundColor: isPaused
+                ? theme.colors.primarySubtle
+                : theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+          onPress={isPaused ? onResume : onPause}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.pauseButtonText, { color: theme.colors.text }]}>
+            {isPaused ? '▶ Resume' : '⏸ Pause'}
+          </Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.secondaryButton,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-              onPress={() => setShowExtendOptions(true)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
-                + More time
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.extendSection}>
-            <Text style={[styles.extendLabel, { color: theme.colors.textSecondary }]}>
-              Add more time
+        <View style={styles.timeAdjustRow}>
+          <TouchableOpacity
+            style={[
+              styles.timeButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            onPress={() => onExtend(-5 * 60 * 1000)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.timeButtonText, { color: theme.colors.text }]}>
+              -5m
             </Text>
-            <View style={styles.extendRow}>
-              <TouchableOpacity
-                style={[
-                  styles.extendButton,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-                onPress={() => handleExtend(60 * 1000)}
-              >
-                <Text style={[styles.extendButtonText, { color: theme.colors.text }]}>
-                  +1 min
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.extendButton,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-                onPress={() => handleExtend(5 * 60 * 1000)}
-              >
-                <Text style={[styles.extendButtonText, { color: theme.colors.text }]}>
-                  +5 min
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.extendButton,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-                onPress={() => handleExtend(10 * 60 * 1000)}
-              >
-                <Text style={[styles.extendButtonText, { color: theme.colors.text }]}>
-                  +10 min
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              style={styles.cancelExtend}
-              onPress={() => setShowExtendOptions(false)}
-            >
-              <Text style={[styles.cancelExtendText, { color: theme.colors.textSecondary }]}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.timeButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            onPress={() => onExtend(-1 * 60 * 1000)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.timeButtonText, { color: theme.colors.text }]}>
+              -1m
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.timeButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            onPress={() => onExtend(1 * 60 * 1000)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.timeButtonText, { color: theme.colors.text }]}>
+              +1m
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.timeButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            onPress={() => onExtend(5 * 60 * 1000)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.timeButtonText, { color: theme.colors.text }]}>
+              +5m
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tertiary action - minimal, tucked away */}
@@ -238,12 +220,7 @@ const styles = StyleSheet.create({
   secondarySection: {
     gap: 12,
   },
-  secondaryRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  secondaryButton: {
-    flex: 1,
+  pauseButton: {
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -252,42 +229,25 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
   },
-  secondaryButtonText: {
+  pauseButtonText: {
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 20,
   },
-  extendSection: {
-    gap: 12,
-    paddingVertical: 8,
-  },
-  extendLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  extendRow: {
+  timeAdjustRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
-  extendButton: {
+  timeButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  extendButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  cancelExtend: {
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  cancelExtendText: {
+  timeButtonText: {
     fontSize: 13,
     fontWeight: '500',
   },
