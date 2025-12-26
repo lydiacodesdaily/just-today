@@ -1,10 +1,40 @@
 /**
  * theme.ts
- * Neurodivergent-friendly theme with calm, supportive colors.
- * Designed for reduced cognitive load and sensory comfort.
+ * Support-first color palette for Just Today.
+ * Designed to feel like being held, not managed.
+ * No urgency. No celebration. Just steady support.
  */
 
 import { useColorScheme } from 'react-native';
+
+export const colors = {
+  ink: {
+    primary: '#2F3138',
+    secondary: '#3A3C43',
+    disabled: '#6B6E75',
+  },
+  sand: {
+    background: '#F5F1ED',
+    surface: '#FFFFFF',
+    border: '#E8E4E0',
+  },
+  sage: {
+    primary: '#9FB2A3',
+    active: '#879E8E',
+    subtle: '#B8C6BC',
+  },
+  dark: {
+    background: '#1E2025',
+    surface: '#2A2C31',
+    textPrimary: '#E5E2DC',
+    textSecondary: '#B8B6B1',
+    textDisabled: '#8A8D92',
+    sageAccent: '#A7BCAD',
+  },
+  states: {
+    error: '#8C7F76',
+  },
+};
 
 export const useTheme = () => {
   const colorScheme = useColorScheme();
@@ -12,58 +42,58 @@ export const useTheme = () => {
 
   return {
     colors: {
-      // Core backgrounds - softer, warmer tones
-      background: isDark ? '#1A1A1D' : '#F8F9FA',
-      surface: isDark ? '#252529' : '#FFFFFF',
-      surfaceSecondary: isDark ? '#2F2F35' : '#F0F2F5',
+      // Primary backgrounds - warm sand (holding/safety)
+      background: isDark ? colors.dark.background : colors.sand.background,
+      surface: isDark ? colors.dark.surface : colors.sand.surface,
+      surfaceSecondary: isDark ? colors.dark.surface : colors.sand.surface,
 
-      // Text - optimized contrast without harshness
-      text: isDark ? '#E8E8EA' : '#2C2C2E',
-      textSecondary: isDark ? '#A8A8B0' : '#5C5C66',
-      textTertiary: isDark ? '#78787F' : '#8E8E93',
+      // Text - soft ink (grounding, no urgency)
+      text: isDark ? colors.dark.textPrimary : colors.ink.primary,
+      textSecondary: isDark ? colors.dark.textSecondary : colors.ink.secondary,
+      textTertiary: isDark ? colors.dark.textDisabled : colors.ink.disabled,
 
-      // Borders - subtle and calming
-      border: isDark ? '#3A3A3E' : '#DCDCE0',
-      borderSubtle: isDark ? '#2A2A2E' : '#EDEDF0',
+      // Borders - subtle sand tones
+      border: isDark ? '#3A3A3E' : colors.sand.border,
+      borderSubtle: isDark ? '#2A2A2E' : colors.sand.border,
 
-      // Primary - calming blue
-      primary: isDark ? '#6B9FED' : '#5B8FDC',
-      primaryLight: isDark ? '#8AB4F1' : '#7BA8E5',
-      primarySubtle: isDark ? '#2D4A6B' : '#E8F1FC',
+      // Primary accent - muted sage (gentle progress, used sparingly)
+      primary: isDark ? colors.dark.sageAccent : colors.sage.primary,
+      primaryLight: isDark ? colors.dark.sageAccent : colors.sage.active,
+      primarySubtle: isDark ? '#3A3E3B' : colors.sage.subtle,
 
-      // Success - gentle, affirming green
-      success: isDark ? '#7BC97A' : '#6BB86A',
-      successLight: isDark ? '#95D794' : '#88C687',
-      successSubtle: isDark ? '#2D4A3A' : '#E8F5E8',
+      // Success - NO bright green, use sage instead
+      success: isDark ? colors.dark.sageAccent : colors.sage.primary,
+      successLight: isDark ? colors.dark.sageAccent : colors.sage.active,
+      successSubtle: isDark ? '#3A3E3B' : colors.sage.subtle,
 
-      // Warning - warm, non-alarming
-      warning: isDark ? '#E8A968' : '#D89655',
-      warningLight: isDark ? '#F0BD85' : '#E5AC75',
-      warningSubtle: isDark ? '#4A3A2D' : '#FDF3E8',
+      // Warning - NO bright colors, use secondary ink instead
+      warning: isDark ? colors.dark.textSecondary : colors.ink.disabled,
+      warningLight: isDark ? colors.dark.textSecondary : colors.ink.disabled,
+      warningSubtle: isDark ? '#2A2C31' : colors.sand.surface,
 
-      // Danger - present but not aggressive
-      danger: isDark ? '#E88585' : '#D67272',
-      dangerLight: isDark ? '#F0A0A0' : '#E59090',
-      dangerSubtle: isDark ? '#4A2D2D' : '#FCE8E8',
+      // Danger/Error - muted warm grey, informational not punitive
+      danger: isDark ? colors.dark.textSecondary : colors.states.error,
+      dangerLight: isDark ? colors.dark.textSecondary : colors.states.error,
+      dangerSubtle: isDark ? '#2A2C31' : colors.sand.surface,
 
-      // Energy mode colors - calm and distinct
-      energyCare: isDark ? '#9B8FD8' : '#8B7FCA',
-      energySteady: isDark ? '#7DBDA8' : '#6DAD98',
-      energyFlow: isDark ? '#E8A968' : '#D89655',
+      // Energy mode colors - keeping calm and supportive
+      energyCare: isDark ? colors.dark.sageAccent : colors.sage.primary,
+      energySteady: isDark ? colors.dark.sageAccent : colors.sage.active,
+      energyFlow: isDark ? colors.dark.sageAccent : colors.sage.primary,
 
-      // Energy mode backgrounds
-      energyCareSubtle: isDark ? '#3A3548' : '#F0EDF8',
-      energySteadySubtle: isDark ? '#2D4A44' : '#E8F5F2',
-      energyFlowSubtle: isDark ? '#4A3A2D' : '#FDF3E8',
+      // Energy mode backgrounds - subtle sand variations
+      energyCareSubtle: isDark ? colors.dark.surface : colors.sand.surface,
+      energySteadySubtle: isDark ? colors.dark.surface : colors.sand.surface,
+      energyFlowSubtle: isDark ? colors.dark.surface : colors.sand.surface,
 
       // Supportive UI elements
       overlay: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)',
       shadow: isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.08)',
 
-      // Calm accent colors
-      calm: isDark ? '#9B8FD8' : '#8B7FCA',
-      breathe: isDark ? '#7DBDA8' : '#6DAD98',
-      rest: isDark ? '#E8A968' : '#D89655',
+      // Calm accent colors - using sage family
+      calm: isDark ? colors.dark.sageAccent : colors.sage.primary,
+      breathe: isDark ? colors.dark.sageAccent : colors.sage.active,
+      rest: isDark ? colors.dark.sageAccent : colors.sage.subtle,
     },
     spacing: {
       xs: 4,

@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Vibration } from 'react-native';
 import { useTheme } from '../constants/theme';
 
 interface TaskControlsProps {
@@ -34,6 +34,12 @@ export function TaskControls({
     setShowExtendOptions(false);
   };
 
+  const handleComplete = () => {
+    // Gentle haptic feedback on task completion
+    Vibration.vibrate(50);
+    onComplete();
+  };
+
   return (
     <View style={styles.container}>
       {/* Primary actions - when ready to move on */}
@@ -46,15 +52,15 @@ export function TaskControls({
             style={[
               styles.primaryButton,
               {
-                backgroundColor: theme.colors.successSubtle,
-                borderColor: theme.colors.success,
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
               },
             ]}
-            onPress={onComplete}
+            onPress={handleComplete}
             activeOpacity={0.7}
           >
-            <Text style={[styles.primaryButtonIcon, { color: theme.colors.success }]}>✓</Text>
-            <Text style={[styles.primaryButtonText, { color: theme.colors.success }]}>
+            <Text style={[styles.primaryButtonIcon, { color: theme.colors.text }]}>✓</Text>
+            <Text style={[styles.primaryButtonText, { color: theme.colors.text }]}>
               Done
             </Text>
           </TouchableOpacity>

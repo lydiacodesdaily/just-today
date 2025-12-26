@@ -17,6 +17,12 @@ interface RoutineCardProps {
 export function RoutineCard({ routine, onStart, onEdit }: RoutineCardProps) {
   const theme = useTheme();
 
+  // Calculate total duration
+  const totalMinutes = routine.tasks.reduce((sum, task) => sum + (task.durationMs / 60000), 0);
+  const durationText = totalMinutes < 60
+    ? `~${Math.round(totalMinutes)} min`
+    : `~${Math.round(totalMinutes / 60)}h ${Math.round(totalMinutes % 60)}m`;
+
   return (
     <View
       style={[
@@ -34,14 +40,14 @@ export function RoutineCard({ routine, onStart, onEdit }: RoutineCardProps) {
           </Text>
         )}
         <Text style={[styles.taskCount, { color: theme.colors.textSecondary }]}>
-          {routine.tasks.length} task{routine.tasks.length !== 1 ? 's' : ''}
+          {routine.tasks.length} task{routine.tasks.length !== 1 ? 's' : ''} · {durationText}
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.startButton, { backgroundColor: theme.colors.primary }]}
         onPress={onStart}
       >
-        <Text style={styles.startButtonText}>Start</Text>
+        <Text style={[styles.startButtonText, { color: theme.colors.text }]}>Start</Text>
       </TouchableOpacity>
     </View>
   );
@@ -73,7 +79,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   startButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },

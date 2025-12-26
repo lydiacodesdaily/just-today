@@ -169,68 +169,87 @@ export default function RoutineEditorScreen() {
               <View style={styles.taskOptions}>
                 <View style={styles.option}>
                   <Text style={[styles.optionLabel, { color: theme.colors.text }]}>
-                    Duration (min):
+                    Duration:
                   </Text>
-                  <TextInput
-                    style={[
-                      styles.durationInput,
-                      {
-                        backgroundColor: theme.colors.surfaceSecondary,
-                        color: theme.colors.text,
-                      },
-                    ]}
-                    keyboardType="number-pad"
-                    value={String(Math.floor((task.durationMs || 0) / 60000))}
-                    onChangeText={(text) => {
-                      const minutes = parseInt(text, 10);
-                      const validMinutes = isNaN(minutes) ? 0 : Math.max(0, minutes);
-                      updateTask(index, { durationMs: validMinutes * 60000 });
-                    }}
-                  />
+                  <View style={styles.durationContainer}>
+                    <TextInput
+                      style={[
+                        styles.durationInput,
+                        {
+                          backgroundColor: theme.colors.surfaceSecondary,
+                          color: theme.colors.text,
+                        },
+                      ]}
+                      keyboardType="number-pad"
+                      value={String(Math.floor((task.durationMs || 0) / 60000))}
+                      onChangeText={(text) => {
+                        const minutes = parseInt(text, 10);
+                        const validMinutes = isNaN(minutes) ? 0 : Math.max(0, minutes);
+                        updateTask(index, { durationMs: validMinutes * 60000 });
+                      }}
+                    />
+                    <Text style={[styles.durationSuffix, { color: theme.colors.textSecondary }]}>
+                      min
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.toggles}>
-                  <TouchableOpacity
-                    style={[
-                      styles.toggle,
-                      {
-                        backgroundColor: task.careSafe
-                          ? theme.colors.primary
-                          : theme.colors.surfaceSecondary,
-                      },
-                    ]}
-                    onPress={() => updateTask(index, { careSafe: !task.careSafe })}
-                  >
-                    <Text
+                <View style={styles.energyTagsSection}>
+                  <Text style={[styles.energyTagsLabel, { color: theme.colors.textSecondary }]}>
+                    Energy modes:
+                  </Text>
+                  <View style={styles.toggles}>
+                    <TouchableOpacity
                       style={[
-                        styles.toggleText,
-                        { color: task.careSafe ? '#FFFFFF' : theme.colors.text },
+                        styles.toggle,
+                        {
+                          backgroundColor: task.careSafe
+                            ? theme.colors.primary
+                            : theme.colors.surfaceSecondary,
+                        },
                       ]}
+                      onPress={() => updateTask(index, { careSafe: !task.careSafe })}
                     >
-                      Care Safe
-                    </Text>
-                  </TouchableOpacity>
+                      <Text
+                        style={[
+                          styles.toggleText,
+                          { color: task.careSafe ? theme.colors.background : theme.colors.text },
+                        ]}
+                      >
+                        🌙 Care Safe
+                      </Text>
+                    </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[
-                      styles.toggle,
-                      {
-                        backgroundColor: task.flowExtra
-                          ? theme.colors.primary
-                          : theme.colors.surfaceSecondary,
-                      },
-                    ]}
-                    onPress={() => updateTask(index, { flowExtra: !task.flowExtra })}
-                  >
-                    <Text
+                    <TouchableOpacity
                       style={[
-                        styles.toggleText,
-                        { color: task.flowExtra ? '#FFFFFF' : theme.colors.text },
+                        styles.toggle,
+                        {
+                          backgroundColor: task.flowExtra
+                            ? theme.colors.primary
+                            : theme.colors.surfaceSecondary,
+                        },
                       ]}
+                      onPress={() => updateTask(index, { flowExtra: !task.flowExtra })}
                     >
-                      Flow Extra
-                    </Text>
-                  </TouchableOpacity>
+                      <Text
+                        style={[
+                          styles.toggleText,
+                          { color: task.flowExtra ? theme.colors.background : theme.colors.text },
+                        ]}
+                      >
+                        ✨ Flow Extra
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={[styles.energyTagsHelp, { color: theme.colors.textSecondary }]}>
+                    {task.careSafe && task.flowExtra
+                      ? 'Shows in all modes'
+                      : task.careSafe
+                      ? 'Shows in Care mode (gentle days)'
+                      : task.flowExtra
+                      ? 'Shows only in Flow mode (bonus task)'
+                      : 'Shows in Steady and Flow modes'}
+                  </Text>
                 </View>
               </View>
 
@@ -249,7 +268,7 @@ export default function RoutineEditorScreen() {
             style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
             onPress={addTask}
           >
-            <Text style={styles.addButtonText}>Add Task</Text>
+            <Text style={[styles.addButtonText, { color: theme.colors.text }]}>Add Task</Text>
           </TouchableOpacity>
         </View>
 
@@ -257,7 +276,7 @@ export default function RoutineEditorScreen() {
           style={[styles.saveButton, { backgroundColor: theme.colors.success }]}
           onPress={handleSave}
         >
-          <Text style={styles.saveButtonText}>Save Routine</Text>
+          <Text style={[styles.saveButtonText, { color: theme.colors.text }]}>Save Routine</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -318,12 +337,29 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: 14,
   },
+  durationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   durationInput: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
     fontSize: 14,
-    width: 60,
+    width: 50,
+    textAlign: 'center',
+  },
+  durationSuffix: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  energyTagsSection: {
+    gap: 8,
+  },
+  energyTagsLabel: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   toggles: {
     flexDirection: 'row',
@@ -331,12 +367,17 @@ const styles = StyleSheet.create({
   },
   toggle: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   toggleText: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  energyTagsHelp: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    lineHeight: 16,
   },
   deleteButton: {
     padding: 8,
@@ -354,7 +395,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -364,7 +404,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveButtonText: {
-    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
   },

@@ -118,7 +118,7 @@ export function QueueList({
                 ]}
                 onPress={() => onSkip(task.id)}
               >
-                <Text style={[styles.controlButtonText, { color: '#FFFFFF' }]}>
+                <Text style={[styles.controlButtonText, { color: theme.colors.text }]}>
                   Skip
                 </Text>
               </TouchableOpacity>

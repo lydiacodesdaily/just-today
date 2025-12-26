@@ -47,7 +47,7 @@ export function SubtaskList({ subtasks, onToggle }: SubtaskListProps) {
               },
             ]}
           >
-            {subtask.checked && <Text style={styles.checkmark}>✓</Text>}
+            {subtask.checked && <Text style={[styles.checkmark, { color: theme.colors.text }]}>✓</Text>}
           </View>
           <Text
             style={[
@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkmark: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },

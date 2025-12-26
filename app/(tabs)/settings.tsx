@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   PanResponder,
 } from 'react-native';
+import { Audio } from 'expo-av';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useTheme } from '../../src/constants/theme';
 import { TickingSoundType } from '../../src/models/Settings';
@@ -112,12 +113,56 @@ const sliderStyles = StyleSheet.create({
   },
 });
 
+function getVolumeLabel(volume: number): string {
+  const percentage = Math.round(volume * 100);
+  if (percentage === 0) return 'Off';
+  if (percentage <= 25) return 'Quiet';
+  if (percentage <= 50) return 'Normal';
+  if (percentage <= 75) return 'Loud';
+  return 'Very Loud';
+}
+
+const TICK_TOK_SOUNDS = {
+  'tick1-tok1': {
+    tick: require('../../assets/sounds/effects/tick1.mp3'),
+    tok: require('../../assets/sounds/effects/tok1.mp3'),
+  },
+  'tick2-tok2': {
+    tick: require('../../assets/sounds/effects/tick2.wav'),
+    tok: require('../../assets/sounds/effects/tok2.wav'),
+  },
+};
+
 export default function SettingsScreen() {
   const theme = useTheme();
   const { settings, updateSettings } = useSettings();
 
   const toggleSetting = (key: keyof typeof settings) => {
     updateSettings({ [key]: !settings[key] });
+  };
+
+  const previewTickingSound = async (soundType: TickingSoundType) => {
+    try {
+      const sounds = TICK_TOK_SOUNDS[soundType];
+      const { sound: tick } = await Audio.Sound.createAsync(sounds.tick, {
+        volume: settings.tickingVolume,
+      });
+      const { sound: tok } = await Audio.Sound.createAsync(sounds.tok, {
+        volume: settings.tickingVolume,
+      });
+
+      // Play tick-tok pattern
+      await tick.playAsync();
+      await new Promise(resolve => setTimeout(resolve, 600));
+      await tok.playAsync();
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      // Cleanup
+      await tick.unloadAsync();
+      await tok.unloadAsync();
+    } catch (error) {
+      console.error('Failed to preview sound:', error);
+    }
   };
 
   return (
@@ -224,77 +269,93 @@ export default function SettingsScreen() {
               </Text>
 
               <View style={styles.soundOptions}>
-                <TouchableOpacity
-                  style={[
-                    styles.soundOption,
-                    {
-                      backgroundColor: settings.tickingSoundType === 'tick1-tok1'
-                        ? theme.colors.primary + '15'
-                        : 'transparent',
-                      borderColor: settings.tickingSoundType === 'tick1-tok1'
-                        ? theme.colors.primary
-                        : theme.colors.border,
-                    },
-                  ]}
-                  onPress={() => updateSettings({ tickingSoundType: 'tick1-tok1' })}
-                >
-                  <View style={styles.soundOptionContent}>
-                    <Text style={[
-                      styles.soundOptionLabel,
+                <View style={styles.soundOptionWrapper}>
+                  <TouchableOpacity
+                    style={[
+                      styles.soundOption,
                       {
-                        color: settings.tickingSoundType === 'tick1-tok1'
+                        backgroundColor: settings.tickingSoundType === 'tick1-tok1'
+                          ? theme.colors.primary + '15'
+                          : 'transparent',
+                        borderColor: settings.tickingSoundType === 'tick1-tok1'
                           ? theme.colors.primary
-                          : theme.colors.text
-                      }
-                    ]}>
-                      Gentle
-                    </Text>
-                    <Text style={[styles.soundOptionSubtext, { color: theme.colors.textSecondary }]}>
-                      Soft tick-tok
-                    </Text>
-                  </View>
-                  {settings.tickingSoundType === 'tick1-tok1' && (
-                    <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
-                      <Text style={styles.selectedCheck}>✓</Text>
+                          : theme.colors.border,
+                      },
+                    ]}
+                    onPress={() => updateSettings({ tickingSoundType: 'tick1-tok1' })}
+                  >
+                    <View style={styles.soundOptionContent}>
+                      <Text style={[
+                        styles.soundOptionLabel,
+                        {
+                          color: settings.tickingSoundType === 'tick1-tok1'
+                            ? theme.colors.primary
+                            : theme.colors.text
+                        }
+                      ]}>
+                        Gentle
+                      </Text>
+                      <Text style={[styles.soundOptionSubtext, { color: theme.colors.textSecondary }]}>
+                        Soft tick-tok
+                      </Text>
                     </View>
-                  )}
-                </TouchableOpacity>
+                    {settings.tickingSoundType === 'tick1-tok1' && (
+                      <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
+                        <Text style={[styles.selectedCheck, { color: theme.colors.text }]}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.previewButton, { borderColor: theme.colors.border }]}
+                    onPress={() => previewTickingSound('tick1-tok1')}
+                  >
+                    <Text style={[styles.previewButtonText, { color: theme.colors.primary }]}>▶</Text>
+                  </TouchableOpacity>
+                </View>
 
-                <TouchableOpacity
-                  style={[
-                    styles.soundOption,
-                    {
-                      backgroundColor: settings.tickingSoundType === 'tick2-tok2'
-                        ? theme.colors.primary + '15'
-                        : 'transparent',
-                      borderColor: settings.tickingSoundType === 'tick2-tok2'
-                        ? theme.colors.primary
-                        : theme.colors.border,
-                    },
-                  ]}
-                  onPress={() => updateSettings({ tickingSoundType: 'tick2-tok2' })}
-                >
-                  <View style={styles.soundOptionContent}>
-                    <Text style={[
-                      styles.soundOptionLabel,
+                <View style={styles.soundOptionWrapper}>
+                  <TouchableOpacity
+                    style={[
+                      styles.soundOption,
                       {
-                        color: settings.tickingSoundType === 'tick2-tok2'
+                        backgroundColor: settings.tickingSoundType === 'tick2-tok2'
+                          ? theme.colors.primary + '15'
+                          : 'transparent',
+                        borderColor: settings.tickingSoundType === 'tick2-tok2'
                           ? theme.colors.primary
-                          : theme.colors.text
-                      }
-                    ]}>
-                      Classic
-                    </Text>
-                    <Text style={[styles.soundOptionSubtext, { color: theme.colors.textSecondary }]}>
-                      Traditional clock
-                    </Text>
-                  </View>
-                  {settings.tickingSoundType === 'tick2-tok2' && (
-                    <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
-                      <Text style={styles.selectedCheck}>✓</Text>
+                          : theme.colors.border,
+                      },
+                    ]}
+                    onPress={() => updateSettings({ tickingSoundType: 'tick2-tok2' })}
+                  >
+                    <View style={styles.soundOptionContent}>
+                      <Text style={[
+                        styles.soundOptionLabel,
+                        {
+                          color: settings.tickingSoundType === 'tick2-tok2'
+                            ? theme.colors.primary
+                            : theme.colors.text
+                        }
+                      ]}>
+                        Classic
+                      </Text>
+                      <Text style={[styles.soundOptionSubtext, { color: theme.colors.textSecondary }]}>
+                        Traditional clock
+                      </Text>
                     </View>
-                  )}
-                </TouchableOpacity>
+                    {settings.tickingSoundType === 'tick2-tok2' && (
+                      <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
+                        <Text style={[styles.selectedCheck, { color: theme.colors.text }]}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.previewButton, { borderColor: theme.colors.border }]}
+                    onPress={() => previewTickingSound('tick2-tok2')}
+                  >
+                    <Text style={[styles.previewButtonText, { color: theme.colors.primary }]}>▶</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
@@ -318,7 +379,7 @@ export default function SettingsScreen() {
                     Voice
                   </Text>
                   <Text style={[styles.volumeValue, { color: theme.colors.primary }]}>
-                    {Math.round(settings.ttsVolume * 100)}%
+                    {getVolumeLabel(settings.ttsVolume)}
                   </Text>
                 </View>
                 <VolumeSlider
@@ -337,7 +398,7 @@ export default function SettingsScreen() {
                     Chimes & Alerts
                   </Text>
                   <Text style={[styles.volumeValue, { color: theme.colors.primary }]}>
-                    {Math.round(settings.announcementVolume * 100)}%
+                    {getVolumeLabel(settings.announcementVolume)}
                   </Text>
                 </View>
                 <VolumeSlider
@@ -356,7 +417,7 @@ export default function SettingsScreen() {
                     Ticking
                   </Text>
                   <Text style={[styles.volumeValue, { color: theme.colors.primary }]}>
-                    {Math.round(settings.tickingVolume * 100)}%
+                    {getVolumeLabel(settings.tickingVolume)}
                   </Text>
                 </View>
                 <VolumeSlider
@@ -469,13 +530,31 @@ const styles = StyleSheet.create({
   soundOptions: {
     gap: 12,
   },
+  soundOptionWrapper: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   soundOption: {
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
+  },
+  previewButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  previewButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   soundOptionContent: {
     flex: 1,
@@ -496,7 +575,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selectedCheck: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
   },

@@ -51,7 +51,10 @@ export function TaskCard({ task, timeRemaining, onToggleSubtask }: TaskCardProps
 
         {/* Timer with generous spacing */}
         <View style={styles.timerSection}>
-          <TimeDisplay timeRemaining={timeRemaining} />
+          <TimeDisplay
+            timeRemaining={timeRemaining}
+            totalDurationMs={task.durationMs + task.extensionMs}
+          />
         </View>
 
         {/* Subtasks with clear separation */}

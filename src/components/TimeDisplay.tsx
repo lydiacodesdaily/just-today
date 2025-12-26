@@ -10,9 +10,11 @@ import { useTheme } from '../constants/theme';
 
 interface TimeDisplayProps {
   timeRemaining: TimeRemaining | null;
+  /** Total planned duration in milliseconds (optional, for progress indicator) */
+  totalDurationMs?: number;
 }
 
-export function TimeDisplay({ timeRemaining }: TimeDisplayProps) {
+export function TimeDisplay({ timeRemaining, totalDurationMs }: TimeDisplayProps) {
   const theme = useTheme();
 
   if (!timeRemaining) {
@@ -23,12 +25,29 @@ export function TimeDisplay({ timeRemaining }: TimeDisplayProps) {
     'It\'s okay to take your time',
     'No rush, keep going',
     'You\'re doing great',
+    'Take all the time you need',
+    'This is your routine, your pace',
+    'Doing it is what matters',
   ];
 
   const getOvertimeMessage = () => {
     const minutes = Math.floor(timeRemaining.overtimeMs / 60000);
-    return overtimeMessages[Math.min(Math.floor(minutes / 5), overtimeMessages.length - 1)];
+    // Rotate every 2 minutes instead of 5
+    return overtimeMessages[Math.min(Math.floor(minutes / 2), overtimeMessages.length - 1)];
   };
+
+  // Calculate progress text if totalDurationMs is provided
+  const getProgressText = () => {
+    if (!totalDurationMs || timeRemaining.isOvertime) return null;
+
+    const elapsedMs = totalDurationMs - timeRemaining.remainingMs;
+    const elapsedMinutes = Math.ceil(elapsedMs / 60000);
+    const totalMinutes = Math.ceil(totalDurationMs / 60000);
+
+    return `${elapsedMinutes} of ${totalMinutes} min`;
+  };
+
+  const progressText = getProgressText();
 
   return (
     <View style={styles.container}>
@@ -44,6 +63,11 @@ export function TimeDisplay({ timeRemaining }: TimeDisplayProps) {
       >
         {formatTimeRemaining(timeRemaining)}
       </Text>
+      {progressText && (
+        <Text style={[styles.progressText, { color: theme.colors.textSecondary }]}>
+          {progressText}
+        </Text>
+      )}
       {timeRemaining.isOvertime && (
         <View style={styles.overtimeContainer}>
           <Text style={[styles.overtimeLabel, { color: theme.colors.warning }]}>
@@ -68,6 +92,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
     letterSpacing: -1,
+  },
+  progressText: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: -4,
   },
   overtimeContainer: {
     alignItems: 'center',

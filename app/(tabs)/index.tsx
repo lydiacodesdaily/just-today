@@ -90,7 +90,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/routine/new')}
               activeOpacity={0.7}
             >
-              <Text style={[styles.createButtonText, { color: theme.colors.primary }]}>
+              <Text style={[styles.createButtonText, { color: theme.colors.text }]}>
                 + New
               </Text>
             </TouchableOpacity>
@@ -113,6 +113,20 @@ export default function HomeScreen() {
               <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary }]}>
                 Create your first routine to begin
               </Text>
+              <TouchableOpacity
+                style={[
+                  styles.emptyCreateButton,
+                  {
+                    backgroundColor: theme.colors.primary,
+                  },
+                ]}
+                onPress={() => router.push('/routine/new')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.emptyCreateButtonText, { color: theme.colors.text }]}>
+                  Create Your First Routine
+                </Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.routinesList}>
@@ -222,18 +236,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   emptyState: {
-    padding: 32,
+    padding: 40,
     borderRadius: 16,
     borderWidth: 1,
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
   emptyIcon: {
-    fontSize: 48,
+    fontSize: 56,
     marginBottom: 8,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -241,6 +255,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
+    marginBottom: 8,
+  },
+  emptyCreateButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 14,
+    marginTop: 8,
+    minWidth: 240,
+  },
+  emptyCreateButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.2,
   },
   routinesList: {
     gap: 12,

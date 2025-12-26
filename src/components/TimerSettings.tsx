@@ -214,7 +214,7 @@ export function TimerSettings() {
               </View>
               {settings.tickingSoundType === 'tick1-tok1' && (
                 <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
-                  <Text style={styles.selectedCheck}>✓</Text>
+                  <Text style={[styles.selectedCheck, { color: theme.colors.text }]}>✓</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -250,7 +250,7 @@ export function TimerSettings() {
               </View>
               {settings.tickingSoundType === 'tick2-tok2' && (
                 <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
-                  <Text style={styles.selectedCheck}>✓</Text>
+                  <Text style={[styles.selectedCheck, { color: theme.colors.text }]}>✓</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -381,7 +381,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selectedCheck: {
-    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
   },

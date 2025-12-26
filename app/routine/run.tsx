@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { StyleSheet, Alert, SafeAreaView, ScrollView, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, Alert, SafeAreaView, ScrollView, TouchableOpacity, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useRun } from '../../src/context/RunContext';
 import { useSettings } from '../../src/context/SettingsContext';
@@ -175,22 +175,36 @@ export default function RunScreen() {
     }
   }, [currentRun?.status]);
 
-  if (!activeTask) {
+  if (!currentRun || !activeTask) {
     return null;
   }
+
+  // Calculate progress
+  const completedTasks = currentRun.tasks.filter(t => t.status === 'completed' || t.status === 'skipped').length;
+  const totalTasks = currentRun.tasks.length;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header with back navigation */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={handleBack}
-        activeOpacity={0.7}
-      >
-        <Text style={[styles.backButtonText, { color: theme.colors.primary }]}>
-          ← Back
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleBack}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.backButtonText, { color: theme.colors.primary }]}>
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <View style={styles.routineInfo}>
+          <Text style={[styles.routineName, { color: theme.colors.text }]}>
+            {currentRun.templateName}
+          </Text>
+          <Text style={[styles.routineProgress, { color: theme.colors.textSecondary }]}>
+            {completedTasks + 1} of {totalTasks} tasks
+          </Text>
+        </View>
+      </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <TaskCard
@@ -229,14 +243,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backButton: {
+  header: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  backButton: {
     alignSelf: 'flex-start',
+    paddingVertical: 4,
   },
   backButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  routineInfo: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  routineName: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  routineProgress: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
