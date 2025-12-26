@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { StyleSheet, Alert, SafeAreaView, ScrollView } from 'react-native';
+import { StyleSheet, Alert, SafeAreaView, ScrollView, TouchableOpacity, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useRun } from '../../src/context/RunContext';
 import { useSettings } from '../../src/context/SettingsContext';
@@ -60,6 +60,11 @@ export default function RunScreen() {
     }
   }, [currentRun, startCurrentRun]);
 
+  // Calculate active task and timer state before any early returns
+  const activeTask = currentRun?.tasks.find((t) => t.id === currentRun.activeTaskId);
+  const isPaused = currentRun?.status === 'paused';
+  const timeRemaining = useTimer(activeTask || null, isPaused || false, currentRun?.pausedAt);
+
   // Auto-advance when task completes naturally
   useEffect(() => {
     if (!currentRun || !activeTask || !timeRemaining) {
@@ -73,10 +78,6 @@ export default function RunScreen() {
   if (!currentRun) {
     return null;
   }
-
-  const activeTask = currentRun.tasks.find((t) => t.id === currentRun.activeTaskId);
-  const isPaused = currentRun.status === 'paused';
-  const timeRemaining = useTimer(activeTask || null, isPaused, currentRun.pausedAt);
 
   // Handle overtime announcements
   const handleOvertimeAnnounced = (minutes: number) => {
@@ -106,10 +107,23 @@ export default function RunScreen() {
     resumeCurrentRun();
   };
 
-  const handleSkip = () => {
+  const handleComplete = () => {
     if (activeTask) {
       advanceTask();
     }
+  };
+
+  const handleSkip = () => {
+    if (activeTask) {
+      skipCurrentTask(activeTask.id);
+    }
+  };
+
+  const handleBack = () => {
+    if (!isPaused) {
+      pauseCurrentRun();
+    }
+    router.back();
   };
 
   const handleExtend = (ms: number) => {
@@ -144,7 +158,7 @@ export default function RunScreen() {
 
   // Check if run is completed
   useEffect(() => {
-    if (currentRun.status === 'completed' || currentRun.status === 'abandoned') {
+    if (currentRun?.status === 'completed' || currentRun?.status === 'abandoned') {
       Alert.alert(
         'Routine Complete',
         'You finished your routine!',
@@ -159,7 +173,7 @@ export default function RunScreen() {
         ]
       );
     }
-  }, [currentRun.status]);
+  }, [currentRun?.status]);
 
   if (!activeTask) {
     return null;
@@ -167,6 +181,17 @@ export default function RunScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* Header with back navigation */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={handleBack}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.backButtonText, { color: theme.colors.primary }]}>
+          ← Back
+        </Text>
+      </TouchableOpacity>
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <TaskCard
           task={activeTask}
@@ -178,6 +203,7 @@ export default function RunScreen() {
           isPaused={isPaused}
           onPause={handlePause}
           onResume={handleResume}
+          onComplete={handleComplete}
           onSkip={handleSkip}
           onExtend={handleExtend}
           onEnd={handleEnd}
@@ -202,6 +228,15 @@ export default function RunScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  backButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    alignSelf: 'flex-start',
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,

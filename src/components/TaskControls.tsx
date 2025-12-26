@@ -11,6 +11,7 @@ interface TaskControlsProps {
   isPaused: boolean;
   onPause: () => void;
   onResume: () => void;
+  onComplete: () => void;
   onSkip: () => void;
   onExtend: (ms: number) => void;
   onEnd: () => void;
@@ -20,6 +21,7 @@ export function TaskControls({
   isPaused,
   onPause,
   onResume,
+  onComplete,
   onSkip,
   onExtend,
   onEnd,
@@ -34,33 +36,49 @@ export function TaskControls({
 
   return (
     <View style={styles.container}>
-      {/* Primary action - always visible, large target */}
+      {/* Primary actions - when ready to move on */}
       <View style={styles.primarySection}>
-        <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            {
-              backgroundColor: isPaused
-                ? theme.colors.primarySubtle
-                : theme.colors.surface,
-              borderColor: theme.colors.primary,
-            },
-          ]}
-          onPress={isPaused ? onResume : onPause}
-          activeOpacity={0.7}
-        >
-          <Text
+        <Text style={[styles.sectionLabel, { color: theme.colors.textSecondary }]}>
+          When you're ready to move on:
+        </Text>
+        <View style={styles.primaryRow}>
+          <TouchableOpacity
             style={[
-              styles.primaryButtonText,
-              { color: theme.colors.primary },
+              styles.primaryButton,
+              {
+                backgroundColor: theme.colors.successSubtle,
+                borderColor: theme.colors.success,
+              },
             ]}
+            onPress={onComplete}
+            activeOpacity={0.7}
           >
-            {isPaused ? '▶ Continue' : '⏸ Pause'}
-          </Text>
-        </TouchableOpacity>
+            <Text style={[styles.primaryButtonIcon, { color: theme.colors.success }]}>✓</Text>
+            <Text style={[styles.primaryButtonText, { color: theme.colors.success }]}>
+              Done
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.primaryButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            onPress={onSkip}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.primaryButtonIcon, { color: theme.colors.text }]}>⏭</Text>
+            <Text style={[styles.primaryButtonText, { color: theme.colors.text }]}>
+              Skip
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Secondary actions - grouped and less prominent */}
+      {/* Secondary actions - adjust current task */}
       <View style={styles.secondarySection}>
         {!showExtendOptions ? (
           <View style={styles.secondaryRow}>
@@ -68,15 +86,17 @@ export function TaskControls({
               style={[
                 styles.secondaryButton,
                 {
-                  backgroundColor: theme.colors.successSubtle,
-                  borderColor: theme.colors.success,
+                  backgroundColor: isPaused
+                    ? theme.colors.primarySubtle
+                    : theme.colors.surface,
+                  borderColor: theme.colors.border,
                 },
               ]}
-              onPress={onSkip}
+              onPress={isPaused ? onResume : onPause}
               activeOpacity={0.7}
             >
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.success }]}>
-                Done with this →
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
+                {isPaused ? '▶ Resume' : '⏸ Pause'}
               </Text>
             </TouchableOpacity>
 
@@ -92,7 +112,7 @@ export function TaskControls({
               activeOpacity={0.7}
             >
               <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
-                Need more time
+                + More time
               </Text>
             </TouchableOpacity>
           </View>
@@ -178,19 +198,34 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   primarySection: {
-    gap: 8,
+    gap: 12,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  primaryRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
   primaryButton: {
-    paddingVertical: 18,
-    paddingHorizontal: 24,
-    borderRadius: 16,
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 14,
     borderWidth: 2,
     alignItems: 'center',
-    minHeight: 56,
     justifyContent: 'center',
+    minHeight: 64,
+    gap: 6,
+  },
+  primaryButtonIcon: {
+    fontSize: 24,
   },
   primaryButtonText: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '600',
     letterSpacing: 0.2,
   },
