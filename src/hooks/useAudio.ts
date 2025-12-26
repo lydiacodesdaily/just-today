@@ -15,6 +15,8 @@ import {
   duckTicking,
   unduckTicking,
   setTickingVolume,
+  setAnnouncementVolume,
+  setTickingSoundType,
 } from '../audio/soundEngine';
 
 interface UseAudioOptions {
@@ -39,11 +41,17 @@ export function useAudio({
   const lastMinuteRef = useRef<number | null>(null);
   const hasAnnouncedOvertimeRef = useRef<Set<number>>(new Set());
 
-  // Sync volumes
+  // Sync volumes and sound type
   useEffect(() => {
     setTTSVolume(settings.ttsVolume);
-    setTickingVolume(settings.soundVolume);
-  }, [settings.ttsVolume, settings.soundVolume]);
+    setTickingVolume(settings.tickingVolume);
+    setAnnouncementVolume(settings.announcementVolume);
+  }, [settings.ttsVolume, settings.tickingVolume, settings.announcementVolume]);
+
+  // Sync ticking sound type
+  useEffect(() => {
+    setTickingSoundType(settings.tickingSoundType);
+  }, [settings.tickingSoundType]);
 
   // Manage ticking sound
   useEffect(() => {

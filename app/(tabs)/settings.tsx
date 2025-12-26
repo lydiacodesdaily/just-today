@@ -1,12 +1,116 @@
 /**
  * settings.tsx
- * Settings screen for audio and behavior preferences.
+ * Settings screen optimized for ADHD-friendly UX
+ * Principles: Clear grouping, reduced cognitive load, calming visual hierarchy
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Switch,
+  TouchableOpacity,
+  PanResponder,
+} from 'react-native';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useTheme } from '../../src/constants/theme';
+import { TickingSoundType } from '../../src/models/Settings';
+
+/**
+ * Simple custom slider component
+ */
+function VolumeSlider({
+  value,
+  onValueChange,
+  minimumTrackTintColor,
+  maximumTrackTintColor,
+  thumbTintColor
+}: {
+  value: number;
+  onValueChange: (value: number) => void;
+  minimumTrackTintColor: string;
+  maximumTrackTintColor: string;
+  thumbTintColor: string;
+}) {
+  const [sliderWidth, setSliderWidth] = React.useState(0);
+
+  const panResponder = React.useMemo(() =>
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt) => {
+        const locationX = evt.nativeEvent.locationX;
+        const newValue = Math.max(0, Math.min(1, locationX / sliderWidth));
+        onValueChange(newValue);
+      },
+      onPanResponderMove: (evt) => {
+        const locationX = evt.nativeEvent.locationX;
+        const newValue = Math.max(0, Math.min(1, locationX / sliderWidth));
+        onValueChange(newValue);
+      },
+    }),
+    [sliderWidth, onValueChange]
+  );
+
+  return (
+    <View
+      style={sliderStyles.container}
+      onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
+      {...panResponder.panHandlers}
+    >
+      <View style={[sliderStyles.track, { backgroundColor: maximumTrackTintColor }]} />
+      <View
+        style={[
+          sliderStyles.fillTrack,
+          {
+            backgroundColor: minimumTrackTintColor,
+            width: `${value * 100}%`
+          }
+        ]}
+      />
+      <View
+        style={[
+          sliderStyles.thumb,
+          {
+            backgroundColor: thumbTintColor,
+            left: `${value * 100}%`
+          }
+        ]}
+      />
+    </View>
+  );
+}
+
+const sliderStyles = StyleSheet.create({
+  container: {
+    height: 48,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  track: {
+    height: 6,
+    borderRadius: 3,
+  },
+  fillTrack: {
+    position: 'absolute',
+    height: 6,
+    borderRadius: 3,
+  },
+  thumb: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginLeft: -14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+});
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -18,119 +122,262 @@ export default function SettingsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Text style={[styles.header, { color: theme.colors.text }]}>
-          Settings
-        </Text>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-            Audio
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Softer header */}
+        <View style={styles.headerContainer}>
+          <Text style={[styles.header, { color: theme.colors.text }]}>
+            Settings
           </Text>
+          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+            Customize your experience
+          </Text>
+        </View>
 
-          <View
-            style={[
-              styles.setting,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { color: theme.colors.text }]}>
-                Text-to-Speech
-              </Text>
-              <Text style={[styles.settingDescription, { color: theme.colors.textSecondary }]}>
-                Enable voice announcements
-              </Text>
-            </View>
-            <Switch
-              value={settings.ttsEnabled}
-              onValueChange={() => toggleSetting('ttsEnabled')}
-              trackColor={{ true: theme.colors.primary }}
-            />
-          </View>
+        {/* Voice & Sounds Group - Most impactful settings first */}
+        <View style={styles.cardGroup}>
+          <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+              Voice & Sounds
+            </Text>
+            <Text style={[styles.cardDescription, { color: theme.colors.textSecondary }]}>
+              Control what you hear
+            </Text>
 
-          <View
-            style={[
-              styles.setting,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { color: theme.colors.text }]}>
-                Minute Announcements
-              </Text>
-              <Text style={[styles.settingDescription, { color: theme.colors.textSecondary }]}>
-                Announce each minute during task
-              </Text>
+            {/* Primary toggle - TTS */}
+            <View style={styles.primaryToggle}>
+              <View style={styles.toggleContent}>
+                <Text style={[styles.toggleLabel, { color: theme.colors.text }]}>
+                  Voice Announcements
+                </Text>
+                <Text style={[styles.toggleHint, { color: theme.colors.textSecondary }]}>
+                  Spoken updates during tasks
+                </Text>
+              </View>
+              <Switch
+                value={settings.ttsEnabled}
+                onValueChange={() => toggleSetting('ttsEnabled')}
+                trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
+                ios_backgroundColor={theme.colors.border}
+              />
             </View>
-            <Switch
-              value={settings.minuteAnnouncementsEnabled}
-              onValueChange={() => toggleSetting('minuteAnnouncementsEnabled')}
-              trackColor={{ true: theme.colors.primary }}
-            />
-          </View>
 
-          <View
-            style={[
-              styles.setting,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { color: theme.colors.text }]}>
-                Ticking Sound
-              </Text>
-              <Text style={[styles.settingDescription, { color: theme.colors.textSecondary }]}>
-                Play ticking during active task
-              </Text>
-            </View>
-            <Switch
-              value={settings.tickingEnabled}
-              onValueChange={() => toggleSetting('tickingEnabled')}
-              trackColor={{ true: theme.colors.primary }}
-            />
-          </View>
+            {/* Secondary toggles - visually grouped and subdued */}
+            <View style={styles.secondaryToggles}>
+              <View style={styles.secondaryToggle}>
+                <View style={styles.toggleContent}>
+                  <Text style={[styles.secondaryLabel, { color: theme.colors.text }]}>
+                    Minute Countdowns
+                  </Text>
+                </View>
+                <Switch
+                  value={settings.minuteAnnouncementsEnabled}
+                  onValueChange={() => toggleSetting('minuteAnnouncementsEnabled')}
+                  trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
+                  ios_backgroundColor={theme.colors.border}
+                />
+              </View>
 
-          <View
-            style={[
-              styles.setting,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { color: theme.colors.text }]}>
-                Overtime Reminders
-              </Text>
-              <Text style={[styles.settingDescription, { color: theme.colors.textSecondary }]}>
-                Announce every 5 minutes of overtime
-              </Text>
+              <View style={styles.secondaryToggle}>
+                <View style={styles.toggleContent}>
+                  <Text style={[styles.secondaryLabel, { color: theme.colors.text }]}>
+                    Overtime Reminders
+                  </Text>
+                </View>
+                <Switch
+                  value={settings.overtimeRemindersEnabled}
+                  onValueChange={() => toggleSetting('overtimeRemindersEnabled')}
+                  trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
+                  ios_backgroundColor={theme.colors.border}
+                />
+              </View>
+
+              <View style={styles.secondaryToggle}>
+                <View style={styles.toggleContent}>
+                  <Text style={[styles.secondaryLabel, { color: theme.colors.text }]}>
+                    Ticking Sound
+                  </Text>
+                </View>
+                <Switch
+                  value={settings.tickingEnabled}
+                  onValueChange={() => toggleSetting('tickingEnabled')}
+                  trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
+                  ios_backgroundColor={theme.colors.border}
+                />
+              </View>
             </View>
-            <Switch
-              value={settings.overtimeRemindersEnabled}
-              onValueChange={() => toggleSetting('overtimeRemindersEnabled')}
-              trackColor={{ true: theme.colors.primary }}
-            />
           </View>
         </View>
 
+        {/* Ticking Sound Choice - Only show if ticking is enabled */}
+        {settings.tickingEnabled && (
+          <View style={styles.cardGroup}>
+            <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+                Ticking Sound
+              </Text>
+              <Text style={[styles.cardDescription, { color: theme.colors.textSecondary }]}>
+                Choose your preferred rhythm
+              </Text>
+
+              <View style={styles.soundOptions}>
+                <TouchableOpacity
+                  style={[
+                    styles.soundOption,
+                    {
+                      backgroundColor: settings.tickingSoundType === 'tick1-tok1'
+                        ? theme.colors.primary + '15'
+                        : 'transparent',
+                      borderColor: settings.tickingSoundType === 'tick1-tok1'
+                        ? theme.colors.primary
+                        : theme.colors.border,
+                    },
+                  ]}
+                  onPress={() => updateSettings({ tickingSoundType: 'tick1-tok1' })}
+                >
+                  <View style={styles.soundOptionContent}>
+                    <Text style={[
+                      styles.soundOptionLabel,
+                      {
+                        color: settings.tickingSoundType === 'tick1-tok1'
+                          ? theme.colors.primary
+                          : theme.colors.text
+                      }
+                    ]}>
+                      Gentle
+                    </Text>
+                    <Text style={[styles.soundOptionSubtext, { color: theme.colors.textSecondary }]}>
+                      Soft tick-tok
+                    </Text>
+                  </View>
+                  {settings.tickingSoundType === 'tick1-tok1' && (
+                    <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
+                      <Text style={styles.selectedCheck}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.soundOption,
+                    {
+                      backgroundColor: settings.tickingSoundType === 'tick2-tok2'
+                        ? theme.colors.primary + '15'
+                        : 'transparent',
+                      borderColor: settings.tickingSoundType === 'tick2-tok2'
+                        ? theme.colors.primary
+                        : theme.colors.border,
+                    },
+                  ]}
+                  onPress={() => updateSettings({ tickingSoundType: 'tick2-tok2' })}
+                >
+                  <View style={styles.soundOptionContent}>
+                    <Text style={[
+                      styles.soundOptionLabel,
+                      {
+                        color: settings.tickingSoundType === 'tick2-tok2'
+                          ? theme.colors.primary
+                          : theme.colors.text
+                      }
+                    ]}>
+                      Classic
+                    </Text>
+                    <Text style={[styles.soundOptionSubtext, { color: theme.colors.textSecondary }]}>
+                      Traditional clock
+                    </Text>
+                  </View>
+                  {settings.tickingSoundType === 'tick2-tok2' && (
+                    <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
+                      <Text style={styles.selectedCheck}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Volume Controls - Simplified and grouped */}
+        <View style={styles.cardGroup}>
+          <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+              Volume Levels
+            </Text>
+            <Text style={[styles.cardDescription, { color: theme.colors.textSecondary }]}>
+              Adjust to your comfort
+            </Text>
+
+            <View style={styles.volumeControls}>
+              {/* Voice Volume */}
+              <View style={styles.volumeControl}>
+                <View style={styles.volumeHeader}>
+                  <Text style={[styles.volumeLabel, { color: theme.colors.text }]}>
+                    Voice
+                  </Text>
+                  <Text style={[styles.volumeValue, { color: theme.colors.primary }]}>
+                    {Math.round(settings.ttsVolume * 100)}%
+                  </Text>
+                </View>
+                <VolumeSlider
+                  value={settings.ttsVolume}
+                  onValueChange={(value: number) => updateSettings({ ttsVolume: value })}
+                  minimumTrackTintColor={theme.colors.primary}
+                  maximumTrackTintColor={theme.colors.border}
+                  thumbTintColor={theme.colors.primary}
+                />
+              </View>
+
+              {/* Announcements Volume */}
+              <View style={styles.volumeControl}>
+                <View style={styles.volumeHeader}>
+                  <Text style={[styles.volumeLabel, { color: theme.colors.text }]}>
+                    Chimes & Alerts
+                  </Text>
+                  <Text style={[styles.volumeValue, { color: theme.colors.primary }]}>
+                    {Math.round(settings.announcementVolume * 100)}%
+                  </Text>
+                </View>
+                <VolumeSlider
+                  value={settings.announcementVolume}
+                  onValueChange={(value: number) => updateSettings({ announcementVolume: value })}
+                  minimumTrackTintColor={theme.colors.primary}
+                  maximumTrackTintColor={theme.colors.border}
+                  thumbTintColor={theme.colors.primary}
+                />
+              </View>
+
+              {/* Ticking Volume */}
+              <View style={styles.volumeControl}>
+                <View style={styles.volumeHeader}>
+                  <Text style={[styles.volumeLabel, { color: theme.colors.text }]}>
+                    Ticking
+                  </Text>
+                  <Text style={[styles.volumeValue, { color: theme.colors.primary }]}>
+                    {Math.round(settings.tickingVolume * 100)}%
+                  </Text>
+                </View>
+                <VolumeSlider
+                  value={settings.tickingVolume}
+                  onValueChange={(value: number) => updateSettings({ tickingVolume: value })}
+                  minimumTrackTintColor={theme.colors.primary}
+                  maximumTrackTintColor={theme.colors.border}
+                  thumbTintColor={theme.colors.primary}
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Gentle footer */}
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
-            Just Today v1.0
+            Just Today
           </Text>
-          <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
-            A gentle routine execution engine
+          <Text style={[styles.footerSubtext, { color: theme.colors.textSecondary }]}>
+            A gentle routine companion
           </Text>
         </View>
       </ScrollView>
@@ -146,45 +393,144 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
-    gap: 24,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  headerContainer: {
+    marginBottom: 32,
+    gap: 6,
   },
   header: {
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: '700',
+    letterSpacing: -0.5,
   },
-  section: {
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  cardGroup: {
+    marginBottom: 20,
+  },
+  card: {
+    borderRadius: 16,
+    padding: 20,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  cardDescription: {
+    fontSize: 14,
+    marginTop: -8,
+    marginBottom: 4,
+  },
+  primaryToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  toggleContent: {
+    flex: 1,
+    gap: 4,
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  toggleHint: {
+    fontSize: 13,
+  },
+  secondaryToggles: {
+    gap: 8,
+    marginTop: 8,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  secondaryToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  secondaryLabel: {
+    fontSize: 15,
+    fontWeight: '400',
+  },
+  soundOptions: {
     gap: 12,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  setting: {
+  soundOption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 2,
   },
-  settingInfo: {
+  soundOptionContent: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
-  settingLabel: {
+  soundOptionLabel: {
     fontSize: 16,
+    fontWeight: '600',
+  },
+  soundOptionSubtext: {
+    fontSize: 13,
+  },
+  selectedIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedCheck: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  volumeControls: {
+    gap: 24,
+  },
+  volumeControl: {
+    gap: 12,
+  },
+  volumeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  volumeLabel: {
+    fontSize: 15,
     fontWeight: '500',
   },
-  settingDescription: {
-    fontSize: 14,
+  volumeValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   footer: {
     alignItems: 'center',
-    gap: 4,
-    paddingTop: 24,
+    gap: 6,
+    paddingTop: 32,
+    paddingBottom: 20,
   },
   footerText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  footerSubtext: {
     fontSize: 12,
   },
 });

@@ -3,6 +3,8 @@
  * User preferences for audio, announcements, and behavior.
  */
 
+export type TickingSoundType = 'tick1-tok1' | 'tick2-tok2';
+
 export interface Settings {
   /** Enable/disable TTS announcements */
   ttsEnabled: boolean;
@@ -14,10 +16,14 @@ export interface Settings {
   overtimeRemindersEnabled: boolean;
   /** Selected TTS voice ID (platform-specific, optional) */
   voiceId?: string;
-  /** Master volume for sound effects (0.0 to 1.0) */
-  soundVolume: number;
-  /** Master volume for TTS (0.0 to 1.0) */
+  /** Volume for TTS (0.0 to 1.0) */
   ttsVolume: number;
+  /** Volume for minute announcements (0.0 to 1.0) */
+  announcementVolume: number;
+  /** Volume for ticking sound (0.0 to 1.0) */
+  tickingVolume: number;
+  /** Type of ticking sound to use */
+  tickingSoundType: TickingSoundType;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -25,6 +31,8 @@ export const DEFAULT_SETTINGS: Settings = {
   minuteAnnouncementsEnabled: false,
   tickingEnabled: true,
   overtimeRemindersEnabled: true,
-  soundVolume: 0.5,
   ttsVolume: 0.8,
+  announcementVolume: 0.7,
+  tickingVolume: 0.5,
+  tickingSoundType: 'tick1-tok1',
 };
