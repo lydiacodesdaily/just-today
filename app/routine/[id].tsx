@@ -3,7 +3,7 @@
  * Minimal routine template editor.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,7 @@ export default function RoutineEditorScreen() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
+  const taskInputRefs = useRef<{ [key: string]: TextInput | null }>({});
 
   useEffect(() => {
     if (id && id !== 'new') {
@@ -73,13 +74,22 @@ export default function RoutineEditorScreen() {
   const addTask = () => {
     const newTask: RoutineTask = {
       id: `task-${Date.now()}`,
-      name: 'New Task',
+      name: '',
       durationMs: 5 * 60 * 1000, // 5 minutes
       order: tasks.length,
       careSafe: false,
       flowExtra: false,
+      autoAdvance: false,
     };
     setTasks([...tasks, newTask]);
+
+    // Auto-focus the new task's input after a brief delay
+    setTimeout(() => {
+      const input = taskInputRefs.current[newTask.id];
+      if (input) {
+        input.focus();
+      }
+    }, 100);
   };
 
   const updateTask = (index: number, updates: Partial<RoutineTask>) => {
@@ -158,107 +168,132 @@ export default function RoutineEditorScreen() {
                 },
               ]}
             >
-              <TextInput
-                style={[styles.taskInput, { color: theme.colors.text }]}
-                placeholder="Task name"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={task.name}
-                onChangeText={(text) => updateTask(index, { name: text })}
-              />
-
-              <View style={styles.taskOptions}>
-                <View style={styles.option}>
-                  <Text style={[styles.optionLabel, { color: theme.colors.text }]}>
-                    Duration:
-                  </Text>
-                  <View style={styles.durationContainer}>
-                    <TextInput
-                      style={[
-                        styles.durationInput,
-                        {
-                          backgroundColor: theme.colors.surfaceSecondary,
-                          color: theme.colors.text,
-                        },
-                      ]}
-                      keyboardType="number-pad"
-                      value={String(Math.floor((task.durationMs || 0) / 60000))}
-                      onChangeText={(text) => {
-                        const minutes = parseInt(text, 10);
-                        const validMinutes = isNaN(minutes) ? 0 : Math.max(0, minutes);
-                        updateTask(index, { durationMs: validMinutes * 60000 });
-                      }}
-                    />
-                    <Text style={[styles.durationSuffix, { color: theme.colors.textSecondary }]}>
-                      min
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.energyTagsSection}>
-                  <Text style={[styles.energyTagsLabel, { color: theme.colors.textSecondary }]}>
-                    Energy modes:
-                  </Text>
-                  <View style={styles.toggles}>
-                    <TouchableOpacity
-                      style={[
-                        styles.toggle,
-                        {
-                          backgroundColor: task.careSafe
-                            ? theme.colors.primary
-                            : theme.colors.surfaceSecondary,
-                        },
-                      ]}
-                      onPress={() => updateTask(index, { careSafe: !task.careSafe })}
-                    >
-                      <Text
-                        style={[
-                          styles.toggleText,
-                          { color: task.careSafe ? theme.colors.background : theme.colors.text },
-                        ]}
-                      >
-                        🌙 Care Safe
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.toggle,
-                        {
-                          backgroundColor: task.flowExtra
-                            ? theme.colors.primary
-                            : theme.colors.surfaceSecondary,
-                        },
-                      ]}
-                      onPress={() => updateTask(index, { flowExtra: !task.flowExtra })}
-                    >
-                      <Text
-                        style={[
-                          styles.toggleText,
-                          { color: task.flowExtra ? theme.colors.background : theme.colors.text },
-                        ]}
-                      >
-                        ✨ Flow Extra
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={[styles.energyTagsHelp, { color: theme.colors.textSecondary }]}>
-                    {task.careSafe && task.flowExtra
-                      ? 'Shows in all modes'
-                      : task.careSafe
-                      ? 'Shows in Care mode (gentle days)'
-                      : task.flowExtra
-                      ? 'Shows only in Flow mode (bonus task)'
-                      : 'Shows in Steady and Flow modes'}
+              {/* Task name and duration - primary focus */}
+              <View style={styles.taskHeader}>
+                <TextInput
+                  ref={(ref) => {
+                    taskInputRefs.current[task.id] = ref;
+                  }}
+                  style={[styles.taskInput, { color: theme.colors.text }]}
+                  placeholder="What needs doing?"
+                  placeholderTextColor={theme.colors.textSecondary}
+                  value={task.name}
+                  onChangeText={(text) => updateTask(index, { name: text })}
+                  autoFocus={task.name === ''}
+                  selectTextOnFocus
+                />
+                <View style={styles.durationControl}>
+                  <TextInput
+                    style={[
+                      styles.durationInput,
+                      {
+                        backgroundColor: theme.colors.surfaceSecondary,
+                        color: theme.colors.text,
+                      },
+                    ]}
+                    keyboardType="number-pad"
+                    value={String(Math.floor((task.durationMs || 0) / 60000))}
+                    onChangeText={(text) => {
+                      const minutes = parseInt(text, 10);
+                      const validMinutes = isNaN(minutes) ? 0 : Math.max(0, minutes);
+                      updateTask(index, { durationMs: validMinutes * 60000 });
+                    }}
+                  />
+                  <Text style={[styles.durationLabel, { color: theme.colors.textSecondary }]}>
+                    min
                   </Text>
                 </View>
               </View>
 
+              {/* Optional settings - subtle and grouped */}
+              <View style={styles.taskOptions}>
+                <View style={styles.optionRow}>
+                  <TouchableOpacity
+                    style={[
+                      styles.chipToggle,
+                      {
+                        backgroundColor: task.careSafe
+                          ? theme.colors.primary
+                          : theme.colors.surfaceSecondary,
+                      },
+                    ]}
+                    onPress={() => updateTask(index, { careSafe: !task.careSafe })}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        { color: task.careSafe ? theme.colors.background : theme.colors.textSecondary },
+                      ]}
+                    >
+                      🌙 Care
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.chipToggle,
+                      {
+                        backgroundColor: task.flowExtra
+                          ? theme.colors.primary
+                          : theme.colors.surfaceSecondary,
+                      },
+                    ]}
+                    onPress={() => updateTask(index, { flowExtra: !task.flowExtra })}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        { color: task.flowExtra ? theme.colors.background : theme.colors.textSecondary },
+                      ]}
+                    >
+                      ✨ Flow
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.chipToggle,
+                      {
+                        backgroundColor: task.autoAdvance
+                          ? theme.colors.primary
+                          : theme.colors.surfaceSecondary,
+                      },
+                    ]}
+                    onPress={() => updateTask(index, { autoAdvance: !task.autoAdvance })}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        { color: task.autoAdvance ? theme.colors.background : theme.colors.textSecondary },
+                      ]}
+                    >
+                      ⏭️ Auto
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Contextual help - only when relevant */}
+                {(task.careSafe || task.flowExtra || task.autoAdvance) && (
+                  <Text style={[styles.subtleHint, { color: theme.colors.textSecondary }]}>
+                    {task.autoAdvance && 'Auto-advances • '}
+                    {task.careSafe && task.flowExtra
+                      ? 'All energy modes'
+                      : task.careSafe
+                      ? 'Care mode'
+                      : task.flowExtra
+                      ? 'Flow mode only'
+                      : 'Steady & Flow modes'}
+                  </Text>
+                )}
+              </View>
+
+              {/* Delete - subtle, bottom right */}
               <TouchableOpacity
-                style={[styles.deleteButton, { borderColor: theme.colors.danger }]}
+                style={styles.deleteButton}
                 onPress={() => deleteTask(index)}
               >
-                <Text style={[styles.deleteButtonText, { color: theme.colors.danger }]}>
-                  Delete
+                <Text style={[styles.deleteButtonText, { color: theme.colors.textSecondary }]}>
+                  Remove
                 </Text>
               </TouchableOpacity>
             </View>
@@ -291,11 +326,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
-    gap: 16,
+    padding: 20,
+    gap: 20,
   },
   header: {
-    marginBottom: 8,
+    marginBottom: 4,
   },
   title: {
     fontSize: 28,
@@ -310,88 +345,82 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   section: {
-    gap: 12,
+    gap: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
+    marginBottom: 4,
   },
   taskCard: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 16,
     borderWidth: 1,
+    gap: 16,
+  },
+  taskHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
   taskInput: {
-    fontSize: 16,
+    flex: 1,
+    fontSize: 17,
     fontWeight: '500',
+    paddingVertical: 8,
   },
-  taskOptions: {
-    gap: 12,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  optionLabel: {
-    fontSize: 14,
-  },
-  durationContainer: {
+  durationControl: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
   durationInput: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    fontSize: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    fontSize: 16,
     width: 50,
     textAlign: 'center',
+    fontWeight: '600',
   },
-  durationSuffix: {
+  durationLabel: {
     fontSize: 14,
     fontWeight: '500',
   },
-  energyTagsSection: {
-    gap: 8,
+  taskOptions: {
+    gap: 10,
   },
-  energyTagsLabel: {
+  optionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  chipToggle: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  subtleHint: {
+    fontSize: 12,
+    lineHeight: 16,
+    opacity: 0.8,
+  },
+  deleteButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  deleteButtonText: {
     fontSize: 13,
     fontWeight: '500',
   },
-  toggles: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  toggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  toggleText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  energyTagsHelp: {
-    fontSize: 12,
-    fontStyle: 'italic',
-    lineHeight: 16,
-  },
-  deleteButton: {
-    padding: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  deleteButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
   addButton: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     alignItems: 'center',
   },
   addButtonText: {
@@ -399,9 +428,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   saveButton: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     alignItems: 'center',
+    marginTop: 8,
   },
   saveButtonText: {
     fontSize: 18,
