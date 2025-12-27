@@ -38,6 +38,7 @@ export default function RunScreen() {
     extendCurrentTask,
     moveCurrentTask,
     toggleTaskSubtask,
+    toggleTaskAutoAdvance,
   } = useRun();
   const { settings } = useSettings();
 
@@ -223,6 +224,12 @@ export default function RunScreen() {
     }
   };
 
+  const handleToggleAutoAdvance = () => {
+    if (activeTask) {
+      toggleTaskAutoAdvance(activeTask.id);
+    }
+  };
+
   // Check if run is completed
   useEffect(() => {
     if (currentRun?.status === 'completed') {
@@ -297,12 +304,14 @@ export default function RunScreen() {
 
         <TaskControls
           isPaused={isPaused}
+          isAutoAdvance={activeTask?.autoAdvance || false}
           onPause={handlePause}
           onResume={handleResume}
           onComplete={handleComplete}
           onSkip={handleSkip}
           onExtend={handleExtend}
           onEnd={handleEnd}
+          onToggleAutoAdvance={handleToggleAutoAdvance}
         />
 
         {/* Simple sound controls - always visible, calm and unobtrusive */}

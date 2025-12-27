@@ -504,3 +504,29 @@ export function toggleSubtask(
     tasks: updatedTasks,
   };
 }
+
+/**
+ * Toggles the auto-advance setting for a specific task during an active run.
+ * This allows users to change their mind about auto-advancing in the moment.
+ */
+export function toggleAutoAdvance(
+  run: RoutineRun,
+  taskId: string
+): RoutineRun {
+  const updatedTasks = run.tasks.map((task) => {
+    if (task.id === taskId) {
+      return {
+        ...task,
+        autoAdvance: !task.autoAdvance,
+        // Reset warning flag when toggling auto-advance
+        autoAdvanceWarningAnnounced: false,
+      };
+    }
+    return task;
+  });
+
+  return {
+    ...run,
+    tasks: updatedTasks,
+  };
+}

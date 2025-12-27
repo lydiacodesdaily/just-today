@@ -61,11 +61,16 @@ export function useTaskTransition({
     previousTimeRemainingRef.current = timeRemaining.totalMs;
 
     // Check for 1-minute warning (only for auto-advance tasks)
+    // Only announce if the task is longer than 1 minute (to avoid announcing at task start)
+    const totalTaskDuration = activeTask.durationMs + activeTask.extensionMs;
+    const shouldAnnounceWarning = totalTaskDuration > 60000; // Task must be longer than 1 minute
+
     if (
       activeTask.autoAdvance &&
       !activeTask.autoAdvanceWarningAnnounced &&
+      shouldAnnounceWarning &&
       timeRemaining.remainingMs > 0 &&
-      timeRemaining.remainingMs <= 60000 // 1 minute or less
+      timeRemaining.remainingMs <= 60000 // 1 minute or less remaining
     ) {
       // Find the next task
       const nextTask = currentRun.tasks

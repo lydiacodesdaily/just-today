@@ -47,6 +47,14 @@ export function TaskCard({ task, timeRemaining, onToggleSubtask }: TaskCardProps
           >
             {task.name}
           </Text>
+          {/* Subtle auto-advance indicator */}
+          {task.autoAdvance && (
+            <View style={styles.autoAdvanceIndicator}>
+              <Text style={[styles.autoAdvanceText, { color: theme.colors.textSecondary }]}>
+                ⏭️ auto-advances
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Timer with generous spacing */}
@@ -108,6 +116,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: -0.5,
     paddingHorizontal: 8,
+  },
+  autoAdvanceIndicator: {
+    marginTop: 4,
+  },
+  autoAdvanceText: {
+    fontSize: 12,
+    fontWeight: '500',
+    opacity: 0.7,
+    letterSpacing: 0.3,
   },
   timerSection: {
     paddingVertical: 24,

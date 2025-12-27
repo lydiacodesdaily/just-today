@@ -16,6 +16,7 @@ import {
   moveTask,
   addQuickTask,
   toggleSubtask,
+  toggleAutoAdvance,
 } from '../engine/runEngine';
 
 interface RunContextValue {
@@ -34,6 +35,7 @@ interface RunContextValue {
   ) => void;
   addQuickTaskToRun: (name: string, durationMs: number) => void;
   toggleTaskSubtask: (taskId: string, subtaskId: string) => void;
+  toggleTaskAutoAdvance: (taskId: string) => void;
 }
 
 const RunContext = createContext<RunContextValue | null>(null);
@@ -118,6 +120,15 @@ export function RunProvider({ children }: { children: React.ReactNode }) {
     [currentRun]
   );
 
+  const toggleTaskAutoAdvance = useCallback(
+    (taskId: string) => {
+      if (currentRun) {
+        setCurrentRun(toggleAutoAdvance(currentRun, taskId));
+      }
+    },
+    [currentRun]
+  );
+
   return (
     <RunContext.Provider
       value={{
@@ -133,6 +144,7 @@ export function RunProvider({ children }: { children: React.ReactNode }) {
         moveCurrentTask,
         addQuickTaskToRun,
         toggleTaskSubtask,
+        toggleTaskAutoAdvance,
       }}
     >
       {children}

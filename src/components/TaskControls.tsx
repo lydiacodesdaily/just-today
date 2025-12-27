@@ -9,22 +9,26 @@ import { useTheme } from '../constants/theme';
 
 interface TaskControlsProps {
   isPaused: boolean;
+  isAutoAdvance: boolean;
   onPause: () => void;
   onResume: () => void;
   onComplete: () => void;
   onSkip: () => void;
   onExtend: (ms: number) => void;
   onEnd: () => void;
+  onToggleAutoAdvance: () => void;
 }
 
 export function TaskControls({
   isPaused,
+  isAutoAdvance,
   onPause,
   onResume,
   onComplete,
   onSkip,
   onExtend,
   onEnd,
+  onToggleAutoAdvance,
 }: TaskControlsProps) {
   const theme = useTheme();
 
@@ -80,23 +84,43 @@ export function TaskControls({
 
       {/* Secondary actions - adjust current task */}
       <View style={styles.secondarySection}>
-        <TouchableOpacity
-          style={[
-            styles.pauseButton,
-            {
-              backgroundColor: isPaused
-                ? theme.colors.primarySubtle
-                : theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
-          onPress={isPaused ? onResume : onPause}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.pauseButtonText, { color: theme.colors.text }]}>
-            {isPaused ? '▶ Resume' : '⏸ Pause'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[
+              styles.pauseButton,
+              {
+                backgroundColor: isPaused
+                  ? theme.colors.primarySubtle
+                  : theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            onPress={isPaused ? onResume : onPause}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.pauseButtonText, { color: theme.colors.text }]}>
+              {isPaused ? '▶ Resume' : '⏸ Pause'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.autoAdvanceButton,
+              {
+                backgroundColor: isAutoAdvance
+                  ? theme.colors.primarySubtle
+                  : theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            onPress={onToggleAutoAdvance}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.autoAdvanceButtonText, { color: theme.colors.text }]}>
+              {isAutoAdvance ? '⏭️ Auto' : '⏭️ Manual'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.timeAdjustRow}>
           <TouchableOpacity
@@ -220,7 +244,12 @@ const styles = StyleSheet.create({
   secondarySection: {
     gap: 12,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   pauseButton: {
+    flex: 1,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -231,6 +260,22 @@ const styles = StyleSheet.create({
   },
   pauseButtonText: {
     fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  autoAdvanceButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  autoAdvanceButtonText: {
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 20,
