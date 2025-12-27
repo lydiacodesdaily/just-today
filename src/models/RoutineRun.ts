@@ -37,6 +37,12 @@ export interface RunTask {
   completedAt: number | null;
   /** Track which 5-minute overtime intervals we've announced (e.g., [5, 10, 15]) */
   overtimeAnnouncedMinutes: number[];
+  /** Track which time milestones we've announced (e.g., [5, 10, 15]) */
+  milestoneAnnouncedMinutes: number[];
+  /** If true, automatically advance to next task when timer reaches 0 */
+  autoAdvance: boolean;
+  /** If true, we've already announced the 1-minute warning for auto-advance */
+  autoAdvanceWarningAnnounced: boolean;
 }
 
 export type RunStatus = 'notStarted' | 'running' | 'paused' | 'completed' | 'abandoned';

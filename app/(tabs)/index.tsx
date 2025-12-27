@@ -3,9 +3,9 @@
  * Home/Today screen - select energy and start routines.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { EnergyMode, RoutineTemplate } from '../../src/models/RoutineTemplate';
 import { loadTemplates } from '../../src/persistence/templateStore';
 import { createRunFromTemplate } from '../../src/engine/runEngine';
@@ -22,13 +22,28 @@ export default function HomeScreen() {
   const [energyMode, setEnergyMode] = useState<EnergyMode>('steady');
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
 
-  // Load templates and energy mode on mount
+  // Load energy mode on mount
   useEffect(() => {
-    loadTemplates().then(setTemplates);
-    getItem<EnergyMode>(KEYS.CURRENT_ENERGY).then((mode) => {
-      if (mode) setEnergyMode(mode);
-    });
+    getItem<EnergyMode>(KEYS.CURRENT_ENERGY)
+      .then((mode) => {
+        if (mode) setEnergyMode(mode);
+      })
+      .catch((err) => {
+        console.error('Failed to load energy mode:', err);
+      });
   }, []);
+
+  // Reload templates whenever the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadTemplates()
+        .then(setTemplates)
+        .catch((err) => {
+          console.error('Failed to load templates:', err);
+          setTemplates([]);
+        });
+    }, [])
+  );
 
   // Persist energy mode changes
   const handleEnergyChange = (mode: EnergyMode) => {

@@ -6,6 +6,16 @@
 import { RoutineTemplate, EnergyMode } from '../models/RoutineTemplate';
 import { RoutineRun, RunTask, RunSubtask } from '../models/RoutineRun';
 import { deriveTasksForEnergyMode } from './energyDerivation';
+import {
+  getTaskCompletionMessage,
+  getTaskSkipMessage,
+  getRoutineCompleteMessage,
+} from '../utils/transitionMessages';
+import {
+  sendTaskTransitionNotification,
+  sendRoutineCompleteNotification,
+} from '../utils/notifications';
+import { speak } from '../audio/ttsEngine';
 
 /**
  * Creates a new RoutineRun from a template and energy mode.
@@ -38,6 +48,9 @@ export function createRunFromTemplate(
     extensionMs: 0,
     completedAt: null,
     overtimeAnnouncedMinutes: [],
+    milestoneAnnouncedMinutes: [],
+    autoAdvance: task.autoAdvance ?? false,
+    autoAdvanceWarningAnnounced: false,
   }));
 
   return {
@@ -162,9 +175,14 @@ export function resumeRun(run: RoutineRun): RoutineRun {
 /**
  * Advances to the next pending task.
  * Marks the current task as completed if it exists.
+ * Announces completion and sends notification.
  */
-export function advanceToNextTask(run: RoutineRun): RoutineRun {
+export async function advanceToNextTask(run: RoutineRun): Promise<RoutineRun> {
   const now = Date.now();
+
+  // Get current task name before updating
+  const currentTask = run.tasks.find((t) => t.id === run.activeTaskId);
+  const currentTaskName = currentTask?.name || 'Task';
 
   // Mark current task as completed
   const updatedTasks = run.tasks.map((task) =>
@@ -180,6 +198,10 @@ export function advanceToNextTask(run: RoutineRun): RoutineRun {
 
   if (!nextTask) {
     // No more tasks - complete the run
+    const completeMessage = getRoutineCompleteMessage();
+    speak(completeMessage.ttsMessage);
+    sendRoutineCompleteNotification();
+
     return {
       ...run,
       tasks: updatedTasks,
@@ -188,6 +210,14 @@ export function advanceToNextTask(run: RoutineRun): RoutineRun {
       endedAt: now,
     };
   }
+
+  // Announce transition to next task
+  const transitionMessage = getTaskCompletionMessage(
+    currentTaskName,
+    nextTask.name
+  );
+  speak(transitionMessage.ttsMessage);
+  sendTaskTransitionNotification(currentTaskName, nextTask.name);
 
   // Start the next task
   return startTask(
@@ -202,10 +232,18 @@ export function advanceToNextTask(run: RoutineRun): RoutineRun {
 /**
  * Skips a task (marks it as skipped).
  * If it's the active task, advance to next.
+ * Announces skip and sends notification.
  */
-export function skipTask(run: RoutineRun, taskId: string): RoutineRun {
+export async function skipTask(
+  run: RoutineRun,
+  taskId: string
+): Promise<RoutineRun> {
   const now = Date.now();
   const isActiveTask = run.activeTaskId === taskId;
+
+  // Get task name before updating
+  const skippedTask = run.tasks.find((t) => t.id === taskId);
+  const skippedTaskName = skippedTask?.name || 'Task';
 
   const updatedTasks = run.tasks.map((task) =>
     task.id === taskId
@@ -221,6 +259,10 @@ export function skipTask(run: RoutineRun, taskId: string): RoutineRun {
 
     if (!nextTask) {
       // No more tasks
+      const completeMessage = getRoutineCompleteMessage();
+      speak(completeMessage.ttsMessage);
+      sendRoutineCompleteNotification();
+
       return {
         ...run,
         tasks: updatedTasks,
@@ -229,6 +271,11 @@ export function skipTask(run: RoutineRun, taskId: string): RoutineRun {
         endedAt: now,
       };
     }
+
+    // Announce skip and transition
+    const skipMessage = getTaskSkipMessage(skippedTaskName, nextTask.name);
+    speak(skipMessage.ttsMessage);
+    sendTaskTransitionNotification(skippedTaskName, nextTask.name);
 
     return startTask(
       {
@@ -374,6 +421,9 @@ export function addQuickTask(
     extensionMs: 0,
     completedAt: null,
     overtimeAnnouncedMinutes: [],
+    milestoneAnnouncedMinutes: [],
+    autoAdvance: false,
+    autoAdvanceWarningAnnounced: false,
   };
 
   // Insert after active task

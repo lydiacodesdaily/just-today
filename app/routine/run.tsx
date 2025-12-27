@@ -18,6 +18,10 @@ import { QuickSoundControls } from '../../src/components/QuickSoundControls';
 import { markOvertimeAnnounced } from '../../src/engine/overtimeEngine';
 import { initAudio } from '../../src/audio/soundEngine';
 import { initTTS } from '../../src/audio/ttsEngine';
+import { requestNotificationPermissions } from '../../src/utils/notifications';
+import { getRoutineCompleteMessage } from '../../src/utils/transitionMessages';
+import { useTaskTransition } from '../../src/hooks/useTaskTransition';
+import { useTimeMilestones } from '../../src/hooks/useTimeMilestones';
 
 export default function RunScreen() {
   const theme = useTheme();
@@ -37,11 +41,12 @@ export default function RunScreen() {
   } = useRun();
   const { settings } = useSettings();
 
-  // Initialize audio on mount
+  // Initialize audio and notifications on mount
   useEffect(() => {
     const init = async () => {
       await initAudio();
       initTTS();
+      await requestNotificationPermissions();
     };
     init();
   }, []);
@@ -90,6 +95,34 @@ export default function RunScreen() {
     }
   };
 
+  // Handle time milestone announcements
+  const handleMilestoneAnnounced = (minutes: number) => {
+    if (activeTask && currentRun) {
+      const updatedTask = {
+        ...activeTask,
+        milestoneAnnouncedMinutes: [...activeTask.milestoneAnnouncedMinutes, minutes],
+      };
+      const updatedTasks = currentRun.tasks.map((t) =>
+        t.id === updatedTask.id ? updatedTask : t
+      );
+      setCurrentRun({ ...currentRun, tasks: updatedTasks });
+    }
+  };
+
+  // Handle auto-advance warning announcement
+  const handleAutoAdvanceWarning = () => {
+    if (activeTask && currentRun) {
+      const updatedTask = {
+        ...activeTask,
+        autoAdvanceWarningAnnounced: true,
+      };
+      const updatedTasks = currentRun.tasks.map((t) =>
+        t.id === updatedTask.id ? updatedTask : t
+      );
+      setCurrentRun({ ...currentRun, tasks: updatedTasks });
+    }
+  };
+
   // Setup audio hooks
   useAudio({
     activeTask: activeTask || null,
@@ -97,6 +130,25 @@ export default function RunScreen() {
     settings,
     isPaused,
     onOvertimeAnnounced: handleOvertimeAnnounced,
+  });
+
+  // Auto-advance when timer reaches 0 (only for tasks with autoAdvance enabled)
+  useTaskTransition({
+    activeTask: activeTask || null,
+    timeRemaining,
+    isPaused,
+    currentRun,
+    onAdvanceTask: advanceTask,
+    onWarningAnnounced: handleAutoAdvanceWarning,
+  });
+
+  // Announce time milestones during task
+  useTimeMilestones({
+    activeTask: activeTask || null,
+    timeRemaining,
+    isPaused,
+    milestoneInterval: settings.milestoneInterval,
+    onMilestoneAnnounced: handleMilestoneAnnounced,
   });
 
   const handlePause = () => {
@@ -158,10 +210,25 @@ export default function RunScreen() {
 
   // Check if run is completed
   useEffect(() => {
-    if (currentRun?.status === 'completed' || currentRun?.status === 'abandoned') {
+    if (currentRun?.status === 'completed') {
+      const completeMessage = getRoutineCompleteMessage();
       Alert.alert(
-        'Routine Complete',
-        'You finished your routine!',
+        'You did it!',
+        completeMessage.displayMessage,
+        [
+          {
+            text: 'Done',
+            onPress: () => {
+              setCurrentRun(null);
+              router.replace('/');
+            },
+          },
+        ]
+      );
+    } else if (currentRun?.status === 'abandoned') {
+      Alert.alert(
+        'Routine Ended',
+        "That's okay. You can try again whenever you're ready.",
         [
           {
             text: 'Done',

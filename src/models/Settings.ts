@@ -4,6 +4,7 @@
  */
 
 export type TickingSoundType = 'tick1-tok1' | 'tick2-tok2';
+export type MilestoneInterval = 1 | 5;
 
 export interface Settings {
   /** Enable/disable TTS announcements */
@@ -14,6 +15,8 @@ export interface Settings {
   tickingEnabled: boolean;
   /** Announce every 5 minutes of overtime */
   overtimeRemindersEnabled: boolean;
+  /** Interval for time milestone announcements during active tasks (1 or 5 minutes) */
+  milestoneInterval: MilestoneInterval;
   /** Selected TTS voice ID (platform-specific, optional) */
   voiceId?: string;
   /** Volume for TTS (0.0 to 1.0) */
@@ -31,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   minuteAnnouncementsEnabled: false,
   tickingEnabled: true,
   overtimeRemindersEnabled: true,
+  milestoneInterval: 5,
   ttsVolume: 0.8,
   announcementVolume: 0.7,
   tickingVolume: 0.5,

@@ -16,6 +16,8 @@ export interface TimeRemaining {
   elapsedMs: number;
   /** Total planned duration (including extensions) */
   totalPlannedMs: number;
+  /** Total time (same as remainingMs for convenience) */
+  totalMs: number;
 }
 
 /**
@@ -45,6 +47,7 @@ export function computeRemainingTime(
     overtimeMs,
     elapsedMs,
     totalPlannedMs,
+    totalMs: remainingMs,
   };
 }
 

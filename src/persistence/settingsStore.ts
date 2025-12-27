@@ -8,10 +8,12 @@ import { getItem, setItem, KEYS } from './storage';
 
 /**
  * Loads settings from storage.
+ * Merges with defaults to ensure new fields are present.
  */
 export async function loadSettings(): Promise<Settings> {
   const settings = await getItem<Settings>(KEYS.SETTINGS);
-  return settings || DEFAULT_SETTINGS;
+  // Merge with defaults to handle new fields added in updates
+  return settings ? { ...DEFAULT_SETTINGS, ...settings } : DEFAULT_SETTINGS;
 }
 
 /**
