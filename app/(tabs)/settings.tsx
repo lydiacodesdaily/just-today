@@ -17,7 +17,8 @@ import {
 import { Audio } from 'expo-av';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useTheme } from '../../src/constants/theme';
-import { TickingSoundType } from '../../src/models/Settings';
+import { useThemeContext } from '../../src/context/ThemeContext';
+import { TickingSoundType, ThemePreference } from '../../src/models/Settings';
 
 /**
  * Simple custom slider component
@@ -136,6 +137,7 @@ const TICK_TOK_SOUNDS = {
 export default function SettingsScreen() {
   const theme = useTheme();
   const { settings, updateSettings } = useSettings();
+  const { themePreference, setThemePreference } = useThemeContext();
 
   const toggleSetting = (key: keyof typeof settings) => {
     updateSettings({ [key]: !settings[key] });
@@ -180,6 +182,95 @@ export default function SettingsScreen() {
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
             Customize your experience
           </Text>
+        </View>
+
+        {/* Appearance Group */}
+        <View style={styles.cardGroup}>
+          <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+              Appearance
+            </Text>
+            <Text style={[styles.cardDescription, { color: theme.colors.textSecondary }]}>
+              Choose your preferred theme
+            </Text>
+
+            <View style={styles.themeToggleContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.themeToggle,
+                  styles.themeToggleLeft,
+                  {
+                    backgroundColor: themePreference === 'light'
+                      ? theme.colors.primary
+                      : 'transparent',
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={() => setThemePreference('light')}
+              >
+                <Text style={[
+                  styles.themeToggleText,
+                  {
+                    color: themePreference === 'light'
+                      ? theme.colors.surface
+                      : theme.colors.text
+                  }
+                ]}>
+                  Light
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.themeToggle,
+                  styles.themeToggleMiddle,
+                  {
+                    backgroundColor: themePreference === 'dark'
+                      ? theme.colors.primary
+                      : 'transparent',
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={() => setThemePreference('dark')}
+              >
+                <Text style={[
+                  styles.themeToggleText,
+                  {
+                    color: themePreference === 'dark'
+                      ? theme.colors.surface
+                      : theme.colors.text
+                  }
+                ]}>
+                  Dark
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.themeToggle,
+                  styles.themeToggleRight,
+                  {
+                    backgroundColor: themePreference === 'system'
+                      ? theme.colors.primary
+                      : 'transparent',
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={() => setThemePreference('system')}
+              >
+                <Text style={[
+                  styles.themeToggleText,
+                  {
+                    color: themePreference === 'system'
+                      ? theme.colors.surface
+                      : theme.colors.text
+                  }
+                ]}>
+                  System
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         {/* Voice & Sounds Group - Most impactful settings first */}
@@ -526,6 +617,36 @@ const styles = StyleSheet.create({
   secondaryLabel: {
     fontSize: 15,
     fontWeight: '400',
+  },
+  themeToggleContainer: {
+    flexDirection: 'row',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  themeToggle: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  themeToggleLeft: {
+    borderTopLeftRadius: 10,
+    borderBottomLeftRadius: 10,
+    borderRightWidth: 0,
+  },
+  themeToggleMiddle: {
+    borderRadius: 0,
+    borderRightWidth: 0,
+  },
+  themeToggleRight: {
+    borderTopRightRadius: 10,
+    borderBottomRightRadius: 10,
+  },
+  themeToggleText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   soundOptions: {
     gap: 12,

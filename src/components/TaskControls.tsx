@@ -50,15 +50,15 @@ export function TaskControls({
             style={[
               styles.primaryButton,
               {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.primary,
+                borderColor: theme.colors.primary,
               },
             ]}
             onPress={handleComplete}
             activeOpacity={0.7}
           >
-            <Text style={[styles.primaryButtonIcon, { color: theme.colors.text }]}>✓</Text>
-            <Text style={[styles.primaryButtonText, { color: theme.colors.text }]}>
+            <Text style={[styles.primaryButtonIcon, { color: theme.colors.surface }]}>✓</Text>
+            <Text style={[styles.primaryButtonText, { color: theme.colors.surface }]}>
               Done
             </Text>
           </TouchableOpacity>
@@ -68,7 +68,7 @@ export function TaskControls({
               styles.primaryButton,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
+                borderColor: theme.colors.primary,
               },
             ]}
             onPress={onSkip}

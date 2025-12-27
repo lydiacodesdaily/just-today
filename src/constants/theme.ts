@@ -5,7 +5,7 @@
  * No urgency. No celebration. Just steady support.
  */
 
-import { useColorScheme } from 'react-native';
+import { useThemeContext } from '../context/ThemeContext';
 
 export const colors = {
   ink: {
@@ -37,7 +37,7 @@ export const colors = {
 };
 
 export const useTheme = () => {
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useThemeContext();
   const isDark = colorScheme === 'dark';
 
   return {

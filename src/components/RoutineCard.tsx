@@ -75,7 +75,7 @@ export function RoutineCard({ routine, onStart, onEdit, energyMode }: RoutineCar
         onPress={onStart}
         activeOpacity={0.8}
       >
-        <Text style={[styles.startButtonText, { color: theme.colors.text }]}>
+        <Text style={[styles.startButtonText, { color: theme.colors.surface }]}>
           Start Routine
         </Text>
       </TouchableOpacity>

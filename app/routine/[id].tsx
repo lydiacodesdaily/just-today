@@ -303,7 +303,7 @@ export default function RoutineEditorScreen() {
             style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
             onPress={addTask}
           >
-            <Text style={[styles.addButtonText, { color: theme.colors.text }]}>Add Task</Text>
+            <Text style={[styles.addButtonText, { color: theme.colors.surface }]}>Add Task</Text>
           </TouchableOpacity>
         </View>
 
@@ -311,7 +311,7 @@ export default function RoutineEditorScreen() {
           style={[styles.saveButton, { backgroundColor: theme.colors.success }]}
           onPress={handleSave}
         >
-          <Text style={[styles.saveButtonText, { color: theme.colors.text }]}>Save Routine</Text>
+          <Text style={[styles.saveButtonText, { color: theme.colors.surface }]}>Save Routine</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

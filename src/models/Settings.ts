@@ -5,6 +5,7 @@
 
 export type TickingSoundType = 'tick1-tok1' | 'tick2-tok2';
 export type MilestoneInterval = 1 | 5;
+export type ThemePreference = 'light' | 'dark' | 'system';
 
 export interface Settings {
   /** Enable/disable TTS announcements */
@@ -27,6 +28,8 @@ export interface Settings {
   tickingVolume: number;
   /** Type of ticking sound to use */
   tickingSoundType: TickingSoundType;
+  /** User's theme preference (light, dark, or system) */
+  themePreference: ThemePreference;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -39,4 +42,5 @@ export const DEFAULT_SETTINGS: Settings = {
   announcementVolume: 0.7,
   tickingVolume: 0.5,
   tickingSoundType: 'tick1-tok1',
+  themePreference: 'system',
 };

@@ -142,7 +142,7 @@ export default function HomeScreen() {
                 onPress={() => router.push('/routine/new')}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.emptyCreateButtonText, { color: theme.colors.text }]}>
+                <Text style={[styles.emptyCreateButtonText, { color: theme.colors.surface }]}>
                   Create Your First Routine
                 </Text>
               </TouchableOpacity>
