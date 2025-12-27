@@ -51,6 +51,7 @@ export function createRunFromTemplate(
     milestoneAnnouncedMinutes: [],
     autoAdvance: task.autoAdvance ?? false,
     autoAdvanceWarningAnnounced: false,
+    timeUpAnnounced: false,
   }));
 
   return {
@@ -294,23 +295,32 @@ export async function skipTask(
 
 /**
  * Extends a task's duration by adding deltaMs.
- * Adjusts plannedEndAt if the task is currently active.
+ * Gives the user fresh time from now (Option 2: Fresh Time approach).
+ * This means pressing "+5m" always gives you 5 minutes from now, regardless of overtime.
+ * Resets timeUpAnnounced and overtime tracking flags so announcements can happen again.
  */
 export function extendTask(
   run: RoutineRun,
   taskId: string,
   deltaMs: number
 ): RoutineRun {
+  const now = Date.now();
+
   const updatedTasks = run.tasks.map((task) => {
     if (task.id === taskId) {
       const newExtension = task.extensionMs + deltaMs;
-      const newPlannedEndAt =
-        task.plannedEndAt !== null ? task.plannedEndAt + deltaMs : null;
+      // Fresh time: set plannedEndAt to now + deltaMs (gives user exactly the time they requested)
+      const newPlannedEndAt = now + deltaMs;
 
       return {
         ...task,
         extensionMs: newExtension,
         plannedEndAt: newPlannedEndAt,
+        // Reset flags so announcements can happen again when the new time expires
+        timeUpAnnounced: false,
+        // Clear overtime tracking since we now have fresh positive time
+        overtimeAnnouncedMinutes: [],
+        // Keep milestone tracking as-is (those track actual elapsed time, not overtime)
       };
     }
     return task;
@@ -424,6 +434,7 @@ export function addQuickTask(
     milestoneAnnouncedMinutes: [],
     autoAdvance: false,
     autoAdvanceWarningAnnounced: false,
+    timeUpAnnounced: false,
   };
 
   // Insert after active task

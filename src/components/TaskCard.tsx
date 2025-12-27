@@ -54,6 +54,7 @@ export function TaskCard({ task, timeRemaining, onToggleSubtask }: TaskCardProps
           <TimeDisplay
             timeRemaining={timeRemaining}
             totalDurationMs={task.durationMs + task.extensionMs}
+            originalDurationMs={task.durationMs}
           />
         </View>
 

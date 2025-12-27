@@ -12,9 +12,11 @@ interface TimeDisplayProps {
   timeRemaining: TimeRemaining | null;
   /** Total planned duration in milliseconds (optional, for progress indicator) */
   totalDurationMs?: number;
+  /** Original planned duration before any extensions */
+  originalDurationMs?: number;
 }
 
-export function TimeDisplay({ timeRemaining, totalDurationMs }: TimeDisplayProps) {
+export function TimeDisplay({ timeRemaining, totalDurationMs, originalDurationMs }: TimeDisplayProps) {
   const theme = useTheme();
 
   if (!timeRemaining) {
@@ -47,7 +49,21 @@ export function TimeDisplay({ timeRemaining, totalDurationMs }: TimeDisplayProps
     return `${elapsedMinutes} of ${totalMinutes} min`;
   };
 
+  // Calculate total actual time spent (for when extensions have been added)
+  const getTotalTimeText = () => {
+    if (!originalDurationMs) return null;
+
+    const totalElapsedMinutes = Math.ceil(timeRemaining.elapsedMs / 60000);
+    const originalMinutes = Math.ceil(originalDurationMs / 60000);
+
+    // Only show if we've gone beyond the original duration (either by extension or overtime)
+    if (totalElapsedMinutes <= originalMinutes) return null;
+
+    return `Total: ${totalElapsedMinutes} min`;
+  };
+
   const progressText = getProgressText();
+  const totalTimeText = getTotalTimeText();
 
   return (
     <View style={styles.container}>
@@ -66,6 +82,11 @@ export function TimeDisplay({ timeRemaining, totalDurationMs }: TimeDisplayProps
       {progressText && (
         <Text style={[styles.progressText, { color: theme.colors.textSecondary }]}>
           {progressText}
+        </Text>
+      )}
+      {totalTimeText && (
+        <Text style={[styles.totalTimeText, { color: theme.colors.textSecondary }]}>
+          {totalTimeText}
         </Text>
       )}
       {timeRemaining.isOvertime && (
@@ -97,6 +118,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     marginTop: -4,
+  },
+  totalTimeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: -8,
+    opacity: 0.7,
   },
   overtimeContainer: {
     alignItems: 'center',

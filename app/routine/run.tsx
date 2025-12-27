@@ -123,6 +123,20 @@ export default function RunScreen() {
     }
   };
 
+  // Handle time up announcement (for non-auto-advance tasks)
+  const handleTimeUpAnnouncement = () => {
+    if (activeTask && currentRun) {
+      const updatedTask = {
+        ...activeTask,
+        timeUpAnnounced: true,
+      };
+      const updatedTasks = currentRun.tasks.map((t) =>
+        t.id === updatedTask.id ? updatedTask : t
+      );
+      setCurrentRun({ ...currentRun, tasks: updatedTasks });
+    }
+  };
+
   // Setup audio hooks
   useAudio({
     activeTask: activeTask || null,
@@ -140,6 +154,7 @@ export default function RunScreen() {
     currentRun,
     onAdvanceTask: advanceTask,
     onWarningAnnounced: handleAutoAdvanceWarning,
+    onTimeUpAnnounced: handleTimeUpAnnouncement,
   });
 
   // Announce time milestones during task

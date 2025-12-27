@@ -43,6 +43,8 @@ export interface RunTask {
   autoAdvance: boolean;
   /** If true, we've already announced the 1-minute warning for auto-advance */
   autoAdvanceWarningAnnounced: boolean;
+  /** If true, we've already announced that time is up (for non-auto-advance tasks) */
+  timeUpAnnounced: boolean;
 }
 
 export type RunStatus = 'notStarted' | 'running' | 'paused' | 'completed' | 'abandoned';
