@@ -88,10 +88,14 @@ export default function HomeScreen() {
           <View style={styles.routinesHeader}>
             <View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Your Routines
+                {energyMode === 'care' && 'Your Essential Routines'}
+                {energyMode === 'steady' && 'Your Routines'}
+                {energyMode === 'flow' && 'Your Full Routines'}
               </Text>
               <Text style={[styles.sectionSubtitle, { color: theme.colors.textSecondary }]}>
-                Choose one to begin
+                {energyMode === 'care' && 'Just the essentials'}
+                {energyMode === 'steady' && 'Your usual pace'}
+                {energyMode === 'flow' && 'Everything included'}
               </Text>
             </View>
             <TouchableOpacity
@@ -149,6 +153,7 @@ export default function HomeScreen() {
                 <RoutineCard
                   key={template.id}
                   routine={template}
+                  energyMode={energyMode}
                   onStart={() => handleStartRoutine(template)}
                   onEdit={() => handleEditRoutine(template)}
                 />

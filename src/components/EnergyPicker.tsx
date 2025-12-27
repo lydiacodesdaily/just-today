@@ -60,13 +60,10 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
         <Text style={[styles.title, { color: theme.colors.text }]}>
           How are you feeling today?
         </Text>
-        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-          Choose what feels right for you right now
-        </Text>
       </View>
 
       <View style={styles.buttons}>
-        {modes.map(({ mode, icon, label, description, supportText, color, bgColor }) => {
+        {modes.map(({ mode, icon, label, color, bgColor }) => {
           const isSelected = selectedMode === mode;
           return (
             <TouchableOpacity
@@ -77,7 +74,6 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
                   backgroundColor: isSelected ? bgColor : theme.colors.surface,
                   borderColor: isSelected ? color : theme.colors.borderSubtle,
                   borderWidth: isSelected ? 2 : 1,
-                  minHeight: theme.touchTarget.comfortable,
                 },
               ]}
               onPress={() => onSelect(mode)}
@@ -95,30 +91,6 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
               >
                 {label}
               </Text>
-              <Text
-                style={[
-                  styles.buttonDescription,
-                  {
-                    color: theme.colors.textSecondary,
-                    lineHeight: theme.lineHeight.relaxed,
-                  },
-                ]}
-              >
-                {description}
-              </Text>
-              {isSelected && (
-                <Text
-                  style={[
-                    styles.supportText,
-                    {
-                      color: color,
-                      lineHeight: theme.lineHeight.relaxed,
-                    },
-                  ]}
-                >
-                  {supportText}
-                </Text>
-              )}
             </TouchableOpacity>
           );
         })}
@@ -129,7 +101,7 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 16,
+    gap: 12,
   },
   header: {
     gap: 6,
@@ -139,37 +111,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: -0.3,
   },
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
   buttons: {
     flexDirection: 'row',
     gap: 12,
   },
   button: {
     flex: 1,
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
     borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
   },
   icon: {
-    fontSize: 28,
-    marginBottom: 4,
+    fontSize: 32,
+    marginBottom: 2,
   },
   buttonLabel: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '600',
   },
-  buttonDescription: {
-    fontSize: 13,
+  descriptionContainer: {
+    paddingHorizontal: 4,
+    gap: 6,
+    alignItems: 'center',
+  },
+  description: {
+    fontSize: 14,
     textAlign: 'center',
+    lineHeight: 20,
   },
   supportText: {
-    fontSize: 11,
+    fontSize: 13,
     textAlign: 'center',
     fontWeight: '500',
-    marginTop: 4,
     fontStyle: 'italic',
+    lineHeight: 18,
   },
 });
