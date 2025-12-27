@@ -16,6 +16,7 @@ let tickingVolume = 0.5;
 let announcementVolume = 0.7;
 let duckedVolume = 0.1;
 let tickInterval: NodeJS.Timeout | null = null;
+let audioLoadFailed = false; // Track if audio loading has failed
 
 /**
  * Sound file mappings for each ticking type.
@@ -70,8 +71,13 @@ export async function loadTickingSound(soundType?: TickingSoundType): Promise<vo
       volume: tickingVolume,
     });
     tokSound = tok;
+
+    audioLoadFailed = false; // Successfully loaded
   } catch (error) {
     console.error('Failed to load ticking sounds:', error);
+    audioLoadFailed = true;
+    tickSound = null;
+    tokSound = null;
   }
 }
 
@@ -119,8 +125,19 @@ async function playAlternatingSound(): Promise<void> {
  * Starts playing the alternating ticking sound (1 second intervals).
  */
 export async function startTicking(): Promise<void> {
+  if (audioLoadFailed) {
+    // Audio previously failed to load, don't try again
+    return;
+  }
+
   if (!tickSound || !tokSound) {
     await loadTickingSound();
+  }
+
+  // If sounds still aren't loaded after attempting to load, bail out gracefully
+  if (!tickSound || !tokSound) {
+    console.warn('Ticking sounds not available, skipping audio');
+    return;
   }
 
   if (!isTickingPlaying) {
@@ -133,7 +150,7 @@ export async function startTicking(): Promise<void> {
     // Then play every 1 second
     tickInterval = setInterval(async () => {
       await playAlternatingSound();
-    }, 1000);
+    }, 1000) as any;
   }
 }
 
@@ -287,6 +304,11 @@ export async function setTickingSoundType(soundType: TickingSoundType): Promise<
  * Plays a one-shot ding sound.
  */
 export async function playChime(): Promise<void> {
+  if (audioLoadFailed) {
+    // Audio system has failed, skip silently
+    return;
+  }
+
   try {
     const { sound } = await Audio.Sound.createAsync(
       require('../../assets/sounds/effects/ding.mp3'),
@@ -301,6 +323,7 @@ export async function playChime(): Promise<void> {
     });
   } catch (error) {
     console.error('Failed to play chime:', error);
+    // Don't set audioLoadFailed here, as this is a different sound
   }
 }
 
