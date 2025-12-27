@@ -23,6 +23,8 @@ export interface RoutineTask {
   subtasks?: Subtask[];
   /** Order within routine */
   order: number;
+  /** If true, automatically advance to next task when timer reaches 0 */
+  autoAdvance?: boolean;
 }
 
 export interface RoutineTemplate {

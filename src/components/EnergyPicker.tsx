@@ -100,7 +100,7 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
                   styles.buttonDescription,
                   {
                     color: theme.colors.textSecondary,
-                    lineHeight: theme.lineHeight.relaxed * theme.fontSize.sm,
+                    lineHeight: theme.lineHeight.relaxed,
                   },
                 ]}
               >
@@ -112,7 +112,7 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
                     styles.supportText,
                     {
                       color: color,
-                      lineHeight: theme.lineHeight.relaxed * theme.fontSize.xs,
+                      lineHeight: theme.lineHeight.relaxed,
                     },
                   ]}
                 >

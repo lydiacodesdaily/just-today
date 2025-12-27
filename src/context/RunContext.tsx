@@ -65,16 +65,18 @@ export function RunProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentRun]);
 
-  const advanceTask = useCallback(() => {
+  const advanceTask = useCallback(async () => {
     if (currentRun) {
-      setCurrentRun(advanceToNextTask(currentRun));
+      const updatedRun = await advanceToNextTask(currentRun);
+      setCurrentRun(updatedRun);
     }
   }, [currentRun]);
 
   const skipCurrentTask = useCallback(
-    (taskId: string) => {
+    async (taskId: string) => {
       if (currentRun) {
-        setCurrentRun(skipTask(currentRun, taskId));
+        const updatedRun = await skipTask(currentRun, taskId);
+        setCurrentRun(updatedRun);
       }
     },
     [currentRun]

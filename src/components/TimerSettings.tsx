@@ -39,11 +39,13 @@ function VolumeSlider({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (evt) => {
+        if (sliderWidth === 0) return;
         const locationX = evt.nativeEvent.locationX;
         const newValue = Math.max(0, Math.min(1, locationX / sliderWidth));
         onValueChange(newValue);
       },
       onPanResponderMove: (evt) => {
+        if (sliderWidth === 0) return;
         const locationX = evt.nativeEvent.locationX;
         const newValue = Math.max(0, Math.min(1, locationX / sliderWidth));
         onValueChange(newValue);
