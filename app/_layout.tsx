@@ -8,6 +8,7 @@ import { SettingsProvider } from '../src/context/SettingsContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { RunProvider } from '../src/context/RunContext';
 import { useTheme } from '../src/constants/theme';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 function RootStack() {
   const theme = useTheme();
@@ -44,12 +45,14 @@ function RootStack() {
 
 export default function RootLayout() {
   return (
-    <SettingsProvider>
-      <ThemeProvider>
-        <RunProvider>
-          <RootStack />
-        </RunProvider>
-      </ThemeProvider>
-    </SettingsProvider>
+    <ErrorBoundary>
+      <SettingsProvider>
+        <ThemeProvider>
+          <RunProvider>
+            <RootStack />
+          </RunProvider>
+        </ThemeProvider>
+      </SettingsProvider>
+    </ErrorBoundary>
   );
 }
