@@ -9,6 +9,7 @@ const KEYS = {
   TEMPLATES: '@just-today/templates',
   SETTINGS: '@just-today/settings',
   CURRENT_ENERGY: '@just-today/current-energy',
+  ACTIVE_RUN: '@just-today/active-run',
 } as const;
 
 export async function getItem<T>(key: string): Promise<T | null> {

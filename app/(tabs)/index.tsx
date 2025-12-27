@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { EnergyMode, RoutineTemplate } from '../../src/models/RoutineTemplate';
 import { loadTemplates } from '../../src/persistence/templateStore';
@@ -21,6 +21,7 @@ export default function HomeScreen() {
   const { setCurrentRun, currentRun } = useRun();
   const [energyMode, setEnergyMode] = useState<EnergyMode>('steady');
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
+  const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
 
   // Load energy mode on mount
   useEffect(() => {
@@ -32,6 +33,28 @@ export default function HomeScreen() {
         console.error('Failed to load energy mode:', err);
       });
   }, []);
+
+  // Prompt user to resume or discard saved run
+  useEffect(() => {
+    if (currentRun && !hasShownResumePrompt && currentRun.status !== 'completed') {
+      setHasShownResumePrompt(true);
+      Alert.alert(
+        'Resume Routine?',
+        `You have an in-progress routine: "${currentRun.templateName}". Would you like to resume where you left off?`,
+        [
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => setCurrentRun(null),
+          },
+          {
+            text: 'Resume',
+            onPress: () => router.push('/routine/run'),
+          },
+        ]
+      );
+    }
+  }, [currentRun, hasShownResumePrompt, router, setCurrentRun]);
 
   // Reload templates whenever the screen comes into focus
   useFocusEffect(

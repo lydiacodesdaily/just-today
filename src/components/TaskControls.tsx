@@ -67,8 +67,8 @@ export function TaskControls({
             style={[
               styles.primaryButton,
               {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.primary,
+                backgroundColor: 'transparent',
+                borderColor: theme.colors.text,
               },
             ]}
             onPress={onSkip}
@@ -250,12 +250,12 @@ const styles = StyleSheet.create({
   },
   pauseButton: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1.5,
     alignItems: 'center',
-    minHeight: 48,
+    minHeight: 52,
     justifyContent: 'center',
   },
   pauseButtonText: {
@@ -266,12 +266,12 @@ const styles = StyleSheet.create({
   },
   autoAdvanceButton: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1.5,
     alignItems: 'center',
-    minHeight: 48,
+    minHeight: 52,
     justifyContent: 'center',
   },
   autoAdvanceButtonText: {
@@ -286,11 +286,12 @@ const styles = StyleSheet.create({
   },
   timeButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
   },
   timeButtonText: {
     fontSize: 13,

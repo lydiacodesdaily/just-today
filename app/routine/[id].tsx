@@ -40,15 +40,29 @@ export default function RoutineEditorScreen() {
   }, [id]);
 
   const handleSave = async () => {
+    // Validate routine name
     if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a routine name');
+      Alert.alert('Validation Error', 'Please enter a routine name');
+      return;
+    }
+
+    // Validate at least one task exists
+    if (tasks.length === 0) {
+      Alert.alert('Validation Error', 'Please add at least one task to the routine');
+      return;
+    }
+
+    // Validate all tasks have names
+    const unnamedTasks = tasks.filter(t => !t.name.trim());
+    if (unnamedTasks.length > 0) {
+      Alert.alert('Validation Error', 'All tasks must have a name');
       return;
     }
 
     // Validate all tasks have valid durations
     const invalidTasks = tasks.filter(t => !t.durationMs || isNaN(t.durationMs) || t.durationMs <= 0);
     if (invalidTasks.length > 0) {
-      Alert.alert('Error', 'All tasks must have a valid duration greater than 0');
+      Alert.alert('Validation Error', 'All tasks must have a valid duration greater than 0');
       return;
     }
 
@@ -57,18 +71,23 @@ export default function RoutineEditorScreen() {
       description: description.trim(),
       tasks: tasks.map((t, i) => ({
         ...t,
+        name: t.name.trim(),
         order: i,
         durationMs: Math.max(0, t.durationMs || 0)
       })),
     };
 
-    if (id && id !== 'new') {
-      await updateTemplate(id, templateData);
-    } else {
-      await createTemplate(templateData);
+    try {
+      if (id && id !== 'new') {
+        await updateTemplate(id, templateData);
+      } else {
+        await createTemplate(templateData);
+      }
+      router.back();
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      Alert.alert('Save Error', 'Failed to save routine. Please try again.');
     }
-
-    router.back();
   };
 
   const addTask = () => {

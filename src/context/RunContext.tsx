@@ -3,7 +3,7 @@
  * Active routine run state management.
  */
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { RoutineRun } from '../models/RoutineRun';
 import {
   startRun,
@@ -18,6 +18,7 @@ import {
   toggleSubtask,
   toggleAutoAdvance,
 } from '../engine/runEngine';
+import { saveRunState, loadRunState, clearRunState } from '../persistence/runStateStore';
 
 interface RunContextValue {
   currentRun: RoutineRun | null;
@@ -42,6 +43,28 @@ const RunContext = createContext<RunContextValue | null>(null);
 
 export function RunProvider({ children }: { children: React.ReactNode }) {
   const [currentRun, setCurrentRun] = useState<RoutineRun | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load saved run state on mount
+  useEffect(() => {
+    loadRunState().then((savedRun) => {
+      if (savedRun) {
+        setCurrentRun(savedRun);
+      }
+      setIsLoaded(true);
+    });
+  }, []);
+
+  // Auto-save run state whenever it changes
+  useEffect(() => {
+    if (!isLoaded) return; // Don't save during initial load
+
+    if (currentRun) {
+      saveRunState(currentRun);
+    } else {
+      clearRunState();
+    }
+  }, [currentRun, isLoaded]);
 
   const startCurrentRun = useCallback(() => {
     if (currentRun) {
