@@ -63,7 +63,7 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
       </View>
 
       <View style={styles.buttons}>
-        {modes.map(({ mode, icon, label, color, bgColor }) => {
+        {modes.map(({ mode, icon, label, description, supportText, color, bgColor }) => {
           const isSelected = selectedMode === mode;
           return (
             <TouchableOpacity
@@ -78,8 +78,13 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
               ]}
               onPress={() => onSelect(mode)}
               activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`${label} energy mode: ${description}. ${supportText}`}
+              accessibilityState={{ selected: isSelected }}
+              accessibilityHint={`Select ${label} energy mode to filter tasks`}
             >
-              <Text style={styles.icon}>{icon}</Text>
+              <Text style={styles.icon} accessible={false}>{icon}</Text>
               <Text
                 style={[
                   styles.buttonLabel,
@@ -88,6 +93,7 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
                     fontWeight: isSelected ? theme.fontWeight.semibold : theme.fontWeight.medium,
                   },
                 ]}
+                accessible={false}
               >
                 {label}
               </Text>

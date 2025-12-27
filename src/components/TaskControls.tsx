@@ -56,9 +56,13 @@ export function TaskControls({
             ]}
             onPress={handleComplete}
             activeOpacity={0.7}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Mark task as done"
+            accessibilityHint="Complete the current task and move to the next one"
           >
-            <Text style={[styles.primaryButtonIcon, { color: theme.colors.surface }]}>✓</Text>
-            <Text style={[styles.primaryButtonText, { color: theme.colors.surface }]}>
+            <Text style={[styles.primaryButtonIcon, { color: theme.colors.surface }]} accessible={false}>✓</Text>
+            <Text style={[styles.primaryButtonText, { color: theme.colors.surface }]} accessible={false}>
               Done
             </Text>
           </TouchableOpacity>
@@ -73,9 +77,13 @@ export function TaskControls({
             ]}
             onPress={onSkip}
             activeOpacity={0.7}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Skip task"
+            accessibilityHint="Skip this task and move to the next one without completing"
           >
-            <Text style={[styles.primaryButtonIcon, { color: theme.colors.text }]}>⏭</Text>
-            <Text style={[styles.primaryButtonText, { color: theme.colors.text }]}>
+            <Text style={[styles.primaryButtonIcon, { color: theme.colors.text }]} accessible={false}>⏭</Text>
+            <Text style={[styles.primaryButtonText, { color: theme.colors.text }]} accessible={false}>
               Skip
             </Text>
           </TouchableOpacity>
@@ -97,8 +105,13 @@ export function TaskControls({
             ]}
             onPress={isPaused ? onResume : onPause}
             activeOpacity={0.7}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={isPaused ? 'Resume timer' : 'Pause timer'}
+            accessibilityHint={isPaused ? 'Resume the task timer' : 'Pause the task timer'}
+            accessibilityState={{ selected: isPaused }}
           >
-            <Text style={[styles.pauseButtonText, { color: theme.colors.text }]}>
+            <Text style={[styles.pauseButtonText, { color: theme.colors.text }]} accessible={false}>
               {isPaused ? '▶ Resume' : '⏸ Pause'}
             </Text>
           </TouchableOpacity>
@@ -114,6 +127,11 @@ export function TaskControls({
               },
             ]}
             onPress={onToggleAutoAdvance}
+            accessible={true}
+            accessibilityRole="switch"
+            accessibilityLabel="Auto-advance"
+            accessibilityHint={isAutoAdvance ? 'Disable automatic advancement to next task' : 'Enable automatic advancement to next task'}
+            accessibilityState={{ checked: isAutoAdvance }}
             activeOpacity={0.7}
           >
             <Text style={[styles.autoAdvanceButtonText, { color: theme.colors.text }]}>
