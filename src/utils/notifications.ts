@@ -39,12 +39,30 @@ export async function requestNotificationPermissions(): Promise<boolean> {
 }
 
 /**
+ * Checks if notification permissions are granted.
+ */
+async function hasNotificationPermission(): Promise<boolean> {
+  if (Platform.OS === 'web') {
+    return false;
+  }
+
+  const { status } = await Notifications.getPermissionsAsync();
+  return status === 'granted';
+}
+
+/**
  * Sends a local notification for task completion.
  */
 export async function sendTaskTransitionNotification(
   completedTaskName: string,
   nextTaskName: string
 ): Promise<void> {
+  const hasPermission = await hasNotificationPermission();
+  if (!hasPermission) {
+    console.log('Notification permissions not granted, skipping notification');
+    return;
+  }
+
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -63,6 +81,12 @@ export async function sendTaskTransitionNotification(
  * Sends a completion notification when all tasks are done.
  */
 export async function sendRoutineCompleteNotification(): Promise<void> {
+  const hasPermission = await hasNotificationPermission();
+  if (!hasPermission) {
+    console.log('Notification permissions not granted, skipping notification');
+    return;
+  }
+
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -84,6 +108,12 @@ export async function sendTimeMilestoneNotification(
   taskName: string,
   minutesPassed: number
 ): Promise<void> {
+  const hasPermission = await hasNotificationPermission();
+  if (!hasPermission) {
+    console.log('Notification permissions not granted, skipping notification');
+    return;
+  }
+
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
