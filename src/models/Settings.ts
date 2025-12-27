@@ -8,6 +8,8 @@ export type MilestoneInterval = 1 | 5;
 export type ThemePreference = 'light' | 'dark' | 'system';
 
 export interface Settings {
+  /** Schema version for migrations */
+  version: number;
   /** Enable/disable TTS announcements */
   ttsEnabled: boolean;
   /** Announce each minute during planned task duration */
@@ -32,7 +34,11 @@ export interface Settings {
   themePreference: ThemePreference;
 }
 
+/** Current settings schema version */
+export const CURRENT_SETTINGS_VERSION = 1;
+
 export const DEFAULT_SETTINGS: Settings = {
+  version: CURRENT_SETTINGS_VERSION,
   ttsEnabled: true,
   minuteAnnouncementsEnabled: false,
   tickingEnabled: true,
