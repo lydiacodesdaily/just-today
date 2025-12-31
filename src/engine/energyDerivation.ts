@@ -8,8 +8,8 @@ import { RoutineTask, EnergyMode } from '../models/RoutineTemplate';
 /**
  * Filters tasks based on the selected energy mode.
  *
- * - Care: Only tasks with careSafe=true
- * - Steady: All tasks except those with flowExtra=true (and no careSafe)
+ * - Low: Only tasks with lowSafe=true
+ * - Steady: All tasks except those with flowExtra=true (and no lowSafe)
  * - Flow: All tasks (including flowExtra)
  */
 export function deriveTasksForEnergyMode(
@@ -18,14 +18,14 @@ export function deriveTasksForEnergyMode(
 ): RoutineTask[] {
   return tasks.filter((task) => {
     switch (energyMode) {
-      case 'care':
-        // Only show tasks marked as careSafe
-        return task.careSafe === true;
+      case 'low':
+        // Only show tasks marked as lowSafe
+        return task.lowSafe === true;
 
       case 'steady':
-        // Show default tasks and careSafe tasks, but NOT flowExtra-only tasks
-        // A task is flowExtra-only if flowExtra=true AND careSafe is not true
-        if (task.flowExtra && !task.careSafe) {
+        // Show default tasks and lowSafe tasks, but NOT flowExtra-only tasks
+        // A task is flowExtra-only if flowExtra=true AND lowSafe is not true
+        if (task.flowExtra && !task.lowSafe) {
           return false;
         }
         return true;

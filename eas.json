@@ -22,8 +22,7 @@
     },
     "production": {
       "ios": {
-        "resourceClass": "m-medium",
-        "bundleIdentifier": "com.justtoday.app"
+        "resourceClass": "m-medium"      
       },
       "android": {
         "buildType": "apk",

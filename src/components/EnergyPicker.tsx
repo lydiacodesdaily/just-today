@@ -1,6 +1,6 @@
 /**
  * EnergyPicker.tsx
- * Care / Steady / Flow selector with supportive, neurodivergent-friendly design.
+ * Low / Steady / Flow selector with supportive, neurodivergent-friendly design.
  */
 
 import React from 'react';
@@ -26,9 +26,9 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
     bgColor: string;
   }[] = [
     {
-      mode: 'care',
-      icon: '🌙',
-      label: 'Care',
+      mode: 'low',
+      icon: '💤',
+      label: 'Low',
       description: 'Just the essentials',
       supportText: "It's okay to take it slow",
       color: theme.colors.energyCare,

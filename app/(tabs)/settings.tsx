@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   PanResponder,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Audio } from 'expo-av';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useTheme } from '../../src/constants/theme';
@@ -136,6 +137,7 @@ const TICK_TOK_SOUNDS = {
 
 export default function SettingsScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { settings, updateSettings } = useSettings();
   const { themePreference, setThemePreference } = useThemeContext();
 
@@ -452,6 +454,25 @@ export default function SettingsScreen() {
           </View>
         )}
 
+        {/* Energy Menu Setup */}
+        <View style={styles.cardGroup}>
+          <TouchableOpacity
+            style={[styles.card, { backgroundColor: theme.colors.surface }]}
+            onPress={() => router.push('/energy-menu/setup' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+              Energy Menu
+            </Text>
+            <Text style={[styles.cardDescription, { color: theme.colors.textSecondary }]}>
+              Manage optional actions you can choose from based on your energy level
+            </Text>
+            <Text style={[styles.linkArrow, { color: theme.colors.primary }]}>
+              →
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Volume Controls - Simplified and grouped */}
         <View style={styles.cardGroup}>
           <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
@@ -581,6 +602,14 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     fontSize: 14,
+    lineHeight: 20,
+  },
+  linkArrow: {
+    fontSize: 24,
+    fontWeight: '600',
+    position: 'absolute',
+    right: 20,
+    top: 20,
     marginTop: -8,
     marginBottom: 4,
   },

@@ -13,10 +13,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.justtoday.app",
+      "bundleIdentifier": "com.lydiastudio.justtoday",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"],
-        "NSMicrophoneUsageDescription": "This app does not use the microphone"
+        "UIBackgroundModes": [
+          "audio",
+          "audio"
+        ],
+        "NSMicrophoneUsageDescription": "This app does not use the microphone",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -24,7 +28,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F5F1ED"
       },
-      "package": "com.justtoday.app"
+      "package": "com.justtoday.app",
+      "permissions": [
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -41,6 +48,12 @@
     "scheme": "justtoday",
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9962032f-19e2-4dd7-ad3c-cc2028d095f4"
+      }
     }
   }
 }

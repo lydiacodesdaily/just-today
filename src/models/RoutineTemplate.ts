@@ -15,8 +15,8 @@ export interface RoutineTask {
   name: string;
   /** Planned duration in milliseconds */
   durationMs: number;
-  /** If true, this task appears in Care mode */
-  careSafe?: boolean;
+  /** If true, this task appears in Low energy mode */
+  lowSafe?: boolean;
   /** If true, this task appears ONLY in Flow mode */
   flowExtra?: boolean;
   /** Optional subtasks for step-mode guidance */
@@ -37,4 +37,4 @@ export interface RoutineTemplate {
   updatedAt: number;
 }
 
-export type EnergyMode = 'care' | 'steady' | 'flow';
+export type EnergyMode = 'low' | 'steady' | 'flow';

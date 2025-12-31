@@ -96,7 +96,7 @@ export default function RoutineEditorScreen() {
       name: '',
       durationMs: 5 * 60 * 1000, // 5 minutes
       order: tasks.length,
-      careSafe: false,
+      lowSafe: false,
       flowExtra: false,
       autoAdvance: false,
     };
@@ -231,20 +231,20 @@ export default function RoutineEditorScreen() {
                     style={[
                       styles.chipToggle,
                       {
-                        backgroundColor: task.careSafe
+                        backgroundColor: task.lowSafe
                           ? theme.colors.primary
                           : theme.colors.surfaceSecondary,
                       },
                     ]}
-                    onPress={() => updateTask(index, { careSafe: !task.careSafe })}
+                    onPress={() => updateTask(index, { lowSafe: !task.lowSafe })}
                   >
                     <Text
                       style={[
                         styles.chipText,
-                        { color: task.careSafe ? theme.colors.background : theme.colors.textSecondary },
+                        { color: task.lowSafe ? theme.colors.background : theme.colors.textSecondary },
                       ]}
                     >
-                      🌙 Care
+                      💤 Low
                     </Text>
                   </TouchableOpacity>
 
@@ -292,13 +292,13 @@ export default function RoutineEditorScreen() {
                 </View>
 
                 {/* Contextual help - only when relevant */}
-                {(task.careSafe || task.flowExtra || task.autoAdvance) && (
+                {(task.lowSafe || task.flowExtra || task.autoAdvance) && (
                   <Text style={[styles.subtleHint, { color: theme.colors.textSecondary }]}>
                     {task.autoAdvance && 'Auto-advances • '}
-                    {task.careSafe && task.flowExtra
+                    {task.lowSafe && task.flowExtra
                       ? 'All energy modes'
-                      : task.careSafe
-                      ? 'Care mode'
+                      : task.lowSafe
+                      ? 'Low energy mode'
                       : task.flowExtra
                       ? 'Flow mode only'
                       : 'Steady & Flow modes'}
