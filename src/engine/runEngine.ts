@@ -343,10 +343,20 @@ export async function skipTask(
 }
 
 /**
- * Extends a task's duration by adding deltaMs.
- * Gives the user fresh time from now (Option 2: Fresh Time approach).
- * This means pressing "+5m" always gives you 5 minutes from now, regardless of overtime.
- * Resets timeUpAnnounced and overtime tracking flags so announcements can happen again.
+ * Extends or reduces a task's duration.
+ *
+ * For positive deltaMs (+1m, +5m):
+ *   - Gives the user fresh time from 0, regardless of current overtime
+ *   - If task is 2min overdue and user adds +5m, they get a full 5 minutes of positive time
+ *   - Resets announcement flags so they trigger again naturally
+ *
+ * For negative deltaMs (-1m, -5m):
+ *   - Moves the deadline closer by that amount
+ *   - If task has 3min remaining and user presses -1m, they'll have 2min remaining
+ *   - If task is overdue and user presses -1m, it increases the overtime
+ *
+ * This approach is calm and supportive: adding time always gives you what you asked for,
+ * without punishing you for being overdue.
  */
 export function extendTask(
   run: RoutineRun,
@@ -357,19 +367,30 @@ export function extendTask(
 
   const updatedTasks = run.tasks.map((task) => {
     if (task.id === taskId) {
+      let newPlannedEndAt: number;
+
+      if (deltaMs > 0) {
+        // Adding time: give fresh time from 0
+        // User gets exactly the time they requested, starting from now
+        newPlannedEndAt = now + deltaMs;
+      } else {
+        // Reducing time: move deadline closer by deltaMs
+        // This works whether we're in positive time or overtime
+        newPlannedEndAt = (task.plannedEndAt || now) + deltaMs;
+      }
+
+      // Track the total extension (both positive and negative adjustments)
       const newExtension = task.extensionMs + deltaMs;
-      // Fresh time: set plannedEndAt to now + deltaMs (gives user exactly the time they requested)
-      const newPlannedEndAt = now + deltaMs;
 
       return {
         ...task,
         extensionMs: newExtension,
         plannedEndAt: newPlannedEndAt,
-        // Reset flags so announcements can happen again when the new time expires
-        timeUpAnnounced: false,
-        // Clear overtime tracking since we now have fresh positive time
-        overtimeAnnouncedMinutes: [],
-        // Keep milestone tracking as-is (those track actual elapsed time, not overtime)
+        // Reset announcement flags when adding time, so they can trigger naturally again
+        timeUpAnnounced: deltaMs > 0 ? false : task.timeUpAnnounced,
+        // Clear overtime tracking when adding time (fresh start)
+        overtimeAnnouncedMinutes: deltaMs > 0 ? [] : task.overtimeAnnouncedMinutes,
+        // Keep milestone tracking as-is (those track actual elapsed time)
       };
     }
     return task;
