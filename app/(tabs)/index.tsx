@@ -49,7 +49,10 @@ export default function HomeScreen() {
           {
             text: 'Discard',
             style: 'destructive',
-            onPress: () => setCurrentRun(null),
+            onPress: () => {
+              setCurrentRun(null);
+              setHasShownResumePrompt(false);
+            },
           },
           {
             text: 'Resume',
@@ -88,9 +91,39 @@ export default function HomeScreen() {
     if (!item) return;
 
     const startFocus = () => {
+      // Check if there's already a routine in progress
+      if (currentRun && currentRun.status !== 'completed' && currentRun.status !== 'abandoned') {
+        Alert.alert(
+          'Routine In Progress',
+          `You have "${currentRun.templateName}" in progress. Do you want to discard it and start "${item.title}"?`,
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+            {
+              text: 'Resume Current',
+              onPress: () => router.push('/routine/run'),
+            },
+            {
+              text: 'Start New',
+              style: 'destructive',
+              onPress: () => {
+                const run = createRunFromOptionalItem(item);
+                setCurrentRun(run);
+                setHasShownResumePrompt(true); // Mark as shown since we're actively starting
+                router.push('/routine/run');
+              },
+            },
+          ]
+        );
+        return;
+      }
+
       // Create a single-task run from the optional item
       const run = createRunFromOptionalItem(item);
       setCurrentRun(run);
+      setHasShownResumePrompt(true); // Mark as shown since we're actively starting
       router.push('/routine/run');
     };
 
@@ -139,8 +172,38 @@ export default function HomeScreen() {
   };
 
   const handleStartRoutine = (template: RoutineTemplate) => {
+    // Check if there's already a routine in progress
+    if (currentRun && currentRun.status !== 'completed' && currentRun.status !== 'abandoned') {
+      Alert.alert(
+        'Routine In Progress',
+        `You have "${currentRun.templateName}" in progress. Do you want to discard it and start "${template.name}"?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Resume Current',
+            onPress: () => router.push('/routine/run'),
+          },
+          {
+            text: 'Start New',
+            style: 'destructive',
+            onPress: () => {
+              const run = createRunFromTemplate(template, energyMode);
+              setCurrentRun(run);
+              setHasShownResumePrompt(true); // Mark as shown since we're actively starting
+              router.push('/routine/run');
+            },
+          },
+        ]
+      );
+      return;
+    }
+
     const run = createRunFromTemplate(template, energyMode);
     setCurrentRun(run);
+    setHasShownResumePrompt(true); // Mark as shown since we're actively starting
     router.push('/routine/run');
   };
 
