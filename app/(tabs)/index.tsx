@@ -4,24 +4,28 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { EnergyMode, RoutineTemplate } from '../../src/models/RoutineTemplate';
 import { loadTemplates } from '../../src/persistence/templateStore';
-import { createRunFromTemplate } from '../../src/engine/runEngine';
+import { createRunFromTemplate, createRunFromOptionalItem } from '../../src/engine/runEngine';
 import { useRun } from '../../src/context/RunContext';
+import { useTodayOptional } from '../../src/context/TodayOptionalContext';
 import { useTheme } from '../../src/constants/theme';
 import { EnergyPicker } from '../../src/components/EnergyPicker';
 import { RoutineCard } from '../../src/components/RoutineCard';
+import { EnergyMenuSheet } from '../../src/components/EnergyMenuSheet';
 import { getItem, setItem, KEYS } from '../../src/persistence/storage';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { setCurrentRun, currentRun } = useRun();
+  const { todayItems, removeItemFromToday, completeItem, refreshItems } = useTodayOptional();
   const [energyMode, setEnergyMode] = useState<EnergyMode>('steady');
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
+  const [showEnergyMenuSheet, setShowEnergyMenuSheet] = useState(false);
 
   // Load energy mode on mount
   useEffect(() => {
@@ -65,13 +69,73 @@ export default function HomeScreen() {
           console.error('Failed to load templates:', err);
           setTemplates([]);
         });
-    }, [])
+
+      // Refresh optional items as well
+      refreshItems();
+    }, [refreshItems])
   );
 
   // Persist energy mode changes
   const handleEnergyChange = (mode: EnergyMode) => {
     setEnergyMode(mode);
     setItem(KEYS.CURRENT_ENERGY, mode);
+    // Show Energy Menu sheet after changing energy mode
+    setShowEnergyMenuSheet(true);
+  };
+
+  const handleOptionalItemAction = (itemId: string) => {
+    const item = todayItems.find(i => i.id === itemId);
+    if (!item) return;
+
+    const startFocus = () => {
+      // Create a single-task run from the optional item
+      const run = createRunFromOptionalItem(item);
+      setCurrentRun(run);
+      router.push('/routine/run');
+    };
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Start Focus', 'Mark Done', 'Remove from Today'],
+          destructiveButtonIndex: 3,
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            startFocus();
+          } else if (buttonIndex === 2) {
+            // Mark done
+            completeItem(itemId);
+          } else if (buttonIndex === 3) {
+            // Remove
+            removeItemFromToday(itemId);
+          }
+        }
+      );
+    } else {
+      // Android - use Alert with buttons
+      Alert.alert(
+        item.title,
+        'What would you like to do?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Start Focus',
+            onPress: startFocus,
+          },
+          {
+            text: 'Mark Done',
+            onPress: () => completeItem(itemId),
+          },
+          {
+            text: 'Remove from Today',
+            style: 'destructive',
+            onPress: () => removeItemFromToday(itemId),
+          },
+        ]
+      );
+    }
   };
 
   const handleStartRoutine = (template: RoutineTemplate) => {
@@ -106,17 +170,59 @@ export default function HomeScreen() {
           <EnergyPicker selectedMode={energyMode} onSelect={handleEnergyChange} />
         </View>
 
+        {/* Energy Menu prompt sheet */}
+        {showEnergyMenuSheet && (
+          <EnergyMenuSheet
+            currentEnergyLevel={energyMode}
+            onDismiss={() => setShowEnergyMenuSheet(false)}
+          />
+        )}
+
+        {/* Optional Items from Energy Menu */}
+        {todayItems.length > 0 && (
+          <View style={styles.optionalSection}>
+            <View style={styles.optionalHeader}>
+              <Text style={[styles.optionalTitle, { color: theme.colors.textSecondary }]}>
+                Optional
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/energy-menu/setup' as any)}>
+                <Text style={[styles.optionalEditLink, { color: theme.colors.primary }]}>
+                  Edit Menu
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {todayItems.filter(item => !item.completedAt).map(item => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.optionalItem, { backgroundColor: theme.colors.surface }]}
+                onPress={() => handleOptionalItemAction(item.id)}
+              >
+                <View style={styles.optionalItemContent}>
+                  <Text style={[styles.optionalItemTitle, { color: theme.colors.text }]}>
+                    • {item.title}
+                  </Text>
+                  {item.estimatedDuration && (
+                    <Text style={[styles.optionalItemDuration, { color: theme.colors.textSecondary }]}>
+                      {item.estimatedDuration}
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* Routines section */}
         <View style={styles.routinesSection}>
           <View style={styles.routinesHeader}>
             <View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                {energyMode === 'care' && 'Your Essential Routines'}
+                {energyMode === 'low' && 'Your Essential Routines'}
                 {energyMode === 'steady' && 'Your Routines'}
                 {energyMode === 'flow' && 'Your Full Routines'}
               </Text>
               <Text style={[styles.sectionSubtitle, { color: theme.colors.textSecondary }]}>
-                {energyMode === 'care' && 'Just the essentials'}
+                {energyMode === 'low' && 'Just the essentials'}
                 {energyMode === 'steady' && 'Your usual pace'}
                 {energyMode === 'flow' && 'Everything included'}
               </Text>
@@ -248,6 +354,42 @@ const styles = StyleSheet.create({
   },
   energySection: {
     marginBottom: 32,
+  },
+  optionalSection: {
+    marginBottom: 24,
+    gap: 12,
+  },
+  optionalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  optionalTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  optionalEditLink: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  optionalItem: {
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 6,
+  },
+  optionalItemContent: {
+    gap: 4,
+  },
+  optionalItemTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 22,
+  },
+  optionalItemDuration: {
+    fontSize: 14,
   },
   routinesSection: {
     gap: 16,

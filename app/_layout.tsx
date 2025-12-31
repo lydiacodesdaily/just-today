@@ -7,6 +7,7 @@ import { Stack } from 'expo-router';
 import { SettingsProvider } from '../src/context/SettingsContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { RunProvider } from '../src/context/RunContext';
+import { TodayOptionalProvider } from '../src/context/TodayOptionalContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
@@ -39,6 +40,13 @@ function RootStack() {
           gestureEnabled: false,
         }}
       />
+      <Stack.Screen
+        name="energy-menu/setup"
+        options={{
+          title: 'Energy Menu',
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
@@ -49,7 +57,9 @@ export default function RootLayout() {
       <SettingsProvider>
         <ThemeProvider>
           <RunProvider>
-            <RootStack />
+            <TodayOptionalProvider>
+              <RootStack />
+            </TodayOptionalProvider>
           </RunProvider>
         </ThemeProvider>
       </SettingsProvider>

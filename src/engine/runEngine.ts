@@ -5,6 +5,7 @@
 
 import { RoutineTemplate, EnergyMode } from '../models/RoutineTemplate';
 import { RoutineRun, RunTask, RunSubtask } from '../models/RoutineRun';
+import { TodayOptionalItem } from '../models/EnergyMenuItem';
 import { deriveTasksForEnergyMode } from './energyDerivation';
 import {
   getTaskCompletionMessage,
@@ -60,6 +61,54 @@ export function createRunFromTemplate(
     templateName: template.name,
     energyMode,
     tasks: runTasks,
+    status: 'notStarted',
+    createdAt: Date.now(),
+    startedAt: null,
+    pausedAt: null,
+    totalPauseMs: 0,
+    endedAt: null,
+    activeTaskId: null,
+  };
+}
+
+/**
+ * Creates a single-task RoutineRun from a Today Optional Item.
+ * Used for optional focus sessions (ad-hoc, single-task mode).
+ */
+export function createRunFromOptionalItem(item: TodayOptionalItem): RoutineRun {
+  // Convert estimated duration string to milliseconds
+  const durationMs = (() => {
+    if (!item.estimatedDuration) return 15 * 60 * 1000; // Default 15 minutes
+    const match = item.estimatedDuration.match(/~(\d+)/);
+    if (!match) return 15 * 60 * 1000;
+    return parseInt(match[1]) * 60 * 1000;
+  })();
+
+  const runTask: RunTask = {
+    id: `optional-run-task-${item.id}-${Date.now()}`,
+    templateTaskId: item.menuItemId,
+    name: item.title,
+    durationMs,
+    subtasks: undefined,
+    status: 'pending',
+    order: 0,
+    startedAt: null,
+    plannedEndAt: null,
+    extensionMs: 0,
+    completedAt: null,
+    overtimeAnnouncedMinutes: [],
+    milestoneAnnouncedMinutes: [],
+    autoAdvance: false,
+    autoAdvanceWarningAnnounced: false,
+    timeUpAnnounced: false,
+  };
+
+  return {
+    id: `optional-run-${item.id}-${Date.now()}`,
+    templateId: 'optional-item',
+    templateName: `Optional: ${item.title}`,
+    energyMode: 'steady', // Default energy mode for optional items
+    tasks: [runTask],
     status: 'notStarted',
     createdAt: Date.now(),
     startedAt: null,
