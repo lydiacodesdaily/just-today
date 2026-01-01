@@ -14,7 +14,7 @@ import { useFocus } from '../../src/context/FocusContext';
 import { useTheme } from '../../src/constants/theme';
 import { EnergyPicker } from '../../src/components/EnergyPicker';
 import { RoutineCard } from '../../src/components/RoutineCard';
-import { EnergyMenuSheet } from '../../src/components/EnergyMenuSheet';
+import { EnergyMenuCollapsible } from '../../src/components/EnergyMenuCollapsible';
 import { TodaysFocus } from '../../src/components/TodaysFocus';
 import { LaterList } from '../../src/components/LaterList';
 import { BrainDump } from '../../src/components/BrainDump';
@@ -30,9 +30,9 @@ export default function HomeScreen() {
   const [energyMode, setEnergyMode] = useState<EnergyMode>('steady');
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
-  const [showEnergyMenuSheet, setShowEnergyMenuSheet] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
   const [isBrainDumpExpanded, setIsBrainDumpExpanded] = useState(false);
+  const [isEnergyMenuExpanded, setIsEnergyMenuExpanded] = useState(false);
 
   // Load energy mode on mount
   useEffect(() => {
@@ -89,8 +89,8 @@ export default function HomeScreen() {
   const handleEnergyChange = (mode: EnergyMode) => {
     setEnergyMode(mode);
     setItem(KEYS.CURRENT_ENERGY, mode);
-    // Show Energy Menu sheet after changing energy mode
-    setShowEnergyMenuSheet(true);
+    // Auto-expand energy menu when energy changes (but keep it inline/collapsed)
+    setIsEnergyMenuExpanded(true);
   };
 
 
@@ -194,7 +194,25 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* Today's Focus Section */}
+        {/* 1. Energy picker (top, always visible) */}
+        <View style={styles.energySection}>
+          <EnergyPicker selectedMode={energyMode} onSelect={handleEnergyChange} />
+        </View>
+
+        {/* 2. Optional Energy Menu (collapsed by default) */}
+        <View style={styles.energyMenuSection}>
+          <EnergyMenuCollapsible
+            energyMode={energyMode}
+            isExpanded={isEnergyMenuExpanded}
+            onToggle={() => setIsEnergyMenuExpanded(!isEnergyMenuExpanded)}
+            onAddItem={async (item) => {
+              await addToToday(item.title, item.estimatedDuration as any);
+              setIsEnergyMenuExpanded(false);
+            }}
+          />
+        </View>
+
+        {/* 3. Today's Focus Section (primary action area) */}
         <View style={styles.focusSection}>
           <TodaysFocus
             onStartFocus={handleStartFocusItem}
@@ -202,33 +220,7 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Later Section */}
-        <View style={styles.laterSection}>
-          <LaterList onStartFocus={handleStartFocusItem} />
-        </View>
-
-        {/* Brain Dump Section */}
-        <View style={styles.brainDumpSection}>
-          <BrainDump
-            isExpanded={isBrainDumpExpanded}
-            onToggle={() => setIsBrainDumpExpanded(!isBrainDumpExpanded)}
-          />
-        </View>
-
-        {/* Energy picker with breathing room */}
-        <View style={styles.energySection}>
-          <EnergyPicker selectedMode={energyMode} onSelect={handleEnergyChange} />
-        </View>
-
-        {/* Energy Menu prompt sheet */}
-        {showEnergyMenuSheet && (
-          <EnergyMenuSheet
-            currentEnergyLevel={energyMode}
-            onDismiss={() => setShowEnergyMenuSheet(false)}
-          />
-        )}
-
-        {/* Routines section */}
+        {/* 4. Routines section */}
         <View style={styles.routinesSection}>
           <View style={styles.routinesHeader}>
             <View>
@@ -307,6 +299,27 @@ export default function HomeScreen() {
           )}
         </View>
 
+        {/* Visual separator between "Doing" and "Thinking" */}
+        <View style={styles.sectionDivider}>
+          <View style={[styles.dividerLine, { backgroundColor: theme.colors.borderSubtle }]} />
+          <Text style={[styles.dividerLabel, { color: theme.colors.textSecondary }]}>
+            Later & Ideas
+          </Text>
+        </View>
+
+        {/* 5. Later Section (collapsed by default) */}
+        <View style={styles.laterSection}>
+          <LaterList onStartFocus={handleStartFocusItem} />
+        </View>
+
+        {/* 6. Brain Dump Section (collapsed, secondary) */}
+        <View style={styles.brainDumpSection}>
+          <BrainDump
+            isExpanded={isBrainDumpExpanded}
+            onToggle={() => setIsBrainDumpExpanded(!isBrainDumpExpanded)}
+          />
+        </View>
+
         {/* Resume button - gentle but present */}
         {currentRun && (
           <View style={styles.resumeSection}>
@@ -366,11 +379,30 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     gap: 6,
   },
+  energyMenuSection: {
+    marginBottom: 20,
+  },
   focusSection: {
     marginBottom: 32,
   },
+  sectionDivider: {
+    marginVertical: 32,
+    alignItems: 'center',
+    gap: 12,
+  },
+  dividerLine: {
+    height: 1,
+    width: '100%',
+    opacity: 0.3,
+  },
+  dividerLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+  },
   laterSection: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   brainDumpSection: {
     marginBottom: 32,
@@ -386,7 +418,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   energySection: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   optionalSection: {
     marginBottom: 24,
