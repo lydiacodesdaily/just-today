@@ -33,6 +33,7 @@ export default function HomeScreen() {
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
   const [isBrainDumpExpanded, setIsBrainDumpExpanded] = useState(false);
   const [isEnergyMenuExpanded, setIsEnergyMenuExpanded] = useState(false);
+  const [isRoutinesExpanded, setIsRoutinesExpanded] = useState(false);
 
   // Load energy mode on mount
   useEffect(() => {
@@ -177,6 +178,12 @@ export default function HomeScreen() {
     await addToToday(title, duration);
   };
 
+  // Routines collapsible logic - show 1-2 routines by default
+  const VISIBLE_ROUTINES_LIMIT = 2;
+  const hasMoreRoutines = templates.length > VISIBLE_ROUTINES_LIMIT;
+  const visibleRoutines = isRoutinesExpanded ? templates : templates.slice(0, VISIBLE_ROUTINES_LIMIT);
+  const hiddenRoutinesCount = templates.length - VISIBLE_ROUTINES_LIMIT;
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
@@ -286,7 +293,7 @@ export default function HomeScreen() {
             </View>
           ) : (
             <View style={styles.routinesList}>
-              {templates.map((template) => (
+              {visibleRoutines.map((template) => (
                 <RoutineCard
                   key={template.id}
                   routine={template}
@@ -295,6 +302,19 @@ export default function HomeScreen() {
                   onEdit={() => handleEditRoutine(template)}
                 />
               ))}
+
+              {/* Expand/Collapse affordance */}
+              {hasMoreRoutines && (
+                <TouchableOpacity
+                  style={styles.viewAllButton}
+                  onPress={() => setIsRoutinesExpanded(!isRoutinesExpanded)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.viewAllText, { color: theme.colors.textSecondary }]}>
+                    {isRoutinesExpanded ? 'Show less' : 'View all routines'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -522,6 +542,17 @@ const styles = StyleSheet.create({
   },
   routinesList: {
     gap: 12,
+  },
+  viewAllButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  viewAllText: {
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
   resumeSection: {
     marginTop: 24,

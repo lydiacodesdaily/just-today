@@ -17,6 +17,13 @@ interface TodaysFocusProps {
 export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
   const theme = useTheme();
   const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage } = useFocus();
+  const [isExpanded, setIsExpanded] = React.useState(false);
+
+  // Show up to 3 items by default
+  const VISIBLE_ITEMS_LIMIT = 3;
+  const hasMoreItems = todayItems.length > VISIBLE_ITEMS_LIMIT;
+  const visibleItems = isExpanded ? todayItems : todayItems.slice(0, VISIBLE_ITEMS_LIMIT);
+  const hiddenCount = todayItems.length - VISIBLE_ITEMS_LIMIT;
 
   // Show rollover message if items were moved from yesterday
   React.useEffect(() => {
@@ -121,7 +128,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
       ) : (
         <View style={styles.itemsList}>
           {/* Items List */}
-          {todayItems.map((item) => (
+          {visibleItems.map((item) => (
             <TouchableOpacity
               key={item.id}
               style={[styles.item, { backgroundColor: theme.colors.surface }]}
@@ -145,6 +152,19 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
               </View>
             </TouchableOpacity>
           ))}
+
+          {/* Expand/Collapse affordance */}
+          {hasMoreItems && (
+            <TouchableOpacity
+              style={styles.expandButton}
+              onPress={() => setIsExpanded(!isExpanded)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.expandText, { color: theme.colors.textSecondary }]}>
+                {isExpanded ? 'Show less' : `+ ${hiddenCount} more (optional)`}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           {/* Add Another Button */}
           <TouchableOpacity
@@ -248,5 +268,16 @@ const styles = StyleSheet.create({
   addAnotherText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  expandButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  expandText: {
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
 });
