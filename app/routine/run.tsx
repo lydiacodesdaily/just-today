@@ -7,6 +7,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, Alert, SafeAreaView, ScrollView, TouchableOpacity, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useRun } from '../../src/context/RunContext';
+import { useFocus } from '../../src/context/FocusContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useTimer } from '../../src/hooks/useTimer';
 import { useAudio } from '../../src/hooks/useAudio';
@@ -40,6 +41,7 @@ export default function RunScreen() {
     toggleTaskSubtask,
     toggleTaskAutoAdvance,
   } = useRun();
+  const { completeItem: completeFocusItem, endItemFocus } = useFocus();
   const { settings } = useSettings();
 
   // Initialize audio and notifications on mount
@@ -70,20 +72,6 @@ export default function RunScreen() {
   const activeTask = currentRun?.tasks.find((t) => t.id === currentRun.activeTaskId);
   const isPaused = currentRun?.status === 'paused';
   const timeRemaining = useTimer(activeTask || null, isPaused || false, currentRun?.pausedAt);
-
-  // Auto-advance when task completes naturally
-  useEffect(() => {
-    if (!currentRun || !activeTask || !timeRemaining) {
-      return;
-    }
-
-    // Don't auto-advance, user must manually advance or skip
-    // (This allows for overtime without forcing the next task)
-  }, []);
-
-  if (!currentRun) {
-    return null;
-  }
 
   // Handle overtime announcements
   const handleOvertimeAnnounced = (minutes: number) => {
@@ -138,7 +126,7 @@ export default function RunScreen() {
     }
   };
 
-  // Setup audio hooks
+  // Setup audio hooks - MUST be called before any conditional returns
   useAudio({
     activeTask: activeTask || null,
     timeRemaining,
@@ -166,6 +154,63 @@ export default function RunScreen() {
     milestoneInterval: settings.milestoneInterval,
     onMilestoneAnnounced: handleMilestoneAnnounced,
   });
+
+  // Check if run is completed
+  useEffect(() => {
+    if (currentRun?.status === 'completed') {
+      const completeMessage = getRoutineCompleteMessage();
+
+      // If this was a focus item run, mark it complete
+      const handleComplete = async () => {
+        if (currentRun.templateId === 'focus-item' && currentRun.tasks[0]?.templateTaskId) {
+          const focusItemId = currentRun.tasks[0].templateTaskId;
+          await completeFocusItem(focusItemId);
+          await endItemFocus(focusItemId);
+        }
+
+        setCurrentRun(null);
+        router.replace('/');
+      };
+
+      Alert.alert(
+        'You did it!',
+        completeMessage.displayMessage,
+        [
+          {
+            text: 'Done',
+            onPress: handleComplete,
+          },
+        ]
+      );
+    } else if (currentRun?.status === 'abandoned') {
+      // If this was a focus item run, just end the session (don't complete)
+      const handleAbandon = async () => {
+        if (currentRun.templateId === 'focus-item' && currentRun.tasks[0]?.templateTaskId) {
+          const focusItemId = currentRun.tasks[0].templateTaskId;
+          await endItemFocus(focusItemId);
+        }
+
+        setCurrentRun(null);
+        router.replace('/');
+      };
+
+      Alert.alert(
+        'Routine Ended',
+        "That's okay. You can try again whenever you're ready.",
+        [
+          {
+            text: 'Done',
+            onPress: handleAbandon,
+          },
+        ]
+      );
+    }
+  }, [currentRun?.status, completeFocusItem, endItemFocus, setCurrentRun, router]);
+
+  // Early returns AFTER all hooks have been called
+  if (!currentRun || !activeTask) {
+    return null;
+  }
 
   const handlePause = () => {
     pauseCurrentRun();
@@ -229,44 +274,6 @@ export default function RunScreen() {
       toggleTaskAutoAdvance(activeTask.id);
     }
   };
-
-  // Check if run is completed
-  useEffect(() => {
-    if (currentRun?.status === 'completed') {
-      const completeMessage = getRoutineCompleteMessage();
-      Alert.alert(
-        'You did it!',
-        completeMessage.displayMessage,
-        [
-          {
-            text: 'Done',
-            onPress: () => {
-              setCurrentRun(null);
-              router.replace('/');
-            },
-          },
-        ]
-      );
-    } else if (currentRun?.status === 'abandoned') {
-      Alert.alert(
-        'Routine Ended',
-        "That's okay. You can try again whenever you're ready.",
-        [
-          {
-            text: 'Done',
-            onPress: () => {
-              setCurrentRun(null);
-              router.replace('/');
-            },
-          },
-        ]
-      );
-    }
-  }, [currentRun?.status]);
-
-  if (!currentRun || !activeTask) {
-    return null;
-  }
 
   // Calculate progress
   const completedTasks = currentRun.tasks.filter(t => t.status === 'completed' || t.status === 'skipped').length;

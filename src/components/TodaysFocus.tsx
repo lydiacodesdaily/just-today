@@ -1,0 +1,252 @@
+/**
+ * TodaysFocus.tsx
+ * Today's Focus section component - displays items for today only
+ */
+
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
+import { useTheme } from '../constants/theme';
+import { useFocus } from '../context/FocusContext';
+import { FocusItem } from '../models/FocusItem';
+
+interface TodaysFocusProps {
+  onStartFocus: (item: FocusItem) => void;
+  onAddItem: () => void;
+}
+
+export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
+  const theme = useTheme();
+  const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage } = useFocus();
+
+  // Show rollover message if items were moved from yesterday
+  React.useEffect(() => {
+    if (rolloverCount > 0) {
+      // Non-modal, calm system message
+      setTimeout(() => {
+        Alert.alert(
+          '',
+          `A few unfinished items were moved to Later.`,
+          [
+            {
+              text: 'OK',
+              onPress: () => dismissRolloverMessage(),
+            },
+          ],
+          { cancelable: true }
+        );
+      }, 500);
+    }
+  }, [rolloverCount, dismissRolloverMessage]);
+
+  const handleItemPress = (item: FocusItem) => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: item.title,
+          options: ['Cancel', '▶ Start', '✓ Mark Done', '⏭ Later', 'Delete'],
+          destructiveButtonIndex: 4,
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            onStartFocus(item);
+          } else if (buttonIndex === 2) {
+            completeItem(item.id);
+          } else if (buttonIndex === 3) {
+            moveItemToLater(item.id);
+          } else if (buttonIndex === 4) {
+            deleteItem(item.id);
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        item.title,
+        'What would you like to do?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: '▶ Start',
+            onPress: () => onStartFocus(item),
+          },
+          {
+            text: '✓ Mark Done',
+            onPress: () => completeItem(item.id),
+          },
+          {
+            text: '⏭ Later',
+            onPress: () => moveItemToLater(item.id),
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => deleteItem(item.id),
+          },
+        ]
+      );
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Section Header */}
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: theme.colors.text }]}>
+          🌱 Today's Focus
+        </Text>
+        <Text style={[styles.helperText, { color: theme.colors.textSecondary }]}>
+          This list is just for today.
+        </Text>
+      </View>
+
+      {/* Empty State */}
+      {todayItems.length === 0 ? (
+        <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.emptyPrompt, { color: theme.colors.text }]}>
+            What do you want to move forward today?
+          </Text>
+          <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary }]}>
+            Add a few things — you can always change your mind.
+          </Text>
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
+            onPress={onAddItem}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.addButtonText, { color: theme.colors.surface }]}>
+              ＋ Add to Today
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.itemsList}>
+          {/* Items List */}
+          {todayItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.item, { backgroundColor: theme.colors.surface }]}
+              onPress={() => handleItemPress(item)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.itemContent}>
+                <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+                  {item.title}
+                </Text>
+                {item.estimatedDuration && (
+                  <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
+                    {item.estimatedDuration}
+                  </Text>
+                )}
+              </View>
+              <View style={styles.itemActions}>
+                <Text style={[styles.itemActionHint, { color: theme.colors.textSecondary }]}>
+                  Tap for options
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {/* Add Another Button */}
+          <TouchableOpacity
+            style={[styles.addAnotherButton, { borderColor: theme.colors.borderSubtle }]}
+            onPress={onAddItem}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.addAnotherText, { color: theme.colors.primary }]}>
+              ＋ Add to Today
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+  },
+  header: {
+    gap: 4,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+  },
+  helperText: {
+    fontSize: 14,
+    fontWeight: '400',
+    letterSpacing: 0.1,
+  },
+  emptyState: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 16,
+  },
+  emptyPrompt: {
+    fontSize: 18,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 26,
+  },
+  emptySubtext: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  addButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  itemsList: {
+    gap: 10,
+  },
+  item: {
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  itemContent: {
+    flex: 1,
+    gap: 4,
+  },
+  itemTitle: {
+    fontSize: 17,
+    fontWeight: '500',
+    lineHeight: 24,
+  },
+  itemDuration: {
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  itemActions: {
+    marginLeft: 12,
+  },
+  itemActionHint: {
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  addAnotherButton: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  addAnotherText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});

@@ -6,6 +6,7 @@
 import { RoutineTemplate, EnergyMode } from '../models/RoutineTemplate';
 import { RoutineRun, RunTask, RunSubtask } from '../models/RoutineRun';
 import { TodayOptionalItem } from '../models/EnergyMenuItem';
+import { FocusItem, durationToMs } from '../models/FocusItem';
 import { deriveTasksForEnergyMode } from './energyDerivation';
 import {
   getTaskCompletionMessage,
@@ -108,6 +109,48 @@ export function createRunFromOptionalItem(item: TodayOptionalItem): RoutineRun {
     templateId: 'optional-item',
     templateName: `Optional: ${item.title}`,
     energyMode: 'steady', // Default energy mode for optional items
+    tasks: [runTask],
+    status: 'notStarted',
+    createdAt: Date.now(),
+    startedAt: null,
+    pausedAt: null,
+    totalPauseMs: 0,
+    endedAt: null,
+    activeTaskId: null,
+  };
+}
+
+/**
+ * Creates a single-task RoutineRun from a Focus Item (Today's Focus or Later).
+ * Used for focus sessions on user-defined tasks.
+ */
+export function createRunFromFocusItem(item: FocusItem): RoutineRun {
+  const durationMs = durationToMs(item.estimatedDuration);
+
+  const runTask: RunTask = {
+    id: `focus-run-task-${item.id}-${Date.now()}`,
+    templateTaskId: item.id,
+    name: item.title,
+    durationMs,
+    subtasks: undefined,
+    status: 'pending',
+    order: 0,
+    startedAt: null,
+    plannedEndAt: null,
+    extensionMs: 0,
+    completedAt: null,
+    overtimeAnnouncedMinutes: [],
+    milestoneAnnouncedMinutes: [],
+    autoAdvance: false,
+    autoAdvanceWarningAnnounced: false,
+    timeUpAnnounced: false,
+  };
+
+  return {
+    id: `focus-run-${item.id}-${Date.now()}`,
+    templateId: 'focus-item',
+    templateName: item.title,
+    energyMode: 'steady', // Default energy mode for focus items
     tasks: [runTask],
     status: 'notStarted',
     createdAt: Date.now(),

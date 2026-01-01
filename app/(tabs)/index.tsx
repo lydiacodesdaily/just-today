@@ -8,24 +8,31 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActionShee
 import { useRouter, useFocusEffect } from 'expo-router';
 import { EnergyMode, RoutineTemplate } from '../../src/models/RoutineTemplate';
 import { loadTemplates } from '../../src/persistence/templateStore';
-import { createRunFromTemplate, createRunFromOptionalItem } from '../../src/engine/runEngine';
+import { createRunFromTemplate, createRunFromOptionalItem, createRunFromFocusItem } from '../../src/engine/runEngine';
 import { useRun } from '../../src/context/RunContext';
 import { useTodayOptional } from '../../src/context/TodayOptionalContext';
+import { useFocus } from '../../src/context/FocusContext';
 import { useTheme } from '../../src/constants/theme';
 import { EnergyPicker } from '../../src/components/EnergyPicker';
 import { RoutineCard } from '../../src/components/RoutineCard';
 import { EnergyMenuSheet } from '../../src/components/EnergyMenuSheet';
+import { TodaysFocus } from '../../src/components/TodaysFocus';
+import { LaterList } from '../../src/components/LaterList';
+import { AddFocusItemModal } from '../../src/components/AddFocusItemModal';
 import { getItem, setItem, KEYS } from '../../src/persistence/storage';
+import { FocusItem } from '../../src/models/FocusItem';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { setCurrentRun, currentRun } = useRun();
   const { todayItems, removeItemFromToday, completeItem, refreshItems } = useTodayOptional();
+  const { startItemFocus, addToToday } = useFocus();
   const [energyMode, setEnergyMode] = useState<EnergyMode>('steady');
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showEnergyMenuSheet, setShowEnergyMenuSheet] = useState(false);
+  const [showAddFocusModal, setShowAddFocusModal] = useState(false);
 
   // Load energy mode on mount
   useEffect(() => {
@@ -40,7 +47,7 @@ export default function HomeScreen() {
 
   // Prompt user to resume or discard saved run
   useEffect(() => {
-    if (currentRun && !hasShownResumePrompt && currentRun.status !== 'completed') {
+    if (currentRun && !hasShownResumePrompt && currentRun.status !== 'completed' && currentRun.status !== 'abandoned') {
       setHasShownResumePrompt(true);
       Alert.alert(
         'Resume Routine?',
@@ -211,6 +218,49 @@ export default function HomeScreen() {
     router.push(`/routine/${template.id}`);
   };
 
+  const handleStartFocusItem = async (item: FocusItem) => {
+    // Check if there's already a routine in progress
+    if (currentRun && currentRun.status !== 'completed' && currentRun.status !== 'abandoned') {
+      Alert.alert(
+        'Routine In Progress',
+        `You have "${currentRun.templateName}" in progress. Do you want to discard it and start "${item.title}"?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Resume Current',
+            onPress: () => router.push('/routine/run'),
+          },
+          {
+            text: 'Start New',
+            style: 'destructive',
+            onPress: () => {
+              const run = createRunFromFocusItem(item);
+              setCurrentRun(run);
+              setHasShownResumePrompt(true);
+              startItemFocus(item.id);
+              router.push('/routine/run');
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    // Create a single-task run from the focus item
+    const run = createRunFromFocusItem(item);
+    setCurrentRun(run);
+    setHasShownResumePrompt(true);
+    await startItemFocus(item.id);
+    router.push('/routine/run');
+  };
+
+  const handleAddFocusItem = async (title: string, duration: any) => {
+    await addToToday(title, duration);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
@@ -226,6 +276,19 @@ export default function HomeScreen() {
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
             One step at a time
           </Text>
+        </View>
+
+        {/* Today's Focus Section */}
+        <View style={styles.focusSection}>
+          <TodaysFocus
+            onStartFocus={handleStartFocusItem}
+            onAddItem={() => setShowAddFocusModal(true)}
+          />
+        </View>
+
+        {/* Later Section */}
+        <View style={styles.laterSection}>
+          <LaterList onStartFocus={handleStartFocusItem} />
         </View>
 
         {/* Energy picker with breathing room */}
@@ -384,6 +447,14 @@ export default function HomeScreen() {
         {/* Spacer for bottom padding */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* Add Focus Item Modal */}
+      <AddFocusItemModal
+        visible={showAddFocusModal}
+        onClose={() => setShowAddFocusModal(false)}
+        onAdd={handleAddFocusItem}
+        defaultLocation="today"
+      />
     </View>
   );
 }
@@ -402,8 +473,14 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     paddingTop: 8,
-    paddingBottom: 24,
+    paddingBottom: 20,
     gap: 6,
+  },
+  focusSection: {
+    marginBottom: 32,
+  },
+  laterSection: {
+    marginBottom: 32,
   },
   header: {
     fontSize: 36,

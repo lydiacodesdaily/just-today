@@ -13,6 +13,8 @@ const KEYS = {
   ENERGY_MENU_ITEMS: '@just-today/energy-menu-items',
   TODAY_OPTIONAL_ITEMS: '@just-today/today-optional-items',
   TODAY_DATE: '@just-today/today-date',
+  FOCUS_ITEMS: '@just-today/focus-items',
+  FOCUS_TODAY_DATE: '@just-today/focus-today-date',
 } as const;
 
 export async function getItem<T>(key: string): Promise<T | null> {

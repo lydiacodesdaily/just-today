@@ -8,6 +8,7 @@ import { SettingsProvider } from '../src/context/SettingsContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { RunProvider } from '../src/context/RunContext';
 import { TodayOptionalProvider } from '../src/context/TodayOptionalContext';
+import { FocusProvider } from '../src/context/FocusContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
@@ -58,7 +59,9 @@ export default function RootLayout() {
         <ThemeProvider>
           <RunProvider>
             <TodayOptionalProvider>
-              <RootStack />
+              <FocusProvider>
+                <RootStack />
+              </FocusProvider>
             </TodayOptionalProvider>
           </RunProvider>
         </ThemeProvider>
