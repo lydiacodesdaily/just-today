@@ -3,8 +3,9 @@
  * Later section component - collapsible list for deferred items
  */
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform, Modal } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
 import { FocusItem } from '../models/FocusItem';
@@ -18,6 +19,12 @@ export function LaterList({ onStartFocus }: LaterListProps) {
   const theme = useTheme();
   const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder } = useFocus();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentItem, setCurrentItem] = useState<FocusItem | null>(null);
+
+  // Memoize the minimum date to prevent creating new Date objects on every render
+  const minimumDate = useMemo(() => new Date(), []);
 
   const handleItemPress = (item: FocusItem) => {
     if (Platform.OS === 'ios') {
@@ -86,9 +93,9 @@ export function LaterList({ onStartFocus }: LaterListProps) {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           title: 'Remind me around…',
-          options: ['Cancel', 'Tomorrow', 'In a few days', 'Clear reminder'],
+          options: ['Cancel', 'Tomorrow', 'In a few days', 'Pick a date…', 'Clear reminder'],
           cancelButtonIndex: 0,
-          destructiveButtonIndex: 3,
+          destructiveButtonIndex: 4,
         },
         (buttonIndex) => {
           if (buttonIndex === 1) {
@@ -104,6 +111,13 @@ export function LaterList({ onStartFocus }: LaterListProps) {
             fewDays.setHours(9, 0, 0, 0);
             setItemReminder(item.id, fewDays.toISOString());
           } else if (buttonIndex === 3) {
+            // Pick a date - show date picker
+            console.log('Opening date picker for item:', item.title);
+            setCurrentItem(item);
+            setSelectedDate(new Date());
+            setShowDatePicker(true);
+            console.log('Date picker state set to true');
+          } else if (buttonIndex === 4) {
             // Clear reminder
             setItemReminder(item.id, undefined);
           }
@@ -134,12 +148,41 @@ export function LaterList({ onStartFocus }: LaterListProps) {
             },
           },
           {
+            text: 'Pick a date…',
+            onPress: () => {
+              setCurrentItem(item);
+              setSelectedDate(new Date());
+              setShowDatePicker(true);
+            },
+          },
+          {
             text: 'Clear reminder',
             style: 'destructive',
             onPress: () => setItemReminder(item.id, undefined),
           },
         ]
       );
+    }
+  };
+
+  const handleDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+
+    if (event.type === 'set' && date && currentItem) {
+      // Set to 9 AM on the selected date
+      const reminderDate = new Date(date);
+      reminderDate.setHours(9, 0, 0, 0);
+      setItemReminder(currentItem.id, reminderDate.toISOString());
+
+      if (Platform.OS === 'ios') {
+        setShowDatePicker(false);
+      }
+      setCurrentItem(null);
+    } else if (event.type === 'dismissed') {
+      setShowDatePicker(false);
+      setCurrentItem(null);
     }
   };
 
@@ -213,6 +256,72 @@ export function LaterList({ onStartFocus }: LaterListProps) {
             ))}
           </View>
         </View>
+      )}
+
+      {/* Date Picker Modal for iOS */}
+      {Platform.OS === 'ios' && showDatePicker && (
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={showDatePicker}
+          onRequestClose={() => {
+            setShowDatePicker(false);
+            setCurrentItem(null);
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowDatePicker(false);
+                    setCurrentItem(null);
+                  }}
+                >
+                  <Text style={[styles.modalButton, { color: theme.colors.primary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Pick a date</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (currentItem) {
+                      const reminderDate = new Date(selectedDate);
+                      reminderDate.setHours(9, 0, 0, 0);
+                      setItemReminder(currentItem.id, reminderDate.toISOString());
+                      setShowDatePicker(false);
+                      setCurrentItem(null);
+                    }
+                  }}
+                >
+                  <Text style={[styles.modalButton, styles.modalButtonDone, { color: theme.colors.primary }]}>
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="spinner"
+                onChange={(_event, date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                  }
+                }}
+                minimumDate={minimumDate}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Date Picker for Android */}
+      {Platform.OS === 'android' && showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+          minimumDate={minimumDate}
+        />
       )}
     </View>
   );
@@ -293,6 +402,37 @@ const styles = StyleSheet.create({
   },
   moveButtonText: {
     fontSize: 15,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 34,
+    minHeight: 300,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(60, 60, 67, 0.29)',
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  modalButton: {
+    fontSize: 17,
+    fontWeight: '400',
+  },
+  modalButtonDone: {
     fontWeight: '600',
   },
 });

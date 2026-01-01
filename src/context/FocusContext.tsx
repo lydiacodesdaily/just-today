@@ -83,7 +83,8 @@ export function FocusProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadItems();
-  }, [loadItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Check for rollover periodically (every minute)
   useEffect(() => {
@@ -96,7 +97,8 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, [loadItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Today's Focus actions
   const addToToday = async (title: string, duration: FocusDuration): Promise<FocusItem> => {
