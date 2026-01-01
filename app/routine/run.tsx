@@ -3,7 +3,7 @@
  * Running screen - active routine execution.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Alert, SafeAreaView, ScrollView, TouchableOpacity, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useRun } from '../../src/context/RunContext';
@@ -27,6 +27,7 @@ import { useTimeMilestones } from '../../src/hooks/useTimeMilestones';
 export default function RunScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const completionAlertShown = useRef(false);
   const {
     currentRun,
     setCurrentRun,
@@ -157,12 +158,13 @@ export default function RunScreen() {
 
   // Check if run is completed
   useEffect(() => {
-    if (currentRun?.status === 'completed') {
-      const completeMessage = getRoutineCompleteMessage();
+    if (currentRun?.status === 'completed' && !completionAlertShown.current) {
+      completionAlertShown.current = true;
+      const isFocusItem = currentRun.templateId === 'focus-item';
 
       // If this was a focus item run, mark it complete
       const handleComplete = async () => {
-        if (currentRun.templateId === 'focus-item' && currentRun.tasks[0]?.templateTaskId) {
+        if (isFocusItem && currentRun.tasks[0]?.templateTaskId) {
           const focusItemId = currentRun.tasks[0].templateTaskId;
           await completeFocusItem(focusItemId);
           await endItemFocus(focusItemId);
@@ -172,16 +174,32 @@ export default function RunScreen() {
         router.replace('/');
       };
 
-      Alert.alert(
-        'You did it!',
-        completeMessage.displayMessage,
-        [
-          {
-            text: 'Done',
-            onPress: handleComplete,
-          },
-        ]
-      );
+      if (isFocusItem) {
+        // Today's Focus completion message
+        Alert.alert(
+          "That's it.",
+          "You completed this task.\n\nYou don't have to do anything else right now.",
+          [
+            {
+              text: 'Back to Today',
+              onPress: handleComplete,
+            },
+          ]
+        );
+      } else {
+        // Routine completion message
+        const completeMessage = getRoutineCompleteMessage();
+        Alert.alert(
+          'You did it!',
+          completeMessage.displayMessage,
+          [
+            {
+              text: 'Done',
+              onPress: handleComplete,
+            },
+          ]
+        );
+      }
     } else if (currentRun?.status === 'abandoned') {
       // If this was a focus item run, just end the session (don't complete)
       const handleAbandon = async () => {
@@ -278,6 +296,7 @@ export default function RunScreen() {
   // Calculate progress
   const completedTasks = currentRun.tasks.filter(t => t.status === 'completed' || t.status === 'skipped').length;
   const totalTasks = currentRun.tasks.length;
+  const isFocusItem = currentRun.templateId === 'focus-item';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -294,11 +313,13 @@ export default function RunScreen() {
         </TouchableOpacity>
         <View style={styles.routineInfo}>
           <Text style={[styles.routineName, { color: theme.colors.text }]}>
-            {currentRun.templateName}
+            {isFocusItem ? 'Today Focus' : currentRun.templateName}
           </Text>
-          <Text style={[styles.routineProgress, { color: theme.colors.textSecondary }]}>
-            {completedTasks + 1} of {totalTasks} tasks
-          </Text>
+          {!isFocusItem && (
+            <Text style={[styles.routineProgress, { color: theme.colors.textSecondary }]}>
+              {completedTasks + 1} of {totalTasks} tasks
+            </Text>
+          )}
         </View>
       </View>
 

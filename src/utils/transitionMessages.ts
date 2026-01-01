@@ -79,20 +79,20 @@ export function getRoutineCompleteMessage(): {
 } {
   const completionMessages = [
     {
-      tts: 'You did it. Your routine is complete. Well done.',
-      display: 'You did it.\n\nYour routine is complete.\n\nWell done.',
+      tts: 'Well done. Your routine is complete.',
+      display: 'Well done.\n\nYour routine is complete.',
     },
     {
-      tts: 'All done. You made it through. Great job.',
-      display: 'All done.\n\nYou made it through.\n\nGreat job.',
+      tts: 'Great job. You made it through.',
+      display: 'Great job.\n\nYou made it through.',
     },
     {
-      tts: 'Your routine is finished. You did great today.',
-      display: 'Your routine is finished.\n\nYou did great today.',
+      tts: 'Nicely done. Your routine is finished.',
+      display: 'Nicely done.\n\nYour routine is finished.',
     },
     {
-      tts: "That's everything. You completed your routine. Be proud.",
-      display: "That's everything.\n\nYou completed your routine.\n\nBe proud.",
+      tts: "You did it. That's everything for now.",
+      display: "You did it.\n\nThat's everything for now.",
     },
   ];
 
