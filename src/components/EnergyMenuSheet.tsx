@@ -19,26 +19,18 @@ interface EnergyMenuSheetProps {
 
 export function EnergyMenuSheet({ currentEnergyLevel, onDismiss }: EnergyMenuSheetProps) {
   const theme = useTheme();
-  const { addToToday, todayItems } = useFocus();
+  const { addToToday } = useFocus();
   const [menuItems, setMenuItems] = useState<EnergyMenuItem[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     loadMenuItems();
-  }, [currentEnergyLevel, todayItems]);
-
-  const maxItemsByLevel = { low: 1, steady: 2, flow: 3 };
-
-  const canAddMoreItems = (level: EnergyLevel): boolean => {
-    const currentCount = todayItems.filter(item => !item.completedAt).length;
-    const maxAllowed = maxItemsByLevel[level];
-    return currentCount < maxAllowed;
-  };
+  }, [currentEnergyLevel]);
 
   const loadMenuItems = async () => {
     const items = await getEnergyMenuItemsByLevel(currentEnergyLevel);
     setMenuItems(items.slice(0, 5)); // Max 5 items
-    setIsVisible(items.length > 0 && canAddMoreItems(currentEnergyLevel));
+    setIsVisible(items.length > 0);
   };
 
   const handleAddItem = async (item: EnergyMenuItem) => {
@@ -69,9 +61,6 @@ export function EnergyMenuSheet({ currentEnergyLevel, onDismiss }: EnergyMenuShe
   };
 
   const { icon, label } = energyLabels[currentEnergyLevel];
-  const maxItems = maxItemsByLevel[currentEnergyLevel];
-  const currentCount = todayItems.filter(item => !item.completedAt).length;
-  const remaining = maxItems - currentCount;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
@@ -83,7 +72,7 @@ export function EnergyMenuSheet({ currentEnergyLevel, onDismiss }: EnergyMenuShe
               Want to add something from your Energy Menu?
             </Text>
             <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-              You can add {remaining} more {remaining === 1 ? 'item' : 'items'} for {label}
+              {label} tasks you can add to Today's Focus
             </Text>
           </View>
         </View>

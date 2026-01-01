@@ -9,6 +9,7 @@ import { ThemeProvider } from '../src/context/ThemeContext';
 import { RunProvider } from '../src/context/RunContext';
 import { TodayOptionalProvider } from '../src/context/TodayOptionalContext';
 import { FocusProvider } from '../src/context/FocusContext';
+import { BrainDumpProvider } from '../src/context/BrainDumpContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
@@ -60,7 +61,9 @@ export default function RootLayout() {
           <RunProvider>
             <TodayOptionalProvider>
               <FocusProvider>
-                <RootStack />
+                <BrainDumpProvider>
+                  <RootStack />
+                </BrainDumpProvider>
               </FocusProvider>
             </TodayOptionalProvider>
           </RunProvider>

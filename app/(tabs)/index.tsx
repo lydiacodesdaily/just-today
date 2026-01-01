@@ -17,6 +17,7 @@ import { RoutineCard } from '../../src/components/RoutineCard';
 import { EnergyMenuSheet } from '../../src/components/EnergyMenuSheet';
 import { TodaysFocus } from '../../src/components/TodaysFocus';
 import { LaterList } from '../../src/components/LaterList';
+import { BrainDump } from '../../src/components/BrainDump';
 import { AddFocusItemModal } from '../../src/components/AddFocusItemModal';
 import { getItem, setItem, KEYS } from '../../src/persistence/storage';
 import { FocusItem } from '../../src/models/FocusItem';
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showEnergyMenuSheet, setShowEnergyMenuSheet] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
+  const [isBrainDumpExpanded, setIsBrainDumpExpanded] = useState(false);
 
   // Load energy mode on mount
   useEffect(() => {
@@ -205,6 +207,14 @@ export default function HomeScreen() {
           <LaterList onStartFocus={handleStartFocusItem} />
         </View>
 
+        {/* Brain Dump Section */}
+        <View style={styles.brainDumpSection}>
+          <BrainDump
+            isExpanded={isBrainDumpExpanded}
+            onToggle={() => setIsBrainDumpExpanded(!isBrainDumpExpanded)}
+          />
+        </View>
+
         {/* Energy picker with breathing room */}
         <View style={styles.energySection}>
           <EnergyPicker selectedMode={energyMode} onSelect={handleEnergyChange} />
@@ -360,6 +370,9 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   laterSection: {
+    marginBottom: 32,
+  },
+  brainDumpSection: {
     marginBottom: 32,
   },
   header: {
