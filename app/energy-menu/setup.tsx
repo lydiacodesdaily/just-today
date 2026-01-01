@@ -222,6 +222,13 @@ function ItemFormModal({ item, defaultLevel, onSave, onCancel }: ItemFormModalPr
     onSave(title.trim(), duration);
   };
 
+  // Energy level-specific placeholder examples
+  const placeholdersByLevel: Record<EnergyLevel, string> = {
+    low: 'e.g., Reply to emails, Light admin, Organize notes',
+    steady: 'e.g., Draft content, Review work',
+    flow: 'e.g., Deep focus work, Creative tasks',
+  };
+
   return (
     <Modal transparent animationType="fade" visible={true}>
       <View style={styles.modalOverlay}>
@@ -240,7 +247,7 @@ function ItemFormModal({ item, defaultLevel, onSave, onCancel }: ItemFormModalPr
             ]}
             value={title}
             onChangeText={setTitle}
-            placeholder="e.g., Reply to one email"
+            placeholder={placeholdersByLevel[defaultLevel]}
             placeholderTextColor={theme.colors.textTertiary}
             autoFocus
           />

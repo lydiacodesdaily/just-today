@@ -9,7 +9,8 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { useTheme } from '../constants/theme';
 import { EnergyMenuItem, EnergyLevel } from '../models/EnergyMenuItem';
 import { getEnergyMenuItemsByLevel } from '../persistence/energyMenuStore';
-import { useTodayOptional } from '../context/TodayOptionalContext';
+import { useFocus } from '../context/FocusContext';
+import { FocusDuration } from '../models/FocusItem';
 
 interface EnergyMenuSheetProps {
   currentEnergyLevel: EnergyLevel;
@@ -18,13 +19,21 @@ interface EnergyMenuSheetProps {
 
 export function EnergyMenuSheet({ currentEnergyLevel, onDismiss }: EnergyMenuSheetProps) {
   const theme = useTheme();
-  const { addItemToToday, canAddMoreItems, todayItems } = useTodayOptional();
+  const { addToToday, todayItems } = useFocus();
   const [menuItems, setMenuItems] = useState<EnergyMenuItem[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     loadMenuItems();
-  }, [currentEnergyLevel]);
+  }, [currentEnergyLevel, todayItems]);
+
+  const maxItemsByLevel = { low: 1, steady: 2, flow: 3 };
+
+  const canAddMoreItems = (level: EnergyLevel): boolean => {
+    const currentCount = todayItems.filter(item => !item.completedAt).length;
+    const maxAllowed = maxItemsByLevel[level];
+    return currentCount < maxAllowed;
+  };
 
   const loadMenuItems = async () => {
     const items = await getEnergyMenuItemsByLevel(currentEnergyLevel);
@@ -33,9 +42,15 @@ export function EnergyMenuSheet({ currentEnergyLevel, onDismiss }: EnergyMenuShe
   };
 
   const handleAddItem = async (item: EnergyMenuItem) => {
-    await addItemToToday(item);
-    // Refresh visibility after adding
-    setIsVisible(canAddMoreItems(currentEnergyLevel) && menuItems.length > 0);
+    // Convert EstimatedDuration to FocusDuration
+    const duration = (item.estimatedDuration || '~15 min') as FocusDuration;
+
+    // Add to Today's Focus
+    await addToToday(item.title, duration);
+
+    // Close Energy Menu sheet immediately
+    setIsVisible(false);
+    onDismiss?.();
   };
 
   const handleDismiss = () => {
@@ -54,7 +69,7 @@ export function EnergyMenuSheet({ currentEnergyLevel, onDismiss }: EnergyMenuShe
   };
 
   const { icon, label } = energyLabels[currentEnergyLevel];
-  const maxItems = { low: 1, steady: 2, flow: 3 }[currentEnergyLevel];
+  const maxItems = maxItemsByLevel[currentEnergyLevel];
   const currentCount = todayItems.filter(item => !item.completedAt).length;
   const remaining = maxItems - currentCount;
 

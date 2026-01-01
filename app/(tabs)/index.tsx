@@ -4,13 +4,12 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { EnergyMode, RoutineTemplate } from '../../src/models/RoutineTemplate';
 import { loadTemplates } from '../../src/persistence/templateStore';
-import { createRunFromTemplate, createRunFromOptionalItem, createRunFromFocusItem } from '../../src/engine/runEngine';
+import { createRunFromTemplate, createRunFromFocusItem } from '../../src/engine/runEngine';
 import { useRun } from '../../src/context/RunContext';
-import { useTodayOptional } from '../../src/context/TodayOptionalContext';
 import { useFocus } from '../../src/context/FocusContext';
 import { useTheme } from '../../src/constants/theme';
 import { EnergyPicker } from '../../src/components/EnergyPicker';
@@ -26,8 +25,7 @@ export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { setCurrentRun, currentRun } = useRun();
-  const { todayItems, removeItemFromToday, completeItem, refreshItems } = useTodayOptional();
-  const { startItemFocus, addToToday } = useFocus();
+  const { startItemFocus, addToToday, refreshItems } = useFocus();
   const [energyMode, setEnergyMode] = useState<EnergyMode>('steady');
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
@@ -93,90 +91,6 @@ export default function HomeScreen() {
     setShowEnergyMenuSheet(true);
   };
 
-  const handleOptionalItemAction = (itemId: string) => {
-    const item = todayItems.find(i => i.id === itemId);
-    if (!item) return;
-
-    const startFocus = () => {
-      // Check if there's already a routine in progress
-      if (currentRun && currentRun.status !== 'completed' && currentRun.status !== 'abandoned') {
-        Alert.alert(
-          'Routine In Progress',
-          `You have "${currentRun.templateName}" in progress. Do you want to discard it and start "${item.title}"?`,
-          [
-            {
-              text: 'Cancel',
-              style: 'cancel',
-            },
-            {
-              text: 'Resume Current',
-              onPress: () => router.push('/routine/run'),
-            },
-            {
-              text: 'Start New',
-              style: 'destructive',
-              onPress: () => {
-                const run = createRunFromOptionalItem(item);
-                setCurrentRun(run);
-                setHasShownResumePrompt(true); // Mark as shown since we're actively starting
-                router.push('/routine/run');
-              },
-            },
-          ]
-        );
-        return;
-      }
-
-      // Create a single-task run from the optional item
-      const run = createRunFromOptionalItem(item);
-      setCurrentRun(run);
-      setHasShownResumePrompt(true); // Mark as shown since we're actively starting
-      router.push('/routine/run');
-    };
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Cancel', 'Start Focus', 'Mark Done', 'Remove from Today'],
-          destructiveButtonIndex: 3,
-          cancelButtonIndex: 0,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            startFocus();
-          } else if (buttonIndex === 2) {
-            // Mark done
-            completeItem(itemId);
-          } else if (buttonIndex === 3) {
-            // Remove
-            removeItemFromToday(itemId);
-          }
-        }
-      );
-    } else {
-      // Android - use Alert with buttons
-      Alert.alert(
-        item.title,
-        'What would you like to do?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Start Focus',
-            onPress: startFocus,
-          },
-          {
-            text: 'Mark Done',
-            onPress: () => completeItem(itemId),
-          },
-          {
-            text: 'Remove from Today',
-            style: 'destructive',
-            onPress: () => removeItemFromToday(itemId),
-          },
-        ]
-      );
-    }
-  };
 
   const handleStartRoutine = (template: RoutineTemplate) => {
     // Check if there's already a routine in progress
@@ -302,40 +216,6 @@ export default function HomeScreen() {
             currentEnergyLevel={energyMode}
             onDismiss={() => setShowEnergyMenuSheet(false)}
           />
-        )}
-
-        {/* Optional Items from Energy Menu */}
-        {todayItems.length > 0 && (
-          <View style={styles.optionalSection}>
-            <View style={styles.optionalHeader}>
-              <Text style={[styles.optionalTitle, { color: theme.colors.textSecondary }]}>
-                Optional
-              </Text>
-              <TouchableOpacity onPress={() => router.push('/energy-menu/setup' as any)}>
-                <Text style={[styles.optionalEditLink, { color: theme.colors.primary }]}>
-                  Edit Menu
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {todayItems.filter(item => !item.completedAt).map(item => (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.optionalItem, { backgroundColor: theme.colors.surface }]}
-                onPress={() => handleOptionalItemAction(item.id)}
-              >
-                <View style={styles.optionalItemContent}>
-                  <Text style={[styles.optionalItemTitle, { color: theme.colors.text }]}>
-                    • {item.title}
-                  </Text>
-                  {item.estimatedDuration && (
-                    <Text style={[styles.optionalItemDuration, { color: theme.colors.textSecondary }]}>
-                      {item.estimatedDuration}
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
         )}
 
         {/* Routines section */}
