@@ -19,7 +19,7 @@ export const colors = {
     border: '#E8E4E0',
   },
   sage: {
-    primary: '#9FB2A3',
+    primary: '#6B8570', // Darker for better contrast (4.5:1 against white)
     active: '#879E8E',
     subtle: '#B8C6BC',
   },

@@ -12,117 +12,14 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
-  PanResponder,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { Audio } from 'expo-av';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useTheme } from '../../src/constants/theme';
 import { useThemeContext } from '../../src/context/ThemeContext';
-import { TickingSoundType, ThemePreference } from '../../src/models/Settings';
-
-/**
- * Simple custom slider component
- */
-function VolumeSlider({
-  value,
-  onValueChange,
-  minimumTrackTintColor,
-  maximumTrackTintColor,
-  thumbTintColor
-}: {
-  value: number;
-  onValueChange: (value: number) => void;
-  minimumTrackTintColor: string;
-  maximumTrackTintColor: string;
-  thumbTintColor: string;
-}) {
-  const [sliderWidth, setSliderWidth] = React.useState(0);
-
-  const panResponder = React.useMemo(() =>
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => {
-        const locationX = evt.nativeEvent.locationX;
-        const newValue = Math.max(0, Math.min(1, locationX / sliderWidth));
-        onValueChange(newValue);
-      },
-      onPanResponderMove: (evt) => {
-        const locationX = evt.nativeEvent.locationX;
-        const newValue = Math.max(0, Math.min(1, locationX / sliderWidth));
-        onValueChange(newValue);
-      },
-    }),
-    [sliderWidth, onValueChange]
-  );
-
-  return (
-    <View
-      style={sliderStyles.container}
-      onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
-      {...panResponder.panHandlers}
-    >
-      <View style={[sliderStyles.track, { backgroundColor: maximumTrackTintColor }]} />
-      <View
-        style={[
-          sliderStyles.fillTrack,
-          {
-            backgroundColor: minimumTrackTintColor,
-            width: `${value * 100}%`
-          }
-        ]}
-      />
-      <View
-        style={[
-          sliderStyles.thumb,
-          {
-            backgroundColor: thumbTintColor,
-            left: `${value * 100}%`
-          }
-        ]}
-      />
-    </View>
-  );
-}
-
-const sliderStyles = StyleSheet.create({
-  container: {
-    height: 48,
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  track: {
-    height: 6,
-    borderRadius: 3,
-  },
-  fillTrack: {
-    position: 'absolute',
-    height: 6,
-    borderRadius: 3,
-  },
-  thumb: {
-    position: 'absolute',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginLeft: -14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-});
-
-function getVolumeLabel(volume: number): string {
-  const percentage = Math.round(volume * 100);
-  if (percentage === 0) return 'Off';
-  if (percentage <= 25) return 'Quiet';
-  if (percentage <= 50) return 'Normal';
-  if (percentage <= 75) return 'Loud';
-  return 'Very Loud';
-}
+import { TickingSoundType } from '../../src/models/Settings';
 
 const TICK_TOK_SOUNDS = {
   'tick1-tok1': {
@@ -132,6 +29,10 @@ const TICK_TOK_SOUNDS = {
   'tick2-tok2': {
     tick: require('../../assets/sounds/effects/tick2.wav'),
     tok: require('../../assets/sounds/effects/tok2.wav'),
+  },
+  'beep': {
+    tick: require('../../assets/sounds/effects/beep.wav'),
+    tok: require('../../assets/sounds/effects/beep.wav'),
   },
 };
 
@@ -147,23 +48,34 @@ export default function SettingsScreen() {
 
   const previewTickingSound = async (soundType: TickingSoundType) => {
     try {
+      // Set audio mode to allow playback
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        allowsRecordingIOS: false,
+        staysActiveInBackground: false,
+      });
+
       const sounds = TICK_TOK_SOUNDS[soundType];
       const { sound: tick } = await Audio.Sound.createAsync(sounds.tick, {
         volume: settings.tickingVolume,
       });
-      const { sound: tok } = await Audio.Sound.createAsync(sounds.tok, {
-        volume: settings.tickingVolume,
-      });
 
-      // Play tick-tok pattern
+      // Play tick sound
       await tick.playAsync();
       await new Promise(resolve => setTimeout(resolve, 600));
-      await tok.playAsync();
-      await new Promise(resolve => setTimeout(resolve, 600));
+
+      // For beep, just play once; for others, play the tok sound too
+      if (soundType !== 'beep') {
+        const { sound: tok } = await Audio.Sound.createAsync(sounds.tok, {
+          volume: settings.tickingVolume,
+        });
+        await tok.playAsync();
+        await new Promise(resolve => setTimeout(resolve, 600));
+        await tok.unloadAsync();
+      }
 
       // Cleanup
       await tick.unloadAsync();
-      await tok.unloadAsync();
     } catch (error) {
       console.error('Failed to preview sound:', error);
     }
@@ -196,25 +108,24 @@ export default function SettingsScreen() {
               Choose your preferred theme
             </Text>
 
-            <View style={styles.themeToggleContainer}>
+            <View style={[styles.themeToggleContainer, { borderColor: theme.colors.border }]}>
               <TouchableOpacity
                 style={[
                   styles.themeToggle,
-                  styles.themeToggleLeft,
                   {
                     backgroundColor: themePreference === 'light'
-                      ? theme.colors.primary
+                      ? '#FFFFFF'
                       : 'transparent',
-                    borderColor: theme.colors.border,
                   },
                 ]}
                 onPress={() => setThemePreference('light')}
+                activeOpacity={0.7}
               >
                 <Text style={[
                   styles.themeToggleText,
                   {
                     color: themePreference === 'light'
-                      ? theme.colors.surface
+                      ? theme.colors.primary
                       : theme.colors.text
                   }
                 ]}>
@@ -222,24 +133,25 @@ export default function SettingsScreen() {
                 </Text>
               </TouchableOpacity>
 
+              <View style={[styles.themeDivider, { backgroundColor: theme.colors.border }]} />
+
               <TouchableOpacity
                 style={[
                   styles.themeToggle,
-                  styles.themeToggleMiddle,
                   {
                     backgroundColor: themePreference === 'dark'
-                      ? theme.colors.primary
+                      ? '#2A2C31'
                       : 'transparent',
-                    borderColor: theme.colors.border,
                   },
                 ]}
                 onPress={() => setThemePreference('dark')}
+                activeOpacity={0.7}
               >
                 <Text style={[
                   styles.themeToggleText,
                   {
                     color: themePreference === 'dark'
-                      ? theme.colors.surface
+                      ? '#FFFFFF'
                       : theme.colors.text
                   }
                 ]}>
@@ -247,24 +159,25 @@ export default function SettingsScreen() {
                 </Text>
               </TouchableOpacity>
 
+              <View style={[styles.themeDivider, { backgroundColor: theme.colors.border }]} />
+
               <TouchableOpacity
                 style={[
                   styles.themeToggle,
-                  styles.themeToggleRight,
                   {
                     backgroundColor: themePreference === 'system'
                       ? theme.colors.primary
                       : 'transparent',
-                    borderColor: theme.colors.border,
                   },
                 ]}
                 onPress={() => setThemePreference('system')}
+                activeOpacity={0.7}
               >
                 <Text style={[
                   styles.themeToggleText,
                   {
                     color: themePreference === 'system'
-                      ? theme.colors.surface
+                      ? '#FFFFFF'
                       : theme.colors.text
                   }
                 ]}>
@@ -367,50 +280,6 @@ export default function SettingsScreen() {
                     style={[
                       styles.soundOption,
                       {
-                        backgroundColor: settings.tickingSoundType === 'tick1-tok1'
-                          ? theme.colors.primary + '15'
-                          : 'transparent',
-                        borderColor: settings.tickingSoundType === 'tick1-tok1'
-                          ? theme.colors.primary
-                          : theme.colors.border,
-                      },
-                    ]}
-                    onPress={() => updateSettings({ tickingSoundType: 'tick1-tok1' })}
-                  >
-                    <View style={styles.soundOptionContent}>
-                      <Text style={[
-                        styles.soundOptionLabel,
-                        {
-                          color: settings.tickingSoundType === 'tick1-tok1'
-                            ? theme.colors.primary
-                            : theme.colors.text
-                        }
-                      ]}>
-                        Gentle
-                      </Text>
-                      <Text style={[styles.soundOptionSubtext, { color: theme.colors.textSecondary }]}>
-                        Soft tick-tok
-                      </Text>
-                    </View>
-                    {settings.tickingSoundType === 'tick1-tok1' && (
-                      <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
-                        <Text style={[styles.selectedCheck, { color: theme.colors.text }]}>✓</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.previewButton, { borderColor: theme.colors.border }]}
-                    onPress={() => previewTickingSound('tick1-tok1')}
-                  >
-                    <Text style={[styles.previewButtonText, { color: theme.colors.primary }]}>▶</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.soundOptionWrapper}>
-                  <TouchableOpacity
-                    style={[
-                      styles.soundOption,
-                      {
                         backgroundColor: settings.tickingSoundType === 'tick2-tok2'
                           ? theme.colors.primary + '15'
                           : 'transparent',
@@ -438,13 +307,101 @@ export default function SettingsScreen() {
                     </View>
                     {settings.tickingSoundType === 'tick2-tok2' && (
                       <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
-                        <Text style={[styles.selectedCheck, { color: theme.colors.text }]}>✓</Text>
+                        <Text style={[styles.selectedCheck, { color: theme.colors.surface }]}>✓</Text>
                       </View>
                     )}
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.previewButton, { borderColor: theme.colors.border }]}
                     onPress={() => previewTickingSound('tick2-tok2')}
+                  >
+                    <Text style={[styles.previewButtonText, { color: theme.colors.primary }]}>▶</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.soundOptionWrapper}>
+                  <TouchableOpacity
+                    style={[
+                      styles.soundOption,
+                      {
+                        backgroundColor: settings.tickingSoundType === 'tick1-tok1'
+                          ? theme.colors.primary + '15'
+                          : 'transparent',
+                        borderColor: settings.tickingSoundType === 'tick1-tok1'
+                          ? theme.colors.primary
+                          : theme.colors.border,
+                      },
+                    ]}
+                    onPress={() => updateSettings({ tickingSoundType: 'tick1-tok1' })}
+                  >
+                    <View style={styles.soundOptionContent}>
+                      <Text style={[
+                        styles.soundOptionLabel,
+                        {
+                          color: settings.tickingSoundType === 'tick1-tok1'
+                            ? theme.colors.primary
+                            : theme.colors.text
+                        }
+                      ]}>
+                        Gentle
+                      </Text>
+                      <Text style={[styles.soundOptionSubtext, { color: theme.colors.textSecondary }]}>
+                        Soft tick-tok
+                      </Text>
+                    </View>
+                    {settings.tickingSoundType === 'tick1-tok1' && (
+                      <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
+                        <Text style={[styles.selectedCheck, { color: theme.colors.surface }]}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.previewButton, { borderColor: theme.colors.border }]}
+                    onPress={() => previewTickingSound('tick1-tok1')}
+                  >
+                    <Text style={[styles.previewButtonText, { color: theme.colors.primary }]}>▶</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.soundOptionWrapper}>
+                  <TouchableOpacity
+                    style={[
+                      styles.soundOption,
+                      {
+                        backgroundColor: settings.tickingSoundType === 'beep'
+                          ? theme.colors.primary + '15'
+                          : 'transparent',
+                        borderColor: settings.tickingSoundType === 'beep'
+                          ? theme.colors.primary
+                          : theme.colors.border,
+                      },
+                    ]}
+                    onPress={() => updateSettings({ tickingSoundType: 'beep' })}
+                  >
+                    <View style={styles.soundOptionContent}>
+                      <Text style={[
+                        styles.soundOptionLabel,
+                        {
+                          color: settings.tickingSoundType === 'beep'
+                            ? theme.colors.primary
+                            : theme.colors.text
+                        }
+                      ]}>
+                        Beep
+                      </Text>
+                      <Text style={[styles.soundOptionSubtext, { color: theme.colors.textSecondary }]}>
+                        Simple digital beep
+                      </Text>
+                    </View>
+                    {settings.tickingSoundType === 'beep' && (
+                      <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
+                        <Text style={[styles.selectedCheck, { color: theme.colors.surface }]}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.previewButton, { borderColor: theme.colors.border }]}
+                    onPress={() => previewTickingSound('beep')}
                   >
                     <Text style={[styles.previewButtonText, { color: theme.colors.primary }]}>▶</Text>
                   </TouchableOpacity>
@@ -491,12 +448,16 @@ export default function SettingsScreen() {
                     Voice
                   </Text>
                   <Text style={[styles.volumeValue, { color: theme.colors.primary }]}>
-                    {getVolumeLabel(settings.ttsVolume)}
+                    {Math.round(settings.ttsVolume * 100)}%
                   </Text>
                 </View>
-                <VolumeSlider
+                <Slider
+                  style={styles.slider}
                   value={settings.ttsVolume}
                   onValueChange={(value: number) => updateSettings({ ttsVolume: value })}
+                  minimumValue={0}
+                  maximumValue={1}
+                  step={0.01}
                   minimumTrackTintColor={theme.colors.primary}
                   maximumTrackTintColor={theme.colors.border}
                   thumbTintColor={theme.colors.primary}
@@ -510,12 +471,16 @@ export default function SettingsScreen() {
                     Chimes & Alerts
                   </Text>
                   <Text style={[styles.volumeValue, { color: theme.colors.primary }]}>
-                    {getVolumeLabel(settings.announcementVolume)}
+                    {Math.round(settings.announcementVolume * 100)}%
                   </Text>
                 </View>
-                <VolumeSlider
+                <Slider
+                  style={styles.slider}
                   value={settings.announcementVolume}
                   onValueChange={(value: number) => updateSettings({ announcementVolume: value })}
+                  minimumValue={0}
+                  maximumValue={1}
+                  step={0.01}
                   minimumTrackTintColor={theme.colors.primary}
                   maximumTrackTintColor={theme.colors.border}
                   thumbTintColor={theme.colors.primary}
@@ -529,12 +494,16 @@ export default function SettingsScreen() {
                     Ticking
                   </Text>
                   <Text style={[styles.volumeValue, { color: theme.colors.primary }]}>
-                    {getVolumeLabel(settings.tickingVolume)}
+                    {Math.round(settings.tickingVolume * 100)}%
                   </Text>
                 </View>
-                <VolumeSlider
+                <Slider
+                  style={styles.slider}
                   value={settings.tickingVolume}
                   onValueChange={(value: number) => updateSettings({ tickingVolume: value })}
+                  minimumValue={0}
+                  maximumValue={1}
+                  step={0.01}
                   minimumTrackTintColor={theme.colors.primary}
                   maximumTrackTintColor={theme.colors.border}
                   thumbTintColor={theme.colors.primary}
@@ -651,6 +620,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 10,
     overflow: 'hidden',
+    borderWidth: 1.5,
   },
   themeToggle: {
     flex: 1,
@@ -658,20 +628,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
   },
-  themeToggleLeft: {
-    borderTopLeftRadius: 10,
-    borderBottomLeftRadius: 10,
-    borderRightWidth: 0,
-  },
-  themeToggleMiddle: {
-    borderRadius: 0,
-    borderRightWidth: 0,
-  },
-  themeToggleRight: {
-    borderTopRightRadius: 10,
-    borderBottomRightRadius: 10,
+  themeDivider: {
+    width: 1.5,
   },
   themeToggleText: {
     fontSize: 15,
@@ -692,15 +651,15 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
+    height: 64,
   },
   previewButton: {
-    width: 48,
-    height: 48,
+    width: 64,
+    height: 64,
     borderRadius: 12,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
   },
   previewButtonText: {
     fontSize: 16,
@@ -747,6 +706,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: -0.5,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
   },
   footer: {
     alignItems: 'center',

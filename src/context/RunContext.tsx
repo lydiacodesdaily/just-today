@@ -19,6 +19,7 @@ import {
   toggleAutoAdvance,
 } from '../engine/runEngine';
 import { saveRunState, loadRunState, clearRunState } from '../persistence/runStateStore';
+import { incrementTodayCounter, addEnergyMode } from '../persistence/snapshotStore';
 
 interface RunContextValue {
   currentRun: RoutineRun | null;
@@ -61,6 +62,16 @@ export function RunProvider({ children }: { children: React.ReactNode }) {
 
     if (currentRun) {
       saveRunState(currentRun);
+
+      // Track energy mode when run starts
+      if (currentRun.status === 'running' && currentRun.startedAt) {
+        addEnergyMode(currentRun.energyMode);
+      }
+
+      // Track completion when run is completed
+      if (currentRun.status === 'completed' && currentRun.endedAt) {
+        incrementTodayCounter('routineRunsCompleted');
+      }
     } else {
       clearRunState();
     }

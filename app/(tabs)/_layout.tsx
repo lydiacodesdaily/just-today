@@ -53,6 +53,21 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="reflections"
+        options={{
+          title: 'Reflections',
+          tabBarLabel: 'Reflections',
+          tabBarIcon: ({ color, focused }) => (
+            <Feather
+              name="book-open"
+              size={24}
+              color={color}
+              style={{ opacity: focused ? 1 : 0.6 }}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',

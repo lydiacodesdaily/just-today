@@ -3,7 +3,7 @@
  * User preferences for audio, announcements, and behavior.
  */
 
-export type TickingSoundType = 'tick1-tok1' | 'tick2-tok2';
+export type TickingSoundType = 'tick1-tok1' | 'tick2-tok2' | 'beep';
 export type MilestoneInterval = 1 | 5;
 export type ThemePreference = 'light' | 'dark' | 'system';
 
@@ -47,6 +47,6 @@ export const DEFAULT_SETTINGS: Settings = {
   ttsVolume: 0.8,
   announcementVolume: 0.7,
   tickingVolume: 0.5,
-  tickingSoundType: 'tick1-tok1',
+  tickingSoundType: 'tick2-tok2',
   themePreference: 'system',
 };

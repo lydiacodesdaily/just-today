@@ -5,6 +5,7 @@
 
 import { FocusItem, FocusDuration } from '../models/FocusItem';
 import { getItem, setItem, KEYS } from './storage';
+import { incrementTodayCounter, addFocusTime } from './snapshotStore';
 
 /**
  * Load all focus items (Today + Later)
@@ -108,6 +109,8 @@ export async function moveToLater(itemId: string, reminderDate?: string): Promis
 
   if (itemIndex === -1) return;
 
+  const wasInToday = items[itemIndex].location === 'today';
+
   items[itemIndex] = {
     ...items[itemIndex],
     location: 'later',
@@ -116,6 +119,11 @@ export async function moveToLater(itemId: string, reminderDate?: string): Promis
   };
 
   await saveFocusItems(items);
+
+  // Track movement to Later in daily snapshot (only if coming from Today)
+  if (wasInToday) {
+    await incrementTodayCounter('itemsMovedToLater');
+  }
 }
 
 /**
@@ -151,6 +159,9 @@ export async function markFocusItemComplete(itemId: string): Promise<void> {
   };
 
   await saveFocusItems(items);
+
+  // Track completion in daily snapshot
+  await incrementTodayCounter('focusItemsCompleted');
 }
 
 /**
@@ -205,12 +216,26 @@ export async function endFocusSession(itemId: string): Promise<void> {
 
   if (itemIndex === -1) return;
 
+  const item = items[itemIndex];
+  const endTime = new Date().toISOString();
+
   items[itemIndex] = {
-    ...items[itemIndex],
-    focusEndedAt: new Date().toISOString(),
+    ...item,
+    focusEndedAt: endTime,
   };
 
   await saveFocusItems(items);
+
+  // Track focus time in daily snapshot if we have a start time
+  if (item.focusStartedAt) {
+    const startMs = new Date(item.focusStartedAt).getTime();
+    const endMs = new Date(endTime).getTime();
+    const durationMs = endMs - startMs;
+
+    if (durationMs > 0) {
+      await addFocusTime(durationMs);
+    }
+  }
 }
 
 /**

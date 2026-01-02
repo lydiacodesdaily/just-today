@@ -3,7 +3,7 @@
  * Context provider for managing Today's Focus and Later items
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { FocusItem, FocusDuration } from '../models/FocusItem';
 import {
   loadTodayFocusItems,
@@ -101,38 +101,40 @@ export function FocusProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Today's Focus actions
-  const addToToday = async (title: string, duration: FocusDuration): Promise<FocusItem> => {
+  const addToToday = useCallback(async (title: string, duration: FocusDuration): Promise<FocusItem> => {
     const newItem = await createTodayFocusItem(title, duration);
     setTodayItems((prev) => [...prev, newItem]);
     return newItem;
-  };
+  }, []);
 
-  const moveItemToLater = async (itemId: string, reminderDate?: string): Promise<void> => {
+  const moveItemToLater = useCallback(async (itemId: string, reminderDate?: string): Promise<void> => {
     await moveToLater(itemId, reminderDate);
-    const item = todayItems.find((i) => i.id === itemId);
-    if (item) {
-      setTodayItems((prev) => prev.filter((i) => i.id !== itemId));
-      setLaterItems((prev) => [
-        ...prev,
-        { ...item, location: 'later', movedToLaterAt: new Date().toISOString(), reminderDate },
-      ]);
-    }
-  };
+    setTodayItems((prev) => {
+      const item = prev.find((i) => i.id === itemId);
+      if (item) {
+        setLaterItems((laterPrev) => [
+          ...laterPrev,
+          { ...item, location: 'later', movedToLaterAt: new Date().toISOString(), reminderDate },
+        ]);
+      }
+      return prev.filter((i) => i.id !== itemId);
+    });
+  }, []);
 
-  const completeItem = async (itemId: string): Promise<void> => {
+  const completeItem = useCallback(async (itemId: string): Promise<void> => {
     await markFocusItemComplete(itemId);
     setTodayItems((prev) => prev.filter((i) => i.id !== itemId));
     setLaterItems((prev) => prev.filter((i) => i.id !== itemId));
-  };
+  }, []);
 
-  const deleteItem = async (itemId: string): Promise<void> => {
+  const deleteItem = useCallback(async (itemId: string): Promise<void> => {
     await deleteFocusItem(itemId);
     setTodayItems((prev) => prev.filter((i) => i.id !== itemId));
     setLaterItems((prev) => prev.filter((i) => i.id !== itemId));
-  };
+  }, []);
 
   // Later actions
-  const addToLater = async (
+  const addToLater = useCallback(async (
     title: string,
     duration: FocusDuration,
     reminderDate?: string
@@ -140,60 +142,81 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     const newItem = await createLaterItem(title, duration, reminderDate);
     setLaterItems((prev) => [...prev, newItem]);
     return newItem;
-  };
+  }, []);
 
-  const moveItemToToday = async (itemId: string): Promise<void> => {
+  const moveItemToToday = useCallback(async (itemId: string): Promise<void> => {
     await moveToToday(itemId);
-    const item = laterItems.find((i) => i.id === itemId);
-    if (item) {
-      setLaterItems((prev) => prev.filter((i) => i.id !== itemId));
-      setTodayItems((prev) => [...prev, { ...item, location: 'today', addedToTodayAt: new Date().toISOString() }]);
-    }
-  };
+    setLaterItems((prev) => {
+      const item = prev.find((i) => i.id === itemId);
+      if (item) {
+        setTodayItems((todayPrev) => [...todayPrev, { ...item, location: 'today', addedToTodayAt: new Date().toISOString() }]);
+      }
+      return prev.filter((i) => i.id !== itemId);
+    });
+  }, []);
 
-  const setItemReminder = async (itemId: string, reminderDate?: string): Promise<void> => {
+  const setItemReminder = useCallback(async (itemId: string, reminderDate?: string): Promise<void> => {
     await updateReminderDate(itemId, reminderDate);
     setLaterItems((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, reminderDate } : item))
     );
-  };
+  }, []);
 
   // Focus session tracking
-  const startItemFocus = async (itemId: string): Promise<void> => {
+  const startItemFocus = useCallback(async (itemId: string): Promise<void> => {
     await startFocusSession(itemId);
-  };
+  }, []);
 
-  const endItemFocus = async (itemId: string): Promise<void> => {
+  const endItemFocus = useCallback(async (itemId: string): Promise<void> => {
     await endFocusSession(itemId);
-  };
+  }, []);
 
   // Utility
-  const refreshItems = async (): Promise<void> => {
+  const refreshItems = useCallback(async (): Promise<void> => {
     await loadItems();
-  };
+  }, [loadItems]);
 
-  const dismissRolloverMessage = async (): Promise<void> => {
+  const dismissRolloverMessage = useCallback(async (): Promise<void> => {
     await clearRolloverTracking();
     setRolloverCount(0);
-  };
+  }, []);
 
-  const value: FocusContextValue = {
-    todayItems,
-    laterItems,
-    isLoading,
-    rolloverCount,
-    addToToday,
-    moveItemToLater,
-    completeItem,
-    deleteItem,
-    addToLater,
-    moveItemToToday,
-    setItemReminder,
-    startItemFocus,
-    endItemFocus,
-    refreshItems,
-    dismissRolloverMessage,
-  };
+  const value: FocusContextValue = useMemo(
+    () => ({
+      todayItems,
+      laterItems,
+      isLoading,
+      rolloverCount,
+      addToToday,
+      moveItemToLater,
+      completeItem,
+      deleteItem,
+      addToLater,
+      moveItemToToday,
+      setItemReminder,
+      startItemFocus,
+      endItemFocus,
+      refreshItems,
+      dismissRolloverMessage,
+    }),
+    [
+      todayItems,
+      laterItems,
+      isLoading,
+      rolloverCount,
+      addToToday,
+      moveItemToLater,
+      completeItem,
+      deleteItem,
+      addToLater,
+      moveItemToToday,
+      setItemReminder,
+      startItemFocus,
+      endItemFocus,
+      refreshItems,
+      dismissRolloverMessage,
+    ]
+  );
 
   return <FocusContext.Provider value={value}>{children}</FocusContext.Provider>;
 }
