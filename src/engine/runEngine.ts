@@ -12,6 +12,7 @@ import {
   getTaskCompletionMessage,
   getTaskSkipMessage,
   getRoutineCompleteMessage,
+  getFocusTaskCompleteMessage,
 } from '../utils/transitionMessages';
 import {
   sendTaskTransitionNotification,
@@ -291,7 +292,11 @@ export async function advanceToNextTask(run: RoutineRun): Promise<RoutineRun> {
 
   if (!nextTask) {
     // No more tasks - complete the run
-    const completeMessage = getRoutineCompleteMessage();
+    // Use different message for focus items vs routines
+    const isFocusItem = run.templateId === 'focus-item' || run.templateId === 'optional-item';
+    const completeMessage = isFocusItem
+      ? getFocusTaskCompleteMessage()
+      : getRoutineCompleteMessage();
     speak(completeMessage.ttsMessage);
     sendRoutineCompleteNotification();
 
@@ -352,7 +357,11 @@ export async function skipTask(
 
     if (!nextTask) {
       // No more tasks
-      const completeMessage = getRoutineCompleteMessage();
+      // Use different message for focus items vs routines
+      const isFocusItem = run.templateId === 'focus-item' || run.templateId === 'optional-item';
+      const completeMessage = isFocusItem
+        ? getFocusTaskCompleteMessage()
+        : getRoutineCompleteMessage();
       speak(completeMessage.ttsMessage);
       sendRoutineCompleteNotification();
 

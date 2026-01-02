@@ -106,6 +106,41 @@ export function getRoutineCompleteMessage(): {
 }
 
 /**
+ * Generates a completion message for a single focus task.
+ */
+export function getFocusTaskCompleteMessage(): {
+  ttsMessage: string;
+  displayMessage: string;
+} {
+  const completionMessages = [
+    {
+      tts: 'Well done. Your task is complete.',
+      display: 'Well done.\n\nYour task is complete.',
+    },
+    {
+      tts: 'Great job. You finished it.',
+      display: 'Great job.\n\nYou finished it.',
+    },
+    {
+      tts: 'Nicely done. Task complete.',
+      display: 'Nicely done.\n\nTask complete.',
+    },
+    {
+      tts: "You did it. That's done.",
+      display: "You did it.\n\nThat's done.",
+    },
+  ];
+
+  const message =
+    completionMessages[Math.floor(Math.random() * completionMessages.length)];
+
+  return {
+    ttsMessage: message.tts,
+    displayMessage: message.display,
+  };
+}
+
+/**
  * Generates an encouraging message for time milestones during a task.
  * Used to gently notify when a certain amount of time has passed.
  */

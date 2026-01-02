@@ -70,7 +70,11 @@ export function RunProvider({ children }: { children: React.ReactNode }) {
 
       // Track completion when run is completed
       if (currentRun.status === 'completed' && currentRun.endedAt) {
-        incrementTodayCounter('routineRunsCompleted');
+        // Only increment routineRunsCompleted for actual routines, not focus items
+        const isFocusItem = currentRun.templateId === 'focus-item' || currentRun.templateId === 'optional-item';
+        if (!isFocusItem) {
+          incrementTodayCounter('routineRunsCompleted');
+        }
       }
     } else {
       clearRunState();
