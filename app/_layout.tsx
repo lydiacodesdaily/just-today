@@ -10,6 +10,7 @@ import { RunProvider } from '../src/context/RunContext';
 import { TodayOptionalProvider } from '../src/context/TodayOptionalContext';
 import { FocusProvider } from '../src/context/FocusContext';
 import { BrainDumpProvider } from '../src/context/BrainDumpContext';
+import { GuidesProvider } from '../src/context/GuidesContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
@@ -27,6 +28,12 @@ function RootStack() {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="guides"
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen
         name="routine/[id]"
         options={{
@@ -62,7 +69,9 @@ export default function RootLayout() {
             <TodayOptionalProvider>
               <FocusProvider>
                 <BrainDumpProvider>
-                  <RootStack />
+                  <GuidesProvider>
+                    <RootStack />
+                  </GuidesProvider>
                 </BrainDumpProvider>
               </FocusProvider>
             </TodayOptionalProvider>

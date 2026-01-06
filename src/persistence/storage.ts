@@ -17,6 +17,8 @@ const KEYS = {
   FOCUS_TODAY_DATE: '@just-today/focus-today-date',
   BRAIN_DUMP_ITEMS: '@just-today/brain-dump-items',
   DAILY_SNAPSHOTS: '@just-today/daily-snapshots',
+  CUSTOM_GUIDES: '@just-today/custom-guides',
+  ACTIVE_GUIDE_SESSION: '@just-today/active-guide-session',
 } as const;
 
 export async function getItem<T>(key: string): Promise<T | null> {
