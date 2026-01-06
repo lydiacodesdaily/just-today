@@ -47,7 +47,7 @@ export const useRoutineStore = create<RoutineStore>()(
       // Add new template
       addTemplate: (name, description) => {
         const now = Date.now();
-        const id = `routine-${now}-${Math.random().toString(36).substr(2, 9)}`;
+        const id = `routine-${now}-${Math.random().toString(36).substring(2, 11)}`;
 
         const template: RoutineTemplate = {
           id,
@@ -91,7 +91,7 @@ export const useRoutineStore = create<RoutineStore>()(
 
             const newTask: RoutineTask = {
               ...task,
-              id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              id: `task-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
               order: template.tasks.length,
             };
 

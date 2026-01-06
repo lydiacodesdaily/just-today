@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { RoutineTemplate, EnergyMode } from '@/src/models/RoutineTemplate';
 import { deriveTasksForEnergyMode, useRoutineStore } from '@/src/stores/routineStore';
+import { RoutineCreationModal } from './RoutineCreationModal';
 
 interface RoutineCardProps {
   routine: RoutineTemplate;
@@ -67,6 +68,7 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
 
   const VISIBLE_ROUTINES_LIMIT = 2;
   const [showAll, setShowAll] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const visibleRoutines = showAll ? templates : templates.slice(0, VISIBLE_ROUTINES_LIMIT);
 
@@ -85,53 +87,76 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
 
   if (templates.length === 0) {
     return (
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold text-calm-text">{getTitle()}</h2>
-        <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
-          <p className="text-calm-muted mb-4">No routines created yet</p>
-          <button className="text-calm-text hover:underline text-sm">
-            Create your first routine
-          </button>
-        </div>
-      </section>
+      <>
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-calm-text">{getTitle()}</h2>
+          <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
+            <p className="text-calm-muted mb-4">No routines created yet</p>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="text-calm-text hover:underline text-sm"
+            >
+              Create your first routine
+            </button>
+          </div>
+        </section>
+        <RoutineCreationModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+        />
+      </>
     );
   }
 
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-semibold text-calm-text">{getTitle()}</h2>
-
-      <div className="space-y-3">
-        {visibleRoutines.map((routine) => (
-          <RoutineCard
-            key={routine.id}
-            routine={routine}
-            energyMode={energyMode}
-            onStart={() => {
-              // TODO: Start routine (will be implemented with routine run functionality)
-              console.log('Starting routine:', routine.id);
-            }}
-          />
-        ))}
-
-        {templates.length > VISIBLE_ROUTINES_LIMIT && !showAll && (
+    <>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-calm-text">{getTitle()}</h2>
           <button
-            onClick={() => setShowAll(true)}
-            className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-4 py-2 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
           >
-            View all routines
+            New
           </button>
-        )}
+        </div>
 
-        {showAll && templates.length > VISIBLE_ROUTINES_LIMIT && (
-          <button
-            onClick={() => setShowAll(false)}
-            className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
-          >
-            Show less
-          </button>
-        )}
-      </div>
-    </section>
+        <div className="space-y-3">
+          {visibleRoutines.map((routine) => (
+            <RoutineCard
+              key={routine.id}
+              routine={routine}
+              energyMode={energyMode}
+              onStart={() => {
+                // TODO: Start routine (will be implemented with routine run functionality)
+                console.log('Starting routine:', routine.id);
+              }}
+            />
+          ))}
+
+          {templates.length > VISIBLE_ROUTINES_LIMIT && !showAll && (
+            <button
+              onClick={() => setShowAll(true)}
+              className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
+            >
+              View all routines
+            </button>
+          )}
+
+          {showAll && templates.length > VISIBLE_ROUTINES_LIMIT && (
+            <button
+              onClick={() => setShowAll(false)}
+              className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
+            >
+              Show less
+            </button>
+          )}
+        </div>
+      </section>
+      <RoutineCreationModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
+    </>
   );
 }
