@@ -57,6 +57,7 @@ export default function TabLayout() {
         options={{
           title: 'Guides',
           tabBarLabel: 'Guides',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Feather
               name="compass"

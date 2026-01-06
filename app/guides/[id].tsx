@@ -17,7 +17,7 @@ export default function GuideDetailScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { allGuides, activeSession, startSession, toggleItem, endSession, deleteGuide, editGuide } = useGuides();
+  const { allGuides, activeSession, startSession, toggleItem, resetSession, deleteGuide, editGuide } = useGuides();
 
   const [guide, setGuide] = useState<Guide | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -34,13 +34,10 @@ export default function GuideDetailScreen() {
     }
   }, [id, allGuides]);
 
-  // Auto-save and cleanup on unmount
-  useEffect(() => {
-    return () => {
-      // End session when leaving the screen
-      endSession();
-    };
-  }, []);
+  // Session is automatically saved by the context on changes
+  // No need to end session on unmount - let it persist until:
+  // 1. User explicitly ends it, or
+  // 2. It becomes stale (10 minutes)
 
   if (!guide) {
     return (
@@ -87,6 +84,19 @@ export default function GuideDetailScreen() {
         onPress: async () => {
           await deleteGuide(id);
           router.back();
+        },
+      },
+    ]);
+  };
+
+  const handleResetSession = () => {
+    Alert.alert('Reset Checklist', 'Clear all checkmarks and start fresh?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: async () => {
+          await resetSession();
         },
       },
     ]);
@@ -141,6 +151,20 @@ export default function GuideDetailScreen() {
           ))}
         </View>
 
+        {/* Reset Button */}
+        {checkedCount > 0 && (
+          <View style={styles.resetContainer}>
+            <TouchableOpacity
+              style={[styles.resetButton, { borderColor: theme.colors.border }]}
+              onPress={handleResetSession}
+              activeOpacity={0.7}
+            >
+              <Feather name="rotate-ccw" size={18} color={theme.colors.textSecondary} />
+              <Text style={[styles.resetButtonText, { color: theme.colors.textSecondary }]}>Reset Checklist</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Actions (for custom guides) */}
         {!guide.isDefault && (
           <View style={styles.actions}>
@@ -165,7 +189,8 @@ export default function GuideDetailScreen() {
 
         {/* Helper text */}
         <Text style={[styles.helperText, { color: theme.colors.textTertiary }]}>
-          Checkmarks will reset when you close this guide or after 10 minutes of inactivity.
+          Your progress stays saved when you navigate away. Checkmarks auto-reset after 60 minutes of
+          inactivity.
         </Text>
       </ScrollView>
 
@@ -257,6 +282,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
+  },
+  resetContainer: {
+    marginBottom: 20,
+  },
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  resetButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
   },
   actions: {
     gap: 12,

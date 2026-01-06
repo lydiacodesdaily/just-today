@@ -37,6 +37,7 @@ interface GuidesContextValue {
   // Session actions
   startSession: (guideId: string) => Promise<void>;
   toggleItem: (itemId: string) => void;
+  resetSession: () => Promise<void>;
   endSession: () => Promise<void>;
 
   // Validation
@@ -208,6 +209,21 @@ export function GuidesProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const resetSession = async (): Promise<void> => {
+    if (!activeSession) return;
+
+    // Reset all checkmarks but keep the session active
+    setActiveSession((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        checkedItems: [],
+        lastActivityAt: new Date().toISOString(),
+      };
+    });
+  };
+
   const endSession = async (): Promise<void> => {
     setActiveSession(null);
     await clearActiveSession();
@@ -239,6 +255,7 @@ export function GuidesProvider({ children }: { children: ReactNode }) {
     duplicateGuide,
     startSession,
     toggleItem,
+    resetSession,
     endSession,
     canCreateCustomGuide,
     getCustomGuideCount,

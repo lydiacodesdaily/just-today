@@ -101,13 +101,13 @@ export async function loadActiveSession(): Promise<GuideSession | null> {
   try {
     const session = await getItem<GuideSession>(KEYS.ACTIVE_GUIDE_SESSION);
 
-    // Check if session is stale (>10 minutes old)
+    // Check if session is stale (>60 minutes old)
     if (session) {
       const lastActivity = new Date(session.lastActivityAt);
       const now = new Date();
       const minutesInactive = (now.getTime() - lastActivity.getTime()) / 1000 / 60;
 
-      if (minutesInactive >= 10) {
+      if (minutesInactive >= 60) {
         // Auto-clear stale session
         await clearActiveSession();
         return null;
