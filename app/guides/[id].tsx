@@ -10,15 +10,17 @@ import { Feather } from '@expo/vector-icons';
 import { useGuides } from '../../src/context/GuidesContext';
 import { useTheme } from '../../src/constants/theme';
 import { GuideItemCheckbox } from '../../src/components/GuideItemCheckbox';
+import { CreateGuideModal } from '../../src/components/CreateGuideModal';
 import { Guide, GuideItem } from '../../src/models/Guide';
 
 export default function GuideDetailScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { allGuides, activeSession, startSession, toggleItem, endSession, deleteGuide } = useGuides();
+  const { allGuides, activeSession, startSession, toggleItem, endSession, deleteGuide, editGuide } = useGuides();
 
   const [guide, setGuide] = useState<Guide | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Load guide when component mounts
   useEffect(() => {
@@ -58,6 +60,23 @@ export default function GuideDetailScreen() {
 
   const checkedCount = itemsWithState.filter((item) => item.checked).length;
   const totalCount = itemsWithState.length;
+
+  const handleEditGuide = () => {
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async (title: string, items: string[]) => {
+    try {
+      await editGuide(id, title, items);
+      // Reload guide after edit
+      const updatedGuide = allGuides.find((g) => g.id === id);
+      if (updatedGuide) {
+        setGuide(updatedGuide);
+      }
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update guide');
+    }
+  };
 
   const handleDeleteGuide = () => {
     Alert.alert('Delete Guide', 'Are you sure you want to delete this custom guide?', [
@@ -127,6 +146,14 @@ export default function GuideDetailScreen() {
           <View style={styles.actions}>
             <TouchableOpacity
               style={[styles.actionButton, { borderColor: theme.colors.border }]}
+              onPress={handleEditGuide}
+              activeOpacity={0.7}
+            >
+              <Feather name="edit-2" size={18} color={theme.colors.text} />
+              <Text style={[styles.actionButtonText, { color: theme.colors.text }]}>Edit Guide</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, { borderColor: theme.colors.border }]}
               onPress={handleDeleteGuide}
               activeOpacity={0.7}
             >
@@ -141,6 +168,20 @@ export default function GuideDetailScreen() {
           Checkmarks will reset when you close this guide or after 10 minutes of inactivity.
         </Text>
       </ScrollView>
+
+      {/* Edit Guide Modal */}
+      {!guide.isDefault && (
+        <CreateGuideModal
+          visible={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onCreate={handleSaveEdit}
+          editingGuide={{
+            id: guide.id,
+            title: guide.title,
+            items: guide.items.map((item) => item.text),
+          }}
+        />
+      )}
     </View>
   );
 }

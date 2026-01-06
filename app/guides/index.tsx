@@ -3,18 +3,20 @@
  * Guides list screen
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useGuides } from '../../src/context/GuidesContext';
 import { useTheme } from '../../src/constants/theme';
 import { GuideCard } from '../../src/components/GuideCard';
+import { CreateGuideModal } from '../../src/components/CreateGuideModal';
 
 export default function GuidesScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { defaultGuides, customGuides, getCustomGuideCount, canCreateCustomGuide } = useGuides();
+  const { defaultGuides, customGuides, getCustomGuideCount, canCreateCustomGuide, createGuide } = useGuides();
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleGuidePress = (guideId: string) => {
     router.push(`/guides/${guideId}` as any);
@@ -31,8 +33,15 @@ export default function GuidesScreen() {
       return;
     }
 
-    // TODO: Open create guide modal
-    Alert.alert('Create Guide', 'Custom guide creation coming soon!');
+    setShowCreateModal(true);
+  };
+
+  const handleCreate = async (title: string, items: string[]) => {
+    try {
+      await createGuide(title, items);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create guide');
+    }
   };
 
   const customGuideCount = getCustomGuideCount();
@@ -105,6 +114,13 @@ export default function GuidesScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Create Guide Modal */}
+      <CreateGuideModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreate={handleCreate}
+      />
     </View>
   );
 }
