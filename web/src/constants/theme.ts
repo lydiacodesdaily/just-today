@@ -5,8 +5,6 @@
  * No urgency. No celebration. Just steady support.
  */
 
-import { useThemeContext } from '../context/ThemeContext';
-
 export const colors = {
   ink: {
     primary: '#2F3138',
@@ -36,10 +34,7 @@ export const colors = {
   },
 };
 
-export const useTheme = () => {
-  const { colorScheme } = useThemeContext();
-  const isDark = colorScheme === 'dark';
-
+export const getTheme = (isDark: boolean) => {
   return {
     colors: {
       // Primary backgrounds - warm sand (holding/safety)
@@ -150,4 +145,4 @@ export const useTheme = () => {
   };
 };
 
-export type Theme = ReturnType<typeof useTheme>;
+export type Theme = ReturnType<typeof getTheme>;
