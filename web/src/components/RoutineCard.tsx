@@ -5,8 +5,9 @@
 
 'use client';
 
+import { useState } from 'react';
 import { RoutineTemplate, EnergyMode } from '@/src/models/RoutineTemplate';
-import { deriveTasksForEnergyMode } from '@/src/stores/routineStore';
+import { deriveTasksForEnergyMode, useRoutineStore } from '@/src/stores/routineStore';
 
 interface RoutineCardProps {
   routine: RoutineTemplate;
