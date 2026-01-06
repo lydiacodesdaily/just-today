@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  /* Calm color palette */
+  --calm-bg: #F7F7F5;
+  --calm-surface: #FFFFFF;
+  --calm-border: #E8E8E5;
+  --calm-text: #2D2D2D;
+  --calm-muted: #8A8A8A;
+  --calm-low: #C4B5FD;
+  --calm-steady: #FDE68A;
+  --calm-flow: #86EFAC;
+
+  --background: var(--calm-bg);
+  --foreground: var(--calm-text);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Calm color system */
+  --color-calm-bg: var(--calm-bg);
+  --color-calm-surface: var(--calm-surface);
+  --color-calm-border: var(--calm-border);
+  --color-calm-text: var(--calm-text);
+  --color-calm-muted: var(--calm-muted);
+  --color-calm-low: var(--calm-low);
+  --color-calm-steady: var(--calm-steady);
+  --color-calm-flow: var(--calm-flow);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Spacing and transitions */
+  --default-transition-duration: 200ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --calm-bg: #1A1A1A;
+    --calm-surface: #2D2D2D;
+    --calm-border: #404040;
+    --calm-text: #EDEDED;
+    --calm-muted: #A0A0A0;
+
+    --background: var(--calm-bg);
+    --foreground: var(--calm-text);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  font-size: 16px;
+  line-height: 1.6;
+}
