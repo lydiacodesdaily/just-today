@@ -95,8 +95,26 @@ export function LeftNav() {
       </div>
 
       {/* Footer (optional) */}
-      <div className="p-4 border-t border-calm-border text-xs text-calm-muted">
+      <div className="p-4 border-t border-calm-border text-xs text-calm-muted space-y-2">
         <p>Focus on what matters</p>
+        <div className="flex flex-col gap-1">
+          <a
+            href="https://tally.so/r/Y50Qb5"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-calm-primary hover:underline"
+          >
+            Contact Us
+          </a>
+          <a
+            href="https://lydiastud.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-calm-muted hover:text-calm-text hover:underline transition-colors"
+          >
+            by Lydia Studio
+          </a>
+        </div>
       </div>
     </nav>
   );

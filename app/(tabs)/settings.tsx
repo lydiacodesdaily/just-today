@@ -12,6 +12,7 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
@@ -521,6 +522,24 @@ export default function SettingsScreen() {
           <Text style={[styles.footerSubtext, { color: theme.colors.textSecondary }]}>
             A gentle routine companion
           </Text>
+          <View style={styles.footerLinks}>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://tally.so/r/Y50Qb5')}
+              style={styles.contactLink}
+            >
+              <Text style={[styles.contactLinkText, { color: theme.colors.primary }]}>
+                Contact Us
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://lydiastud.io/')}
+              style={styles.contactLink}
+            >
+              <Text style={[styles.studioLinkText, { color: theme.colors.textSecondary }]}>
+                by Lydia Studio
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -723,5 +742,22 @@ const styles = StyleSheet.create({
   },
   footerSubtext: {
     fontSize: 12,
+  },
+  footerLinks: {
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+  },
+  contactLink: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  contactLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  studioLinkText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
