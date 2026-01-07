@@ -6,8 +6,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { RoutineTemplate, EnergyMode } from '@/src/models/RoutineTemplate';
 import { deriveTasksForEnergyMode, useRoutineStore } from '@/src/stores/routineStore';
+import { useRunStore } from '@/src/stores/runStore';
+import { createRunFromTemplate } from '@/src/engine/runEngine';
 import { RoutineCreationModal } from './RoutineCreationModal';
 
 interface RoutineCardProps {
@@ -65,12 +68,23 @@ interface RoutinesListProps {
 
 export function RoutinesList({ energyMode }: RoutinesListProps) {
   const { templates } = useRoutineStore();
+  const { setCurrentRun } = useRunStore();
+  const router = useRouter();
 
   const VISIBLE_ROUTINES_LIMIT = 2;
   const [showAll, setShowAll] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const visibleRoutines = showAll ? templates : templates.slice(0, VISIBLE_ROUTINES_LIMIT);
+
+  const handleStartRoutine = (routine: RoutineTemplate) => {
+    // Create a new run from the template
+    const run = createRunFromTemplate(routine, energyMode);
+    console.log('[RoutineCard] Created new run:', run.id, 'status:', run.status);
+    setCurrentRun(run);
+    // Navigate to run page
+    router.push('/run');
+  };
 
   const getTitle = () => {
     switch (energyMode) {
@@ -127,10 +141,7 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
               key={routine.id}
               routine={routine}
               energyMode={energyMode}
-              onStart={() => {
-                // TODO: Start routine (will be implemented with routine run functionality)
-                console.log('Starting routine:', routine.id);
-              }}
+              onStart={() => handleStartRoutine(routine)}
             />
           ))}
 
