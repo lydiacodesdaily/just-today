@@ -21,18 +21,10 @@ interface EnergyMenuStore {
   removeFromToday: (id: string) => void;
   completeOptionalItem: (id: string) => void;
   checkAndResetDaily: () => void;
-  getItemCountByLevel: (level: EnergyLevel) => number;
-  canAddMoreItems: (level: EnergyLevel) => boolean;
 }
 
 const getTodayDateString = (): string => {
   return new Date().toISOString().split('T')[0];
-};
-
-const MAX_ITEMS_PER_LEVEL: Record<EnergyLevel, number> = {
-  low: 1,
-  steady: 2,
-  flow: 3,
 };
 
 export const useEnergyMenuStore = create<EnergyMenuStore>()(
@@ -125,22 +117,6 @@ export const useEnergyMenuStore = create<EnergyMenuStore>()(
             todayDate: currentDate,
           });
         }
-      },
-
-      // Get count of items added to Today for a specific level
-      getItemCountByLevel: (level) => {
-        const { todayOptionalItems, menuItems } = get();
-
-        return todayOptionalItems.filter((item) => {
-          const menuItem = menuItems.find((m) => m.id === item.menuItemId);
-          return menuItem?.energyLevel === level && !item.completedAt;
-        }).length;
-      },
-
-      // Check if more items can be added for a level
-      canAddMoreItems: (level) => {
-        const count = get().getItemCountByLevel(level);
-        return count < MAX_ITEMS_PER_LEVEL[level];
       },
     }),
     {

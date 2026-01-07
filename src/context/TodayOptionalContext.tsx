@@ -20,17 +20,9 @@ interface TodayOptionalContextValue {
   removeItemFromToday: (id: string) => Promise<void>;
   completeItem: (id: string) => Promise<void>;
   refreshItems: () => Promise<void>;
-  getItemCountByLevel: (level: 'low' | 'steady' | 'flow') => number;
-  canAddMoreItems: (level: 'low' | 'steady' | 'flow') => boolean;
 }
 
 const TodayOptionalContext = createContext<TodayOptionalContextValue | null>(null);
-
-const MAX_ITEMS_BY_LEVEL = {
-  low: 1,
-  steady: 2,
-  flow: 3,
-};
 
 export function TodayOptionalProvider({ children }: { children: React.ReactNode }) {
   const [todayItems, setTodayItems] = useState<TodayOptionalItem[]>([]);
@@ -77,29 +69,12 @@ export function TodayOptionalProvider({ children }: { children: React.ReactNode 
     await loadItems();
   }, []);
 
-  // Helper: Get count of incomplete items for a given energy level
-  // We track which menu items were added based on their original energy level
-  const getItemCountByLevel = useCallback((level: 'low' | 'steady' | 'flow'): number => {
-    // Note: We don't store energyLevel on TodayOptionalItem
-    // For V1, we'll count total items regardless of level
-    // This is a simplification - in a full implementation, we'd need to join with menu items
-    return todayItems.filter(item => !item.completedAt).length;
-  }, [todayItems]);
-
-  const canAddMoreItems = useCallback((level: 'low' | 'steady' | 'flow'): boolean => {
-    const currentCount = todayItems.filter(item => !item.completedAt).length;
-    const maxAllowed = MAX_ITEMS_BY_LEVEL[level];
-    return currentCount < maxAllowed;
-  }, [todayItems]);
-
   const value: TodayOptionalContextValue = {
     todayItems,
     addItemToToday,
     removeItemFromToday,
     completeItem,
     refreshItems,
-    getItemCountByLevel,
-    canAddMoreItems,
   };
 
   return (
