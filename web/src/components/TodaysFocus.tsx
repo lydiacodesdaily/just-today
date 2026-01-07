@@ -6,8 +6,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FocusItem, FocusDuration } from '@/src/models/FocusItem';
 import { useFocusStore } from '@/src/stores/focusStore';
+import { useRunStore } from '@/src/stores/runStore';
+import { createRunFromFocusItem } from '@/src/engine/runEngine';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
@@ -123,8 +126,10 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart }: F
 }
 
 export function TodaysFocus() {
-  const { todayItems, addToToday, completeItem, moveToLater, deleteItem, startFocus, rolloverCount, dismissRollover } =
+  const { todayItems, addToToday, completeItem, moveToLater, deleteItem, rolloverCount, dismissRollover } =
     useFocusStore();
+  const { setCurrentRun } = useRunStore();
+  const router = useRouter();
 
   const [showAll, setShowAll] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -141,6 +146,15 @@ export function TodaysFocus() {
       setSelectedDuration('~15 min');
       setShowAddModal(false);
     }
+  };
+
+  const handleStartFocus = (item: FocusItem) => {
+    // Create a run from the focus item
+    const run = createRunFromFocusItem(item);
+    console.log('[TodaysFocus] Created new run:', run.id, 'status:', run.status);
+    setCurrentRun(run);
+    // Navigate to run page where timer will auto-start
+    router.push('/run');
   };
 
   return (
@@ -202,7 +216,7 @@ export function TodaysFocus() {
               onComplete={() => completeItem(item.id)}
               onMoveToLater={() => moveToLater(item.id)}
               onDelete={() => deleteItem(item.id)}
-              onStart={() => startFocus(item.id)}
+              onStart={() => handleStartFocus(item)}
             />
           ))}
 

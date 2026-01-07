@@ -14,10 +14,9 @@ interface LaterItemCardProps {
   onMoveToToday: () => void;
   onComplete: () => void;
   onDelete: () => void;
-  onStart: () => void;
 }
 
-function LaterItemCard({ item, onMoveToToday, onComplete, onDelete, onStart }: LaterItemCardProps) {
+function LaterItemCard({ item, onMoveToToday, onComplete, onDelete }: LaterItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -87,24 +86,6 @@ function LaterItemCard({ item, onMoveToToday, onComplete, onDelete, onStart }: L
                 className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
               >
                 Move to Today
-              </button>
-              <button
-                onClick={() => {
-                  onStart();
-                  setShowMenu(false);
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
-              >
-                Start Now
-              </button>
-              <button
-                onClick={() => {
-                  onComplete();
-                  setShowMenu(false);
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
-              >
-                Mark Done
               </button>
               <button
                 onClick={() => {
