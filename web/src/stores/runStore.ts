@@ -19,6 +19,7 @@ import {
   toggleSubtask,
   toggleAutoAdvance,
 } from '@/src/engine/runEngine';
+import { useSnapshotStore } from './snapshotStore';
 
 interface RunStore {
   // State
@@ -58,7 +59,12 @@ export const useRunStore = create<RunStore>()(
         const { currentRun } = get();
         if (currentRun) {
           console.log('[runStore] Starting run:', currentRun.id, 'current status:', currentRun.status);
-          set({ currentRun: startRun(currentRun) });
+          const updatedRun = startRun(currentRun);
+
+          // Track energy mode selection in snapshot
+          useSnapshotStore.getState().addEnergyMode(updatedRun.energyMode);
+
+          set({ currentRun: updatedRun });
         }
       },
 
@@ -90,7 +96,23 @@ export const useRunStore = create<RunStore>()(
       advanceTask: async () => {
         const { currentRun } = get();
         if (currentRun) {
+          const previousStatus = currentRun.status;
           const updatedRun = await advanceToNextTask(currentRun);
+
+          // If run just completed, count it in snapshot
+          if (previousStatus !== 'completed' && updatedRun.status === 'completed') {
+            // Count completed tasks (excluding focus items and optional items)
+            const completedTasks = updatedRun.tasks.filter(
+              (t) => (t.status === 'completed' || t.status === 'skipped') &&
+                     !t.name.toLowerCase().includes('focus')
+            );
+
+            // Increment counter for each completed non-focus task
+            completedTasks.forEach(() => {
+              useSnapshotStore.getState().incrementTodayCounter('routineRunsCompleted');
+            });
+          }
+
           set({ currentRun: updatedRun });
         }
       },

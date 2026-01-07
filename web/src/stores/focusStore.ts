@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { FocusItem, FocusDuration, ReminderTiming, calculateReminderDate } from '@/src/models/FocusItem';
+import { useSnapshotStore } from './snapshotStore';
 
 interface FocusStore {
   // State
@@ -105,6 +106,9 @@ export const useFocusStore = create<FocusStore>()(
             updatedItem.reminderTiming = reminderTiming;
           }
 
+          // Track in snapshot: item moved to later
+          useSnapshotStore.getState().incrementTodayCounter('itemsMovedToLater');
+
           return {
             todayItems: state.todayItems.filter((i) => i.id !== itemId),
             laterItems: [...state.laterItems, updatedItem],
@@ -139,14 +143,26 @@ export const useFocusStore = create<FocusStore>()(
       completeItem: (itemId) => {
         const now = new Date().toISOString();
 
-        set((state) => ({
-          todayItems: state.todayItems.map((item) =>
-            item.id === itemId ? { ...item, completedAt: now } : item
-          ),
-          laterItems: state.laterItems.map((item) =>
-            item.id === itemId ? { ...item, completedAt: now } : item
-          ),
-        }));
+        set((state) => {
+          // Check if item exists and is being completed (not already completed)
+          const todayItem = state.todayItems.find((i) => i.id === itemId);
+          const laterItem = state.laterItems.find((i) => i.id === itemId);
+          const item = todayItem || laterItem;
+
+          // Only increment snapshot if item exists and wasn't already completed
+          if (item && !item.completedAt) {
+            useSnapshotStore.getState().incrementTodayCounter('focusItemsCompleted');
+          }
+
+          return {
+            todayItems: state.todayItems.map((item) =>
+              item.id === itemId ? { ...item, completedAt: now } : item
+            ),
+            laterItems: state.laterItems.map((item) =>
+              item.id === itemId ? { ...item, completedAt: now } : item
+            ),
+          };
+        });
       },
 
       // Delete item
@@ -194,14 +210,32 @@ export const useFocusStore = create<FocusStore>()(
       endFocus: (itemId) => {
         const now = new Date().toISOString();
 
-        set((state) => ({
-          todayItems: state.todayItems.map((item) =>
-            item.id === itemId ? { ...item, focusEndedAt: now } : item
-          ),
-          laterItems: state.laterItems.map((item) =>
-            item.id === itemId ? { ...item, focusEndedAt: now } : item
-          ),
-        }));
+        set((state) => {
+          // Find the item and calculate focus duration
+          const todayItem = state.todayItems.find((i) => i.id === itemId);
+          const laterItem = state.laterItems.find((i) => i.id === itemId);
+          const item = todayItem || laterItem;
+
+          if (item && item.focusStartedAt) {
+            const startTime = new Date(item.focusStartedAt).getTime();
+            const endTime = new Date(now).getTime();
+            const durationMs = endTime - startTime;
+
+            // Track focus time in snapshot
+            if (durationMs > 0) {
+              useSnapshotStore.getState().addFocusTime(durationMs);
+            }
+          }
+
+          return {
+            todayItems: state.todayItems.map((item) =>
+              item.id === itemId ? { ...item, focusEndedAt: now } : item
+            ),
+            laterItems: state.laterItems.map((item) =>
+              item.id === itemId ? { ...item, focusEndedAt: now } : item
+            ),
+          };
+        });
       },
 
       // Dismiss rollover notification

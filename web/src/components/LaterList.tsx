@@ -151,7 +151,6 @@ export function LaterList() {
               onMoveToToday={() => moveToToday(item.id)}
               onComplete={() => completeItem(item.id)}
               onDelete={() => deleteItem(item.id)}
-              onStart={() => startFocus(item.id)}
             />
           ))}
         </div>
