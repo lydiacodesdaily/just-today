@@ -17,6 +17,8 @@ interface RoutineCardProps {
   routine: RoutineTemplate;
   energyMode: EnergyMode;
   onStart: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
 function formatDuration(ms: number): string {
@@ -29,7 +31,7 @@ function formatDuration(ms: number): string {
   return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 }
 
-export function RoutineCard({ routine, energyMode, onStart }: RoutineCardProps) {
+export function RoutineCard({ routine, energyMode, onStart, onEdit, onDelete }: RoutineCardProps) {
   const filteredTasks = deriveTasksForEnergyMode(routine.tasks, energyMode);
   const totalDuration = filteredTasks.reduce((sum, task) => sum + task.durationMs, 0);
 
@@ -37,7 +39,29 @@ export function RoutineCard({ routine, energyMode, onStart }: RoutineCardProps) 
     <div className="bg-calm-surface border border-calm-border rounded-lg p-5 hover:border-calm-text/30 transition-colors">
       {/* Info section */}
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-calm-text mb-1">{routine.name}</h3>
+        <div className="flex items-start justify-between mb-1">
+          <h3 className="text-lg font-semibold text-calm-text">{routine.name}</h3>
+          <div className="flex items-center gap-2 ml-2">
+            <button
+              onClick={onEdit}
+              className="p-1.5 text-calm-muted hover:text-calm-text transition-colors"
+              title="Edit routine"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-1.5 text-calm-muted hover:text-red-600 transition-colors"
+              title="Delete routine"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
         {routine.description && (
           <p className="text-sm text-calm-muted mb-3">{routine.description}</p>
         )}
@@ -67,13 +91,15 @@ interface RoutinesListProps {
 }
 
 export function RoutinesList({ energyMode }: RoutinesListProps) {
-  const { templates } = useRoutineStore();
+  const { templates, deleteTemplate } = useRoutineStore();
   const { setCurrentRun } = useRunStore();
   const router = useRouter();
 
   const VISIBLE_ROUTINES_LIMIT = 2;
   const [showAll, setShowAll] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingRoutine, setEditingRoutine] = useState<RoutineTemplate | null>(null);
+  const [deletingRoutine, setDeletingRoutine] = useState<RoutineTemplate | null>(null);
 
   const visibleRoutines = showAll ? templates : templates.slice(0, VISIBLE_ROUTINES_LIMIT);
 
@@ -84,6 +110,21 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
     setCurrentRun(run);
     // Navigate to run page
     router.push('/run');
+  };
+
+  const handleEditRoutine = (routine: RoutineTemplate) => {
+    setEditingRoutine(routine);
+  };
+
+  const handleDeleteRoutine = (routine: RoutineTemplate) => {
+    setDeletingRoutine(routine);
+  };
+
+  const confirmDelete = () => {
+    if (deletingRoutine) {
+      deleteTemplate(deletingRoutine.id);
+      setDeletingRoutine(null);
+    }
   };
 
   const getTitle = () => {
@@ -142,6 +183,8 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
               routine={routine}
               energyMode={energyMode}
               onStart={() => handleStartRoutine(routine)}
+              onEdit={() => handleEditRoutine(routine)}
+              onDelete={() => handleDeleteRoutine(routine)}
             />
           ))}
 
@@ -164,10 +207,50 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
           )}
         </div>
       </section>
+
+      {/* Create/Edit Modal */}
       <RoutineCreationModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        isOpen={isCreateModalOpen || editingRoutine !== null}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setEditingRoutine(null);
+        }}
+        editingRoutine={editingRoutine}
       />
+
+      {/* Delete Confirmation Dialog */}
+      {deletingRoutine && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setDeletingRoutine(null)}
+          />
+
+          {/* Dialog */}
+          <div className="relative bg-calm-surface rounded-2xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-calm-text mb-2">Delete Routine?</h3>
+            <p className="text-calm-muted mb-6">
+              Are you sure you want to delete "{deletingRoutine.name}"? This action cannot be undone.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeletingRoutine(null)}
+                className="px-5 py-2.5 text-calm-text hover:bg-calm-border/50 rounded-lg transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-5 py-2.5 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors font-semibold"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

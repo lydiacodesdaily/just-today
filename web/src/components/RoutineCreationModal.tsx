@@ -6,15 +6,16 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { RoutineTask } from '@/src/models/RoutineTemplate';
+import { RoutineTask, RoutineTemplate } from '@/src/models/RoutineTemplate';
 import { useRoutineStore } from '@/src/stores/routineStore';
 
 interface RoutineCreationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  editingRoutine?: RoutineTemplate | null;
 }
 
-export function RoutineCreationModal({ isOpen, onClose }: RoutineCreationModalProps) {
+export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: RoutineCreationModalProps) {
   const { addTemplate, updateTemplate } = useRoutineStore();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -28,6 +29,29 @@ export function RoutineCreationModal({ isOpen, onClose }: RoutineCreationModalPr
       setTimeout(() => nameInputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+
+  // Populate form when editing a routine
+  useEffect(() => {
+    if (isOpen && editingRoutine) {
+      setName(editingRoutine.name);
+      setDescription(editingRoutine.description || '');
+      setTasks(editingRoutine.tasks.map(task => ({
+        name: task.name,
+        durationMs: task.durationMs,
+        lowSafe: task.lowSafe,
+        flowExtra: task.flowExtra,
+        autoAdvance: task.autoAdvance,
+        subtasks: task.subtasks,
+      })));
+      setErrors({});
+    } else if (isOpen && !editingRoutine) {
+      // Reset form for new routine
+      setName('');
+      setDescription('');
+      setTasks([]);
+      setErrors({});
+    }
+  }, [isOpen, editingRoutine]);
 
   // Reset form when modal closes
   useEffect(() => {
@@ -87,12 +111,9 @@ export function RoutineCreationModal({ isOpen, onClose }: RoutineCreationModalPr
       return;
     }
 
-    // Create the routine with tasks
-    const templateId = addTemplate(name.trim(), description.trim());
-
-    // Update template with properly formatted tasks
+    // Format tasks
     const formattedTasks: RoutineTask[] = tasks.map((task, i) => ({
-      id: `task-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 11)}`,
+      id: editingRoutine?.tasks[i]?.id || `task-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 11)}`,
       name: task.name.trim(),
       durationMs: Math.max(0, task.durationMs || 0),
       order: i,
@@ -102,7 +123,18 @@ export function RoutineCreationModal({ isOpen, onClose }: RoutineCreationModalPr
       subtasks: task.subtasks,
     }));
 
-    updateTemplate(templateId, { tasks: formattedTasks });
+    if (editingRoutine) {
+      // Update existing routine
+      updateTemplate(editingRoutine.id, {
+        name: name.trim(),
+        description: description.trim(),
+        tasks: formattedTasks,
+      });
+    } else {
+      // Create new routine
+      const templateId = addTemplate(name.trim(), description.trim());
+      updateTemplate(templateId, { tasks: formattedTasks });
+    }
 
     onClose();
   };
@@ -121,7 +153,9 @@ export function RoutineCreationModal({ isOpen, onClose }: RoutineCreationModalPr
       <div className="relative bg-calm-surface rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-5 border-b border-calm-border">
-          <h2 className="text-2xl font-bold text-calm-text">New Routine</h2>
+          <h2 className="text-2xl font-bold text-calm-text">
+            {editingRoutine ? 'Edit Routine' : 'New Routine'}
+          </h2>
         </div>
 
         {/* Content */}
@@ -205,7 +239,7 @@ export function RoutineCreationModal({ isOpen, onClose }: RoutineCreationModalPr
             onClick={handleSave}
             className="px-5 py-2.5 bg-calm-text text-calm-surface hover:opacity-90 rounded-lg transition-opacity font-semibold"
           >
-            Create Routine
+            {editingRoutine ? 'Save Changes' : 'Create Routine'}
           </button>
         </div>
       </div>
