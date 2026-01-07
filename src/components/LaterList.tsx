@@ -3,13 +3,15 @@
  * Later section component - collapsible list for deferred items
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform, Modal } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
 import { FocusItem } from '../models/FocusItem';
 import { formatReminderDate } from '../models/FocusItem';
+import { shouldShowLaterExamples } from '../persistence/onboardingStore';
+import { CoachMark } from './CoachMark';
 
 interface LaterListProps {
   onStartFocus: (item: FocusItem) => void;
@@ -17,11 +19,24 @@ interface LaterListProps {
 
 export function LaterList({ onStartFocus }: LaterListProps) {
   const theme = useTheme();
-  const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder } = useFocus();
+  const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder, addToLater } = useFocus();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentItem, setCurrentItem] = useState<FocusItem | null>(null);
+  const [showExamples, setShowExamples] = useState(false);
+
+  // Check if we should show example link
+  useEffect(() => {
+    shouldShowLaterExamples().then(setShowExamples);
+  }, [laterItems.length]);
+
+  const handleAddExamples = async () => {
+    await addToLater('Look into appointment options', '~15 min');
+    await addToLater('Buy refill / supplies', '~10 min');
+    await addToLater('Read or watch something later', '~30 min');
+    setShowExamples(false);
+  };
 
   // Memoize the minimum date to prevent creating new Date objects on every render
   const minimumDate = useMemo(() => new Date(), []);
@@ -186,76 +201,130 @@ export function LaterList({ onStartFocus }: LaterListProps) {
     }
   };
 
-  if (laterItems.length === 0) {
-    return null; // Don't show Later section if empty
-  }
-
   return (
     <View style={styles.container}>
-      {/* Collapsed Header */}
-      <TouchableOpacity
-        style={styles.header}
-        onPress={() => setIsExpanded(!isExpanded)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.headerContent}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            🕒 Later
-          </Text>
-          <Text style={[styles.count, { color: theme.colors.textSecondary }]}>
-            ({laterItems.length} {laterItems.length === 1 ? 'item' : 'items'})
-          </Text>
-        </View>
-        <Text style={[styles.expandIcon, { color: theme.colors.textSecondary }]}>
-          {isExpanded ? '▼' : '▶'}
-        </Text>
-      </TouchableOpacity>
+      {/* Contextual coach mark */}
+      <CoachMark
+        hintId="later-coach-mark"
+        message="Dump it messy. You can sort later — or not."
+      />
 
-      {/* Expanded Content */}
-      {isExpanded && (
-        <View style={styles.expandedContent}>
-          <Text style={[styles.helperText, { color: theme.colors.textSecondary }]}>
-            Not for today. No rush.
-          </Text>
+      {/* Empty State */}
+      {laterItems.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: theme.colors.text }]}>
+              Later
+            </Text>
+          </View>
 
-          <View style={styles.itemsList}>
-            {laterItems.map((item) => (
+          <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
+            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+              Not today — and that's okay
+            </Text>
+            <Text style={[styles.emptyBody, { color: theme.colors.textSecondary }]}>
+              Put things here so they stop nagging you.{'\n'}
+              You can decide later.
+            </Text>
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
+              onPress={() => {
+                // Open the add modal in 'later' mode
+                Alert.prompt(
+                  'Add to Later',
+                  'What do you want to do later?',
+                  (text) => {
+                    if (text) addToLater(text, '~15 min');
+                  }
+                );
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.addButtonText, { color: theme.colors.surface }]}>
+                ➕ Add something for later
+              </Text>
+            </TouchableOpacity>
+            {showExamples && (
               <TouchableOpacity
-                key={item.id}
-                style={[styles.item, { backgroundColor: theme.colors.surface }]}
-                onPress={() => handleItemPress(item)}
+                style={styles.examplesButton}
+                onPress={handleAddExamples}
                 activeOpacity={0.7}
               >
-                <View style={styles.itemContent}>
-                  <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-                    {item.title}
-                  </Text>
-                  <View style={styles.itemMeta}>
-                    {item.estimatedDuration && (
-                      <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
-                        {item.estimatedDuration}
-                      </Text>
-                    )}
-                    {item.reminderDate && (
-                      <Text style={[styles.itemReminder, { color: theme.colors.textSecondary }]}>
-                        • Remind {formatReminderDate(item.reminderDate)}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={[styles.moveButton, { borderColor: theme.colors.primary }]}
-                  onPress={() => moveItemToToday(item.id)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.moveButtonText, { color: theme.colors.primary }]}>
-                    ↩ Move to Today
-                  </Text>
-                </TouchableOpacity>
+                <Text style={[styles.examplesButtonText, { color: theme.colors.textSecondary }]}>
+                  Add a few examples
+                </Text>
               </TouchableOpacity>
-            ))}
+            )}
           </View>
         </View>
+      ) : (
+        <>
+          {/* Collapsed Header */}
+          <TouchableOpacity
+            style={styles.header}
+            onPress={() => setIsExpanded(!isExpanded)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.headerContent}>
+              <Text style={[styles.title, { color: theme.colors.text }]}>
+                Later
+              </Text>
+              <Text style={[styles.count, { color: theme.colors.textSecondary }]}>
+                ({laterItems.length} {laterItems.length === 1 ? 'item' : 'items'})
+              </Text>
+            </View>
+            <Text style={[styles.expandIcon, { color: theme.colors.textSecondary }]}>
+              {isExpanded ? '▼' : '▶'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Expanded Content */}
+          {isExpanded && (
+            <View style={styles.expandedContent}>
+              <Text style={[styles.helperText, { color: theme.colors.textSecondary }]}>
+                Not for today. No rush.
+              </Text>
+
+              <View style={styles.itemsList}>
+                {laterItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[styles.item, { backgroundColor: theme.colors.surface }]}
+                    onPress={() => handleItemPress(item)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.itemContent}>
+                      <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+                        {item.title}
+                      </Text>
+                      <View style={styles.itemMeta}>
+                        {item.estimatedDuration && (
+                          <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
+                            {item.estimatedDuration}
+                          </Text>
+                        )}
+                        {item.reminderDate && (
+                          <Text style={[styles.itemReminder, { color: theme.colors.textSecondary }]}>
+                            • Remind {formatReminderDate(item.reminderDate)}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.moveButton, { borderColor: theme.colors.primary }]}
+                      onPress={() => moveItemToToday(item.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.moveButtonText, { color: theme.colors.primary }]}>
+                        ↩ Move to Today
+                      </Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </>
       )}
 
       {/* Date Picker Modal for iOS */}
@@ -330,6 +399,47 @@ export function LaterList({ onStartFocus }: LaterListProps) {
 const styles = StyleSheet.create({
   container: {
     gap: 12,
+  },
+  emptyContainer: {
+    gap: 16,
+  },
+  emptyState: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+  emptyBody: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 8,
+  },
+  addButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  examplesButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 4,
+  },
+  examplesButtonText: {
+    fontSize: 15,
+    textAlign: 'center',
   },
   header: {
     flexDirection: 'row',

@@ -3,7 +3,7 @@
  * Brain Dump section component - quick capture for unsorted thoughts
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,15 @@ import {
   ActionSheetIOS,
   Platform,
   KeyboardAvoidingView,
+  Modal,
 } from 'react-native';
 import { useTheme } from '../constants/theme';
 import { useBrainDump } from '../context/BrainDumpContext';
 import { useFocus } from '../context/FocusContext';
 import { BrainDumpItem } from '../models/BrainDumpItem';
 import { FocusDuration } from '../models/FocusItem';
+import { shouldShowBrainDumpExample } from '../persistence/onboardingStore';
+import { CoachMark } from './CoachMark';
 
 interface BrainDumpProps {
   isExpanded: boolean;
@@ -31,6 +34,13 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
   const { items, addItem, keepItem, deleteItem } = useBrainDump();
   const { addToLater } = useFocus();
   const [inputText, setInputText] = useState('');
+  const [showExample, setShowExample] = useState(false);
+  const [showExampleModal, setShowExampleModal] = useState(false);
+
+  // Check if we should show example link
+  useEffect(() => {
+    shouldShowBrainDumpExample().then(setShowExample);
+  }, [items.length]);
 
   const handleAddItem = async () => {
     if (!inputText.trim()) return;
@@ -106,53 +116,97 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.container}>
+        {/* Contextual coach mark */}
+        <CoachMark
+          hintId="brain-dump-coach-mark"
+          message="Dump it messy. You can sort later — or not."
+        />
+
         {/* Section Header */}
         <TouchableOpacity onPress={onToggle} activeOpacity={0.7}>
           <View style={styles.header}>
             <Text style={[styles.title, { color: theme.colors.text }]}>
-              🧠 Brain Dump
-            </Text>
-            <Text style={[styles.helperText, { color: theme.colors.textSecondary }]}>
-              This is a temporary space.
-            </Text>
-            <Text style={[styles.helperText, { color: theme.colors.textSecondary }]}>
-              Unsorted thoughts clear automatically.
+              Brain Dump
             </Text>
           </View>
         </TouchableOpacity>
 
-        {/* Input Area */}
-        <View style={[styles.inputContainer, { backgroundColor: theme.colors.surface }]}>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                color: theme.colors.text,
-                backgroundColor: theme.colors.background,
-                borderColor: theme.colors.border,
-              },
-            ]}
-            placeholder="Dump anything on your mind."
-            placeholderTextColor={theme.colors.textTertiary}
-            value={inputText}
-            onChangeText={setInputText}
-            onSubmitEditing={handleAddItem}
-            returnKeyType="done"
-            multiline={false}
-            blurOnSubmit
-          />
-          {inputText.trim() && (
-            <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
-              onPress={handleAddItem}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.addButtonText, { color: theme.colors.surface }]}>
-                Add
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* Empty State */}
+        {items.length === 0 ? (
+          <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
+            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+              Get it out of your head
+            </Text>
+            <Text style={[styles.emptyBody, { color: theme.colors.textSecondary }]}>
+              This doesn't need to be organized or useful.{'\n'}
+              Messy is fine.
+            </Text>
+            <TextInput
+              style={[
+                styles.emptyInput,
+                {
+                  color: theme.colors.text,
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+              placeholder="Dump thoughts here… half-sentences welcome."
+              placeholderTextColor={theme.colors.textTertiary}
+              value={inputText}
+              onChangeText={setInputText}
+              onSubmitEditing={handleAddItem}
+              returnKeyType="done"
+              multiline
+              blurOnSubmit
+            />
+            {showExample && (
+              <TouchableOpacity
+                style={styles.exampleButton}
+                onPress={() => setShowExampleModal(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.exampleButtonText, { color: theme.colors.textSecondary }]}>
+                  See an example
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <>
+            {/* Input Area */}
+            <View style={[styles.inputContainer, { backgroundColor: theme.colors.surface }]}>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    color: theme.colors.text,
+                    backgroundColor: theme.colors.background,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                placeholder="Dump anything on your mind."
+                placeholderTextColor={theme.colors.textTertiary}
+                value={inputText}
+                onChangeText={setInputText}
+                onSubmitEditing={handleAddItem}
+                returnKeyType="done"
+                multiline={false}
+                blurOnSubmit
+              />
+              {inputText.trim() && (
+                <TouchableOpacity
+                  style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
+                  onPress={handleAddItem}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.addButtonText, { color: theme.colors.surface }]}>
+                    Add
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </>
+        )}
 
         {/* Recent Items List (max 3) */}
         {recentItems.length > 0 && (
@@ -184,6 +238,42 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
             +{items.length - 3} more thought{items.length - 3 !== 1 ? 's' : ''}
           </Text>
         )}
+
+        {/* Example Modal */}
+        <Modal
+          visible={showExampleModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowExampleModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                Example brain dump
+              </Text>
+              <Text style={[styles.modalExample, { color: theme.colors.textSecondary }]}>
+                "Need to email Sam{'\n'}
+                why am I tired{'\n'}
+                groceries{'\n'}
+                remember passport{'\n'}
+                anxious about Thursday{'\n'}
+                idea for routine app"
+              </Text>
+              <Text style={[styles.modalNote, { color: theme.colors.textTertiary }]}>
+                This is just an example — nothing here will be saved.
+              </Text>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: theme.colors.primary }]}
+                onPress={() => setShowExampleModal(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.modalButtonText, { color: theme.colors.surface }]}>
+                  Got it
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </KeyboardAvoidingView>
   );
@@ -221,6 +311,43 @@ const styles = StyleSheet.create({
     fontSize: 13,
     letterSpacing: 0.1,
     lineHeight: 18,
+  },
+  emptyState: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+  emptyBody: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 8,
+  },
+  emptyInput: {
+    width: '100%',
+    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  exampleButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 4,
+  },
+  exampleButtonText: {
+    fontSize: 15,
+    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -275,5 +402,50 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 0.1,
     paddingVertical: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    gap: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  modalExample: {
+    fontSize: 15,
+    lineHeight: 24,
+    fontStyle: 'italic',
+  },
+  modalNote: {
+    fontSize: 13,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  modalButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

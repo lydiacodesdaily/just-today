@@ -3,11 +3,13 @@
  * Today's Focus section component - displays items for today only
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
 import { FocusItem } from '../models/FocusItem';
+import { shouldShowTodayExamples } from '../persistence/onboardingStore';
+import { CoachMark } from './CoachMark';
 
 interface TodaysFocusProps {
   onStartFocus: (item: FocusItem) => void;
@@ -16,8 +18,21 @@ interface TodaysFocusProps {
 
 export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
   const theme = useTheme();
-  const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage } = useFocus();
-  const [isExpanded, setIsExpanded] = React.useState(false);
+  const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage, addToToday } = useFocus();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
+
+  // Check if we should show example link
+  useEffect(() => {
+    shouldShowTodayExamples().then(setShowExamples);
+  }, [todayItems.length]);
+
+  const handleAddExamples = async () => {
+    await addToToday('Reply to one message', '~5 min');
+    await addToToday('10-minute tidy', '~10 min');
+    await addToToday('Pick one thing for tomorrow', '~5 min');
+    setShowExamples(false);
+  };
 
   // Show up to 3 items by default
   const VISIBLE_ITEMS_LIMIT = 3;
@@ -96,24 +111,28 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
 
   return (
     <View style={styles.container}>
+      {/* Contextual coach mark */}
+      <CoachMark
+        hintId="today-coach-mark"
+        message="Add 1–3 items. That's enough."
+      />
+
       {/* Section Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.colors.text }]}>
-          🌱 Today's Focus
-        </Text>
-        <Text style={[styles.helperText, { color: theme.colors.textSecondary }]}>
-          This list is just for today.
+          Today's Focus
         </Text>
       </View>
 
       {/* Empty State */}
       {todayItems.length === 0 ? (
         <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.emptyPrompt, { color: theme.colors.text }]}>
-            What do you want to move forward today?
+          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+            What's one thing for today?
           </Text>
-          <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary }]}>
-            Add a few things — you can always change your mind.
+          <Text style={[styles.emptyBody, { color: theme.colors.textSecondary }]}>
+            You don't need a full list.{'\n'}
+            One small, doable thing is enough.
           </Text>
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
@@ -121,9 +140,20 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
             activeOpacity={0.8}
           >
             <Text style={[styles.addButtonText, { color: theme.colors.surface }]}>
-              ＋ Add to Today
+              ➕ Add a task
             </Text>
           </TouchableOpacity>
+          {showExamples && (
+            <TouchableOpacity
+              style={styles.examplesButton}
+              onPress={handleAddExamples}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.examplesButtonText, { color: theme.colors.textSecondary }]}>
+                Add 3 examples
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       ) : (
         <View style={styles.itemsList}>
@@ -203,18 +233,19 @@ const styles = StyleSheet.create({
     padding: 32,
     borderRadius: 16,
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
-  emptyPrompt: {
-    fontSize: 18,
-    fontWeight: '500',
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 26,
+    lineHeight: 28,
   },
-  emptySubtext: {
+  emptyBody: {
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
+    marginBottom: 8,
   },
   addButton: {
     paddingHorizontal: 24,
@@ -226,6 +257,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.2,
+  },
+  examplesButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 4,
+  },
+  examplesButtonText: {
+    fontSize: 15,
+    textAlign: 'center',
   },
   itemsList: {
     gap: 10,
