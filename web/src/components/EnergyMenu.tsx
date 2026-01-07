@@ -6,6 +6,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { EnergyLevel } from '@/src/models/EnergyMenuItem';
 import { useEnergyMenuStore } from '@/src/stores/energyMenuStore';
 
@@ -22,10 +23,8 @@ export function EnergyMenu({ energyLevel }: EnergyMenuProps) {
     .filter((item) => item.energyLevel === energyLevel)
     .slice(0, 5); // Show max 5 items
 
-  // Don't render if no items for this level
-  if (filteredItems.length === 0) {
-    return null;
-  }
+  // Show placeholder if no items for this level
+  const hasNoItems = filteredItems.length === 0;
 
   const getLevelLabel = () => {
     switch (energyLevel) {
@@ -67,35 +66,59 @@ export function EnergyMenu({ energyLevel }: EnergyMenuProps) {
 
       {/* Expanded content */}
       {isExpanded && (
-        <div className="space-y-2">
-          {filteredItems.map((item) => {
-            const canAdd = canAddMoreItems(energyLevel);
-
-            return (
-              <div
-                key={item.id}
-                className="bg-calm-surface border border-calm-border rounded-lg p-4 hover:border-calm-text/30 transition-colors"
+        <div className="space-y-3">
+          {hasNoItems ? (
+            <div className="bg-calm-surface/50 border border-dashed border-calm-border rounded-lg p-6 text-center">
+              <p className="text-sm text-calm-muted mb-3">
+                No Energy Menu items for {getLevelLabel()} energy yet.
+              </p>
+              <Link
+                href="/energy-menu"
+                className="inline-block px-4 py-2 bg-calm-text text-calm-bg rounded-lg hover:bg-calm-text/90 transition-colors text-sm font-medium"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-medium text-calm-text mb-0.5">{item.title}</h3>
-                    {item.estimatedDuration && (
-                      <p className="text-sm text-calm-muted">{item.estimatedDuration}</p>
-                    )}
-                  </div>
+                Create Energy Menu Items →
+              </Link>
+            </div>
+          ) : (
+            <>
+              {filteredItems.map((item) => {
+                const canAdd = canAddMoreItems(energyLevel);
 
-                  <button
-                    onClick={() => addToToday(item)}
-                    disabled={!canAdd}
-                    className="px-3 py-1.5 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text hover:text-calm-surface transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-calm-border disabled:hover:text-calm-text"
-                    title={!canAdd ? 'Maximum items reached for this energy level' : 'Add to Today'}
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-calm-surface border border-calm-border rounded-lg p-4 hover:border-calm-text/30 transition-colors"
                   >
-                    + Add
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-medium text-calm-text mb-0.5">{item.title}</h3>
+                        {item.estimatedDuration && (
+                          <p className="text-sm text-calm-muted">{item.estimatedDuration}</p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => addToToday(item)}
+                        disabled={!canAdd}
+                        className="px-3 py-1.5 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text hover:text-calm-surface transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-calm-border disabled:hover:text-calm-text"
+                        title={!canAdd ? 'Maximum items reached for this energy level' : 'Add to Today'}
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Manage link */}
+              <Link
+                href="/energy-menu"
+                className="block text-center text-sm text-calm-muted hover:text-calm-text transition-colors py-2"
+              >
+                Manage Energy Menu →
+              </Link>
+            </>
+          )}
         </div>
       )}
     </section>
