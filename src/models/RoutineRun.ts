@@ -72,4 +72,8 @@ export interface RoutineRun {
   endedAt: number | null;
   /** ID of currently active task (null if none) */
   activeTaskId: string | null;
+  /** Source FocusItem ID if this run was created from a FocusItem */
+  sourceFocusItemId?: string;
+  /** Source Optional Item ID if this run was created from an OptionalItem */
+  sourceOptionalItemId?: string;
 }

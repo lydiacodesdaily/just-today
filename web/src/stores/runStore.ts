@@ -101,6 +101,16 @@ export const useRunStore = create<RunStore>()(
 
           // If run just completed, count it in snapshot
           if (previousStatus !== 'completed' && updatedRun.status === 'completed') {
+            // Mark source FocusItem or OptionalItem as completed
+            if (updatedRun.sourceFocusItemId) {
+              const { useFocusStore } = await import('./focusStore');
+              useFocusStore.getState().completeItem(updatedRun.sourceFocusItemId);
+            }
+            if (updatedRun.sourceOptionalItemId) {
+              const { useEnergyMenuStore } = await import('./energyMenuStore');
+              useEnergyMenuStore.getState().completeOptionalItem(updatedRun.sourceOptionalItemId);
+            }
+
             // Count completed tasks (excluding focus items and optional items)
             const completedTasks = updatedRun.tasks.filter(
               (t) => (t.status === 'completed' || t.status === 'skipped') &&
@@ -121,7 +131,21 @@ export const useRunStore = create<RunStore>()(
       skipCurrentTask: async (taskId: string) => {
         const { currentRun } = get();
         if (currentRun) {
+          const previousStatus = currentRun.status;
           const updatedRun = await skipTask(currentRun, taskId);
+
+          // If run just completed (by skipping the last task), mark source items as completed
+          if (previousStatus !== 'completed' && updatedRun.status === 'completed') {
+            if (updatedRun.sourceFocusItemId) {
+              const { useFocusStore } = await import('./focusStore');
+              useFocusStore.getState().completeItem(updatedRun.sourceFocusItemId);
+            }
+            if (updatedRun.sourceOptionalItemId) {
+              const { useEnergyMenuStore } = await import('./energyMenuStore');
+              useEnergyMenuStore.getState().completeOptionalItem(updatedRun.sourceOptionalItemId);
+            }
+          }
+
           set({ currentRun: updatedRun });
         }
       },

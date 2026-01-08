@@ -118,6 +118,7 @@ export function createRunFromOptionalItem(item: TodayOptionalItem): RoutineRun {
     totalPauseMs: 0,
     endedAt: null,
     activeTaskId: null,
+    sourceOptionalItemId: item.id,
   };
 }
 
@@ -160,6 +161,7 @@ export function createRunFromFocusItem(item: FocusItem): RoutineRun {
     totalPauseMs: 0,
     endedAt: null,
     activeTaskId: null,
+    sourceFocusItemId: item.id,
   };
 }
 
