@@ -97,6 +97,7 @@ export function getLaterItemsMessage(count: number): string | null {
  */
 export function getClosingMessage(): string {
   const messages = [
+    "You showed up. That's what matters.",
     "That's a day. Rest well.",
     "You did what you could. That's enough.",
     "Tomorrow is a new day.",

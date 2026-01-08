@@ -41,8 +41,25 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSe
     }
   }, [showMenu, showTimeBucketMenu]);
 
+  // Show encouraging message for items rolled over many times
+  const showRolloverEncouragement = item.rolloverCount && item.rolloverCount >= 3;
+
   return (
-    <div className="bg-calm-surface border border-calm-border rounded-lg p-4 hover:border-calm-text/30 transition-colors">
+    <div className="space-y-2">
+      {showRolloverEncouragement && (
+        <div className="bg-calm-steady/10 border border-calm-steady/30 rounded-lg p-3">
+          <p className="text-xs text-calm-text">
+            Carried over {item.rolloverCount} times — no pressure, work with your energy.
+            <button
+              onClick={onDelete}
+              className="ml-1 text-calm-steady hover:underline"
+            >
+              Let this go?
+            </button>
+          </p>
+        </div>
+      )}
+      <div className="bg-calm-surface border border-calm-border rounded-lg p-4 hover:border-calm-text/30 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-medium text-calm-text mb-1">{item.title}</h3>
@@ -63,7 +80,9 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSe
             {item.rolloverCount && item.rolloverCount > 0 && (
               <>
                 <span>•</span>
-                <span className="text-calm-steady">Rolled over {item.rolloverCount}x</span>
+                <span className="text-calm-steady" title={item.rolloverCount >= 3 ? "No pressure, work with your energy" : undefined}>
+                  Rolled over {item.rolloverCount}x
+                </span>
               </>
             )}
           </div>
@@ -124,9 +143,12 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSe
                   onDelete();
                   setShowMenu(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors group"
               >
-                Delete
+                <div>Delete</div>
+                <div className="text-xs text-red-600/60 mt-0.5 group-hover:text-red-600/80 transition-colors">
+                  Sometimes letting go is the right choice
+                </div>
               </button>
             </div>
           )}
@@ -160,6 +182,7 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSe
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

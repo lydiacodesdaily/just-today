@@ -106,18 +106,24 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart }: F
                   onMoveToLater();
                   setShowMenu(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
               >
-                Move to Later
+                <div>Move to Later</div>
+                <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
+                  That&apos;s okay — you can come back when ready
+                </div>
               </button>
               <button
                 onClick={() => {
                   onDelete();
                   setShowMenu(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors group"
               >
-                Delete
+                <div>Delete</div>
+                <div className="text-xs text-red-600/60 mt-0.5 group-hover:text-red-600/80 transition-colors">
+                  Sometimes letting go is the right choice
+                </div>
               </button>
             </div>
           )}
@@ -224,7 +230,7 @@ function OptionalItemCard({ item, onComplete, onRemove, onStart }: OptionalItemC
 }
 
 export function TodaysFocus() {
-  const { todayItems, addToToday, completeItem, moveToLater, deleteItem, rolloverCount, dismissRollover } =
+  const { todayItems, addToToday, completeItem, moveToLater, deleteItem, rolloverCount, dismissRollover, completionCelebrationMessage } =
     useFocusStore();
   const { todayOptionalItems, completeOptionalItem, removeFromToday } = useEnergyMenuStore();
   const { setCurrentRun } = useRunStore();
@@ -282,6 +288,15 @@ export function TodaysFocus() {
           + Add
         </button>
       </div>
+
+      {/* Completion celebration message */}
+      {completionCelebrationMessage && (
+        <div className="bg-calm-flow/20 border border-calm-flow/40 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <p className="text-sm text-calm-text font-medium text-center">
+            {completionCelebrationMessage}
+          </p>
+        </div>
+      )}
 
       {/* Rollover notification */}
       {rolloverCount > 0 && (
