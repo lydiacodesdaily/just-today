@@ -38,8 +38,9 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
       setTasks(editingRoutine.tasks.map(task => ({
         name: task.name,
         durationMs: task.durationMs,
-        lowSafe: task.lowSafe,
-        flowExtra: task.flowExtra,
+        lowIncluded: task.lowIncluded ?? task.lowSafe ?? false,
+        steadyIncluded: task.steadyIncluded ?? (!task.flowExtra || task.lowSafe ? true : false),
+        flowIncluded: task.flowIncluded ?? (task.flowExtra || task.lowSafe ? true : false),
         autoAdvance: task.autoAdvance,
         subtasks: task.subtasks,
       })));
@@ -67,8 +68,9 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
     const newTask: Omit<RoutineTask, 'id' | 'order'> = {
       name: '',
       durationMs: 5 * 60 * 1000, // 5 minutes default
-      lowSafe: false,
-      flowExtra: false,
+      lowIncluded: false,
+      steadyIncluded: true, // Default to Steady only
+      flowIncluded: false,
       autoAdvance: false,
     };
     setTasks([...tasks, newTask]);
@@ -117,8 +119,9 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
       name: task.name.trim(),
       durationMs: Math.max(0, task.durationMs || 0),
       order: i,
-      lowSafe: task.lowSafe || false,
-      flowExtra: task.flowExtra || false,
+      lowIncluded: task.lowIncluded || false,
+      steadyIncluded: task.steadyIncluded ?? true, // Default to true if undefined
+      flowIncluded: task.flowIncluded || false,
       autoAdvance: task.autoAdvance || false,
       subtasks: task.subtasks,
     }));
@@ -296,9 +299,9 @@ function TaskInput({ task, onUpdate, onDelete, autoFocus }: TaskInputProps) {
       {/* Energy mode tags and options */}
       <div className="flex items-center gap-2 flex-wrap">
         <button
-          onClick={() => onUpdate({ lowSafe: !task.lowSafe })}
+          onClick={() => onUpdate({ lowIncluded: !task.lowIncluded })}
           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-            task.lowSafe
+            task.lowIncluded
               ? 'bg-calm-text text-calm-surface'
               : 'bg-calm-border/50 text-calm-muted hover:bg-calm-border'
           }`}
@@ -307,9 +310,20 @@ function TaskInput({ task, onUpdate, onDelete, autoFocus }: TaskInputProps) {
         </button>
 
         <button
-          onClick={() => onUpdate({ flowExtra: !task.flowExtra })}
+          onClick={() => onUpdate({ steadyIncluded: !task.steadyIncluded })}
           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-            task.flowExtra
+            task.steadyIncluded
+              ? 'bg-calm-text text-calm-surface'
+              : 'bg-calm-border/50 text-calm-muted hover:bg-calm-border'
+          }`}
+        >
+          🎯 Steady
+        </button>
+
+        <button
+          onClick={() => onUpdate({ flowIncluded: !task.flowIncluded })}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+            task.flowIncluded
               ? 'bg-calm-text text-calm-surface'
               : 'bg-calm-border/50 text-calm-muted hover:bg-calm-border'
           }`}
@@ -337,16 +351,18 @@ function TaskInput({ task, onUpdate, onDelete, autoFocus }: TaskInputProps) {
       </div>
 
       {/* Help text */}
-      {(task.lowSafe || task.flowExtra || task.autoAdvance) && (
+      {(task.lowIncluded || task.steadyIncluded || task.flowIncluded || task.autoAdvance) && (
         <p className="text-xs text-calm-muted leading-relaxed">
           {task.autoAdvance && 'Auto-advances • '}
-          {task.lowSafe && task.flowExtra
-            ? 'All energy modes'
-            : task.lowSafe
-            ? 'Low energy mode'
-            : task.flowExtra
-            ? 'Flow mode only'
-            : 'Steady & Flow modes'}
+          {(() => {
+            const modes = [];
+            if (task.lowIncluded) modes.push('Low');
+            if (task.steadyIncluded) modes.push('Steady');
+            if (task.flowIncluded) modes.push('Flow');
+            if (modes.length === 0) return 'Steady mode (default)';
+            if (modes.length === 3) return 'All energy modes';
+            return modes.join(' + ') + ' mode' + (modes.length > 1 ? 's' : '');
+          })()}
         </p>
       )}
     </div>

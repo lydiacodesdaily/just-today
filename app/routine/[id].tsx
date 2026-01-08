@@ -73,7 +73,10 @@ export default function RoutineEditorScreen() {
         ...t,
         name: t.name.trim(),
         order: i,
-        durationMs: Math.max(0, t.durationMs || 0)
+        durationMs: Math.max(0, t.durationMs || 0),
+        lowIncluded: t.lowIncluded ?? t.lowSafe ?? false,
+        steadyIncluded: t.steadyIncluded ?? (!t.flowExtra || t.lowSafe ? true : false),
+        flowIncluded: t.flowIncluded ?? (t.flowExtra || t.lowSafe ? true : false),
       })),
     };
 
@@ -96,8 +99,9 @@ export default function RoutineEditorScreen() {
       name: '',
       durationMs: 5 * 60 * 1000, // 5 minutes
       order: tasks.length,
-      lowSafe: false,
-      flowExtra: false,
+      lowIncluded: false,
+      steadyIncluded: true, // Default to Steady only
+      flowIncluded: false,
       autoAdvance: false,
     };
     setTasks([...tasks, newTask]);
@@ -231,17 +235,17 @@ export default function RoutineEditorScreen() {
                     style={[
                       styles.chipToggle,
                       {
-                        backgroundColor: task.lowSafe
+                        backgroundColor: task.lowIncluded
                           ? theme.colors.primary
                           : theme.colors.surfaceSecondary,
                       },
                     ]}
-                    onPress={() => updateTask(index, { lowSafe: !task.lowSafe })}
+                    onPress={() => updateTask(index, { lowIncluded: !task.lowIncluded })}
                   >
                     <Text
                       style={[
                         styles.chipText,
-                        { color: task.lowSafe ? theme.colors.background : theme.colors.textSecondary },
+                        { color: task.lowIncluded ? theme.colors.background : theme.colors.textSecondary },
                       ]}
                     >
                       💤 Low
@@ -252,17 +256,38 @@ export default function RoutineEditorScreen() {
                     style={[
                       styles.chipToggle,
                       {
-                        backgroundColor: task.flowExtra
+                        backgroundColor: task.steadyIncluded
                           ? theme.colors.primary
                           : theme.colors.surfaceSecondary,
                       },
                     ]}
-                    onPress={() => updateTask(index, { flowExtra: !task.flowExtra })}
+                    onPress={() => updateTask(index, { steadyIncluded: !task.steadyIncluded })}
                   >
                     <Text
                       style={[
                         styles.chipText,
-                        { color: task.flowExtra ? theme.colors.background : theme.colors.textSecondary },
+                        { color: task.steadyIncluded ? theme.colors.background : theme.colors.textSecondary },
+                      ]}
+                    >
+                      🎯 Steady
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.chipToggle,
+                      {
+                        backgroundColor: task.flowIncluded
+                          ? theme.colors.primary
+                          : theme.colors.surfaceSecondary,
+                      },
+                    ]}
+                    onPress={() => updateTask(index, { flowIncluded: !task.flowIncluded })}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        { color: task.flowIncluded ? theme.colors.background : theme.colors.textSecondary },
                       ]}
                     >
                       ✨ Flow
@@ -292,16 +317,18 @@ export default function RoutineEditorScreen() {
                 </View>
 
                 {/* Contextual help - only when relevant */}
-                {(task.lowSafe || task.flowExtra || task.autoAdvance) && (
+                {(task.lowIncluded || task.steadyIncluded || task.flowIncluded || task.autoAdvance) && (
                   <Text style={[styles.subtleHint, { color: theme.colors.textSecondary }]}>
                     {task.autoAdvance && 'Auto-advances • '}
-                    {task.lowSafe && task.flowExtra
-                      ? 'All energy modes'
-                      : task.lowSafe
-                      ? 'Low energy mode'
-                      : task.flowExtra
-                      ? 'Flow mode only'
-                      : 'Steady & Flow modes'}
+                    {(() => {
+                      const modes = [];
+                      if (task.lowIncluded) modes.push('Low');
+                      if (task.steadyIncluded) modes.push('Steady');
+                      if (task.flowIncluded) modes.push('Flow');
+                      if (modes.length === 0) return 'Steady mode (default)';
+                      if (modes.length === 3) return 'All energy modes';
+                      return modes.join(' + ') + ' mode' + (modes.length > 1 ? 's' : '');
+                    })()}
                   </Text>
                 )}
               </View>

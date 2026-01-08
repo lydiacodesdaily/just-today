@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { RoutineTemplate, RoutineTask, EnergyMode } from '@/src/models/RoutineTemplate';
+import { RoutineTemplate, RoutineTask } from '@/src/models/RoutineTemplate';
 
 interface RoutineStore {
   // State
@@ -20,23 +20,8 @@ interface RoutineStore {
   deleteTask: (templateId: string, taskId: string) => void;
 }
 
-/**
- * Helper to filter tasks based on energy mode
- */
-export function deriveTasksForEnergyMode(tasks: RoutineTask[], mode: EnergyMode): RoutineTask[] {
-  return tasks.filter((task) => {
-    if (mode === 'low') {
-      // Low mode: only lowSafe tasks
-      return task.lowSafe === true;
-    } else if (mode === 'steady') {
-      // Steady mode: all except flowExtra
-      return !task.flowExtra;
-    } else {
-      // Flow mode: all tasks
-      return true;
-    }
-  });
-}
+// Re-export the filtering function from energyDerivation.ts
+export { deriveTasksForEnergyMode } from '@/src/engine/energyDerivation';
 
 export const useRoutineStore = create<RoutineStore>()(
   persist(

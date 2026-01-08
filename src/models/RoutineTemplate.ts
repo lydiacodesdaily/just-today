@@ -16,8 +16,14 @@ export interface RoutineTask {
   /** Planned duration in milliseconds */
   durationMs: number;
   /** If true, this task appears in Low energy mode */
+  lowIncluded?: boolean;
+  /** If true, this task appears in Steady energy mode */
+  steadyIncluded?: boolean;
+  /** If true, this task appears in Flow energy mode */
+  flowIncluded?: boolean;
+  /** @deprecated Use lowIncluded instead */
   lowSafe?: boolean;
-  /** If true, this task appears ONLY in Flow mode */
+  /** @deprecated Use flowIncluded instead */
   flowExtra?: boolean;
   /** Optional subtasks for step-mode guidance */
   subtasks?: Subtask[];
