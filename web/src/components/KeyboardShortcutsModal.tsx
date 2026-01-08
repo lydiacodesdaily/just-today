@@ -1,7 +1,7 @@
 'use client'
 
-import { useFocusTrap } from '@/hooks/useFocusTrap'
-import { KEYBOARD_SHORTCUTS } from '@/hooks/useGlobalKeyboardShortcuts'
+import { useFocusTrap } from '@/src/hooks/useFocusTrap'
+import { KEYBOARD_SHORTCUTS } from '@/src/hooks/useGlobalKeyboardShortcuts'
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean
