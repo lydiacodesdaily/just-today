@@ -135,6 +135,9 @@ export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps)
             <label htmlFor="duration" className="block text-sm font-medium text-calm-text mb-2">
               Estimated Duration <span className="text-calm-muted text-xs">(optional)</span>
             </label>
+            <p className="text-xs text-calm-muted mb-2">
+              Rough estimate is fine — you can always adjust when you start
+            </p>
             <select
               id="duration"
               value={duration}

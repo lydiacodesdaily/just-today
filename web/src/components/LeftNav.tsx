@@ -61,6 +61,11 @@ const navItems: NavItem[] = [
 export function LeftNav() {
   const pathname = usePathname();
 
+  // Hide navigation on Run page for focus mode
+  if (pathname === '/run') {
+    return null;
+  }
+
   return (
     <nav className="fixed left-0 top-0 h-full w-64 bg-calm-surface border-r border-calm-border flex flex-col">
       {/* Logo/Brand */}

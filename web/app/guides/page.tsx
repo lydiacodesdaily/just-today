@@ -84,7 +84,10 @@ export default function GuidesPage() {
                 </>
               ) : (
                 <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
-                  <p className="text-calm-muted mb-4">No custom guides yet</p>
+                  <p className="text-calm-text mb-2">No custom guides yet</p>
+                  <p className="text-sm text-calm-muted mb-6">
+                    Default guides help with transitions. Create your own for routines you do often.
+                  </p>
                   <button
                     onClick={() => setShowCreateModal(true)}
                     className="px-4 py-2 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"

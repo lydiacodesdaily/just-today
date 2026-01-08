@@ -102,6 +102,9 @@ export function EditLaterItemModal({ item, onClose }: EditLaterItemModalProps) {
             <label htmlFor="duration" className="block text-sm font-medium text-calm-text mb-2">
               Estimated Duration
             </label>
+            <p className="text-xs text-calm-muted mb-2">
+              Think about how long this usually takes, then add a little buffer
+            </p>
             <select
               id="duration"
               value={duration}

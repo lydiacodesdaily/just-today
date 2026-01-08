@@ -120,11 +120,22 @@ export default function RunPage() {
 
   // Completion state
   if (currentRun.status === 'completed') {
+    const messages = [
+      "You did it!",
+      "That's one done ✓",
+      "Nice work",
+      "You showed up today",
+    ];
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
     return (
       <div className="min-h-screen bg-calm-bg flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-calm-text mb-4">You did it!</h1>
-          <p className="text-lg text-calm-muted">Great job completing your routine.</p>
+        <div className="text-center px-4">
+          <h1 className="text-4xl font-bold text-calm-text mb-4">{randomMessage}</h1>
+          <p className="text-lg text-calm-muted mb-2">{currentRun.templateName} complete</p>
+          <p className="text-base text-calm-muted">
+            {completedCount} of {totalCount} {totalCount === 1 ? 'task' : 'tasks'} done
+          </p>
         </div>
       </div>
     );
@@ -134,9 +145,12 @@ export default function RunPage() {
   if (currentRun.status === 'abandoned') {
     return (
       <div className="min-h-screen bg-calm-bg flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-calm-text mb-4">Routine Ended</h1>
-          <p className="text-lg text-calm-muted">That's okay. You can try again whenever you're ready.</p>
+        <div className="text-center px-4">
+          <h1 className="text-3xl font-bold text-calm-text mb-4">Taking a break</h1>
+          <p className="text-lg text-calm-muted mb-2">That's part of the process</p>
+          <p className="text-base text-calm-muted">
+            You can come back to this anytime you're ready
+          </p>
         </div>
       </div>
     );
@@ -173,7 +187,14 @@ export default function RunPage() {
               <h1 className="text-3xl font-semibold text-calm-text leading-tight">
                 {activeTask.name}
               </h1>
-              {activeTask.autoAdvance && (
+              {isPaused && (
+                <div className="mt-4 px-4 py-3 bg-calm-steady/20 border border-calm-steady/40 rounded-lg">
+                  <p className="text-sm text-calm-text">
+                    Taking a break is part of the process
+                  </p>
+                </div>
+              )}
+              {activeTask.autoAdvance && !isPaused && (
                 <div className="mt-3">
                   <span className="text-sm text-calm-muted">⏭️ auto-advances</span>
                 </div>

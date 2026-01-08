@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/src/components/ThemeProvider";
-import { LeftNav } from "@/src/components/LeftNav";
+import { MainLayout } from "@/src/components/MainLayout";
 
 export const metadata: Metadata = {
   title: "JustToday",
@@ -17,12 +17,7 @@ export default function RootLayout({
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className="h-full antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="flex h-full">
-            <LeftNav />
-            <main className="flex-1 ml-64">
-              {children}
-            </main>
-          </div>
+          <MainLayout>{children}</MainLayout>
         </ThemeProvider>
       </body>
     </html>

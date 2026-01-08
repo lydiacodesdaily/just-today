@@ -66,7 +66,7 @@ export default function EnergyMenuPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-semibold text-calm-text mb-2">Energy Menu</h1>
           <p className="text-calm-muted mb-6">
-            Create optional tasks for different energy levels. Add them to Today when you need them.
+            Build your menu of optional activities — things you might do when energy allows. Add them to Today when you&apos;re ready.
           </p>
           <button
             onClick={handleCreateNew}
@@ -102,10 +102,9 @@ export default function EnergyMenuPage() {
                 <div className="space-y-3 flex-1">
                   {items.length === 0 ? (
                     <div className="bg-calm-surface/50 border border-dashed border-calm-border rounded-lg p-6 text-center">
-                      <p className="text-sm text-calm-muted">
-                        No items yet.
-                        <br />
-                        Create one to get started.
+                      <p className="text-sm text-calm-text mb-1">No items yet</p>
+                      <p className="text-xs text-calm-muted">
+                        Add optional activities that match this energy level
                       </p>
                     </div>
                   ) : (

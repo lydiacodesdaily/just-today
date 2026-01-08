@@ -312,10 +312,13 @@ export function TodaysFocus() {
       {/* Items list */}
       {allIncompleteItems.length === 0 ? (
         <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
-          <p className="text-calm-muted mb-4">No items in Today&apos;s Focus yet</p>
+          <p className="text-calm-text mb-2">Ready when you are</p>
+          <p className="text-sm text-calm-muted mb-6">
+            Add your first task, or try an item from your Energy Menu
+          </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="text-calm-text hover:underline text-sm"
+            className="px-4 py-2 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
           >
             Add your first item
           </button>
@@ -398,6 +401,9 @@ export function TodaysFocus() {
                 <label className="block text-sm font-medium text-calm-text mb-2">
                   Estimated duration
                 </label>
+                <p className="text-xs text-calm-muted mb-2">
+                  How long do you think this will take? It&apos;s okay to adjust as you go.
+                </p>
                 <select
                   value={selectedDuration}
                   onChange={(e) => setSelectedDuration(e.target.value as FocusDuration)}
