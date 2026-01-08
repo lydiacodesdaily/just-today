@@ -38,6 +38,18 @@ export type TimeBucket =
   | 'SOMEDAY';
 
 /**
+ * Subtask within a FocusItem
+ */
+export interface Subtask {
+  id: string;
+  text: string;
+  order: number;
+  completed: boolean;
+  estimatedDurationMs?: number;
+  completedAt?: string; // ISO date string
+}
+
+/**
  * FocusItem - Represents an item in either Today's Focus or Later
  */
 export interface FocusItem {
@@ -46,18 +58,20 @@ export interface FocusItem {
   estimatedDuration: FocusDuration;
 
   // Location tracking
-  location: 'today' | 'later';
+  location: 'today' | 'later' | 'archived';
 
   // Timestamps
   createdAt: string; // ISO date string
   addedToTodayAt?: string; // When moved to Today
   movedToLaterAt?: string; // When moved to Later
   completedAt?: string; // When marked complete
+  archivedAt?: string; // When archived
 
   // Later-specific fields
   reminderDate?: string; // ISO date string for when to remind
   reminderTiming?: ReminderTiming; // How the reminder was set
   timeBucket?: TimeBucket; // Optional manual time bucket label (defaults to NONE)
+  lastReviewPromptDate?: string; // Last time user was prompted to review this item
 
   // Focus session tracking
   focusStartedAt?: string;
@@ -66,6 +80,10 @@ export interface FocusItem {
   // Rollover tracking
   rolledOverFromDate?: string; // Original date if item was rolled over
   rolloverCount?: number; // How many times this item has rolled over
+
+  // Subtasks
+  subtasks?: Subtask[];
+  subtaskSuggestionDismissed?: boolean; // User dismissed subtask suggestion for this item
 }
 
 /**

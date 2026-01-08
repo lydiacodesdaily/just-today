@@ -10,6 +10,9 @@ export interface OnboardingState {
   /** IDs of coach marks/hints that have been dismissed */
   dismissedHints: string[];
 
+  /** Whether user completed the welcome tour */
+  completedWelcomeTour: boolean;
+
   /** Usage tracking for determining when to hide example links */
   usage: {
     /** Total items added to Today list */
@@ -31,6 +34,7 @@ export interface OnboardingState {
 
 export const DEFAULT_ONBOARDING_STATE: OnboardingState = {
   dismissedHints: [],
+  completedWelcomeTour: false,
   usage: {
     todayItemsCreated: 0,
     laterItemsCreated: 0,

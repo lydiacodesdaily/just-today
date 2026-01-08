@@ -32,6 +32,22 @@ export interface Settings {
   tickingSoundType: TickingSoundType;
   /** User's theme preference (light, dark, or system) */
   themePreference: ThemePreference;
+  /** Announce when task starts */
+  announceTaskStart: boolean;
+  /** Announce at halfway point of task */
+  announceHalfway: boolean;
+  /** Announce when almost done (2 min remaining) */
+  announceAlmostDone: boolean;
+  /** Enable occasional encouragement announcements */
+  announceEncouragement: boolean;
+  /** Frequency of encouragement: never, occasional, frequent */
+  encouragementFrequency: 'never' | 'occasional' | 'frequent';
+  /** Enable automatic archiving of old items */
+  autoArchiveEnabled: boolean;
+  /** Days before auto-archiving items in Someday */
+  autoArchiveDays: number;
+  /** Show reminders to review aged Someday items */
+  showSomedayReminders: boolean;
 }
 
 /** Current settings schema version */
@@ -49,4 +65,12 @@ export const DEFAULT_SETTINGS: Settings = {
   tickingVolume: 0.5,
   tickingSoundType: 'tick2-tok2',
   themePreference: 'system',
+  announceTaskStart: true,
+  announceHalfway: true,
+  announceAlmostDone: true,
+  announceEncouragement: true,
+  encouragementFrequency: 'occasional',
+  autoArchiveEnabled: false,
+  autoArchiveDays: 60,
+  showSomedayReminders: true,
 };
