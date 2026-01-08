@@ -8,16 +8,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { FocusItem, TimeBucket, formatReminderDate, formatTimeBucket } from '@/src/models/FocusItem';
 import { useFocusStore } from '@/src/stores/focusStore';
+import { EditLaterItemModal } from './EditLaterItemModal';
 
 interface LaterItemCardProps {
   item: FocusItem;
+  onEdit: () => void;
   onMoveToToday: () => void;
   onComplete: () => void;
   onDelete: () => void;
   onSetTimeBucket: (bucket: TimeBucket) => void;
 }
 
-function LaterItemCard({ item, onMoveToToday, onComplete, onDelete, onSetTimeBucket }: LaterItemCardProps) {
+function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSetTimeBucket }: LaterItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showTimeBucketMenu, setShowTimeBucketMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -92,6 +94,15 @@ function LaterItemCard({ item, onMoveToToday, onComplete, onDelete, onSetTimeBuc
             <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-10">
               <button
                 onClick={() => {
+                  onEdit();
+                  setShowMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => {
                   onMoveToToday();
                   setShowMenu(false);
                 }}
@@ -157,6 +168,7 @@ function LaterItemCard({ item, onMoveToToday, onComplete, onDelete, onSetTimeBuc
 export function LaterList() {
   const { laterItems, moveToToday, completeItem, deleteItem, startFocus, setItemTimeBucket } = useFocusStore();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
 
   const incompleteItems = laterItems.filter((item) => !item.completedAt);
 
@@ -198,6 +210,7 @@ export function LaterList() {
             <LaterItemCard
               key={item.id}
               item={item}
+              onEdit={() => setEditingItem(item)}
               onMoveToToday={() => moveToToday(item.id)}
               onComplete={() => completeItem(item.id)}
               onDelete={() => deleteItem(item.id)}
@@ -205,6 +218,14 @@ export function LaterList() {
             />
           ))}
         </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingItem && (
+        <EditLaterItemModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+        />
       )}
     </section>
   );

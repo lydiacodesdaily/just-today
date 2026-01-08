@@ -20,6 +20,7 @@ interface FocusStore {
   addToLater: (title: string, duration: FocusDuration, reminderTiming?: ReminderTiming, customDate?: Date) => void;
   moveToLater: (itemId: string, reminderTiming?: ReminderTiming, customDate?: Date) => void;
   moveToToday: (itemId: string) => void;
+  updateLaterItem: (itemId: string, title: string, duration: FocusDuration, timeBucket?: TimeBucket) => void;
   completeItem: (itemId: string) => void;
   deleteItem: (itemId: string) => void;
   setItemReminder: (itemId: string, reminderTiming?: ReminderTiming, customDate?: Date) => void;
@@ -138,6 +139,22 @@ export const useFocusStore = create<FocusStore>()(
             todayItems: [...state.todayItems, updatedItem],
           };
         });
+      },
+
+      // Update Later item
+      updateLaterItem: (itemId, title, duration, timeBucket) => {
+        set((state) => ({
+          laterItems: state.laterItems.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  title,
+                  estimatedDuration: duration,
+                  timeBucket,
+                }
+              : item
+          ),
+        }));
       },
 
       // Complete item
