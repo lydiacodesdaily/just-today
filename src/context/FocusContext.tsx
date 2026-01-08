@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import { FocusItem, FocusDuration } from '../models/FocusItem';
+import { FocusItem, FocusDuration, TimeBucket } from '../models/FocusItem';
 import {
   loadTodayFocusItems,
   loadLaterItems,
@@ -15,6 +15,7 @@ import {
   markFocusItemComplete,
   deleteFocusItem,
   updateReminderDate,
+  updateTimeBucket,
   startFocusSession,
   endFocusSession,
   checkAndRolloverIfNewDay,
@@ -39,6 +40,7 @@ interface FocusContextValue {
   addToLater: (title: string, duration: FocusDuration, reminderDate?: string) => Promise<FocusItem>;
   moveItemToToday: (itemId: string) => Promise<void>;
   setItemReminder: (itemId: string, reminderDate?: string) => Promise<void>;
+  setItemTimeBucket: (itemId: string, timeBucket?: TimeBucket) => Promise<void>;
 
   // Focus session tracking
   startItemFocus: (itemId: string) => Promise<void>;
@@ -162,6 +164,13 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const setItemTimeBucket = useCallback(async (itemId: string, timeBucket?: TimeBucket): Promise<void> => {
+    await updateTimeBucket(itemId, timeBucket);
+    setLaterItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, timeBucket } : item))
+    );
+  }, []);
+
   // Focus session tracking
   const startItemFocus = useCallback(async (itemId: string): Promise<void> => {
     await startFocusSession(itemId);
@@ -194,6 +203,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
       addToLater,
       moveItemToToday,
       setItemReminder,
+      setItemTimeBucket,
       startItemFocus,
       endItemFocus,
       refreshItems,
@@ -211,6 +221,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
       addToLater,
       moveItemToToday,
       setItemReminder,
+      setItemTimeBucket,
       startItemFocus,
       endItemFocus,
       refreshItems,

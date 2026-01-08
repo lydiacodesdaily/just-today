@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { FocusItem, FocusDuration, ReminderTiming, calculateReminderDate } from '@/src/models/FocusItem';
+import { FocusItem, FocusDuration, ReminderTiming, TimeBucket, calculateReminderDate } from '@/src/models/FocusItem';
 import { useSnapshotStore } from './snapshotStore';
 
 interface FocusStore {
@@ -23,6 +23,7 @@ interface FocusStore {
   completeItem: (itemId: string) => void;
   deleteItem: (itemId: string) => void;
   setItemReminder: (itemId: string, reminderTiming?: ReminderTiming, customDate?: Date) => void;
+  setItemTimeBucket: (itemId: string, timeBucket?: TimeBucket) => void;
   startFocus: (itemId: string) => void;
   endFocus: (itemId: string) => void;
   dismissRollover: () => void;
@@ -190,6 +191,15 @@ export const useFocusStore = create<FocusStore>()(
             ),
           };
         });
+      },
+
+      // Set time bucket for Later item
+      setItemTimeBucket: (itemId, timeBucket) => {
+        set((state) => ({
+          laterItems: state.laterItems.map((item) =>
+            item.id === itemId ? { ...item, timeBucket } : item
+          ),
+        }));
       },
 
       // Start focus session

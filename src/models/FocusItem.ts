@@ -25,6 +25,19 @@ export type ReminderTiming =
   | 'custom';
 
 /**
+ * Time bucket options for Later items
+ * These are optional, manual labels to help users mentally offload
+ * when to think about an item again - no automation or urgency
+ */
+export type TimeBucket =
+  | 'NONE'
+  | 'TOMORROW'
+  | 'THIS_WEEKEND'
+  | 'NEXT_WEEK'
+  | 'LATER_THIS_MONTH'
+  | 'SOMEDAY';
+
+/**
  * FocusItem - Represents an item in either Today's Focus or Later
  */
 export interface FocusItem {
@@ -44,6 +57,7 @@ export interface FocusItem {
   // Later-specific fields
   reminderDate?: string; // ISO date string for when to remind
   reminderTiming?: ReminderTiming; // How the reminder was set
+  timeBucket?: TimeBucket; // Optional manual time bucket label (defaults to NONE)
 
   // Focus session tracking
   focusStartedAt?: string;
@@ -137,4 +151,22 @@ export function formatReminderDate(reminderDate?: string): string {
 
   // Otherwise, show the date
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Helper function to format time bucket for display
+ */
+export function formatTimeBucket(bucket?: TimeBucket): string {
+  if (!bucket || bucket === 'NONE') return '';
+
+  const mapping: Record<TimeBucket, string> = {
+    NONE: '',
+    TOMORROW: 'Tomorrow',
+    THIS_WEEKEND: 'This Weekend',
+    NEXT_WEEK: 'Next Week',
+    LATER_THIS_MONTH: 'Later This Month',
+    SOMEDAY: 'Someday',
+  };
+
+  return mapping[bucket] || '';
 }

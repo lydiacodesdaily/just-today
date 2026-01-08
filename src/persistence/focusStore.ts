@@ -3,7 +3,7 @@
  * Storage operations for Today's Focus and Later items
  */
 
-import { FocusItem, FocusDuration } from '../models/FocusItem';
+import { FocusItem, FocusDuration, TimeBucket } from '../models/FocusItem';
 import { getItem, setItem, KEYS } from './storage';
 import { incrementTodayCounter, addFocusTime } from './snapshotStore';
 
@@ -185,6 +185,23 @@ export async function updateReminderDate(itemId: string, reminderDate?: string):
   items[itemIndex] = {
     ...items[itemIndex],
     reminderDate,
+  };
+
+  await saveFocusItems(items);
+}
+
+/**
+ * Update time bucket for a Later item
+ */
+export async function updateTimeBucket(itemId: string, timeBucket?: TimeBucket): Promise<void> {
+  const items = await loadFocusItems();
+  const itemIndex = items.findIndex((item) => item.id === itemId);
+
+  if (itemIndex === -1) return;
+
+  items[itemIndex] = {
+    ...items[itemIndex],
+    timeBucket,
   };
 
   await saveFocusItems(items);

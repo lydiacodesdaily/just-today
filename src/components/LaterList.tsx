@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platfo
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
-import { FocusItem } from '../models/FocusItem';
+import { FocusItem, TimeBucket, formatTimeBucket } from '../models/FocusItem';
 import { formatReminderDate } from '../models/FocusItem';
 import { shouldShowLaterExamples } from '../persistence/onboardingStore';
 import { CoachMark } from './CoachMark';
@@ -19,7 +19,7 @@ interface LaterListProps {
 
 export function LaterList({ onStartFocus }: LaterListProps) {
   const theme = useTheme();
-  const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder, addToLater } = useFocus();
+  const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder, setItemTimeBucket, addToLater } = useFocus();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -52,9 +52,10 @@ export function LaterList({ onStartFocus }: LaterListProps) {
             '▶ Start Now',
             '✓ Mark Done',
             '🔔 Set Reminder',
+            '🗓 When to think about this?',
             'Delete',
           ],
-          destructiveButtonIndex: 5,
+          destructiveButtonIndex: 6,
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
@@ -67,6 +68,8 @@ export function LaterList({ onStartFocus }: LaterListProps) {
           } else if (buttonIndex === 4) {
             showReminderPicker(item);
           } else if (buttonIndex === 5) {
+            showTimeBucketPicker(item);
+          } else if (buttonIndex === 6) {
             deleteItem(item.id);
           }
         }
@@ -92,6 +95,10 @@ export function LaterList({ onStartFocus }: LaterListProps) {
           {
             text: '🔔 Set Reminder',
             onPress: () => showReminderPicker(item),
+          },
+          {
+            text: '🗓 When to think about this?',
+            onPress: () => showTimeBucketPicker(item),
           },
           {
             text: 'Delete',
@@ -201,6 +208,70 @@ export function LaterList({ onStartFocus }: LaterListProps) {
     }
   };
 
+  const showTimeBucketPicker = (item: FocusItem) => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: 'When should I think about this again?',
+          message: 'This is just for you — no reminders, no pressure',
+          options: [
+            'Cancel',
+            'Tomorrow',
+            'This Weekend',
+            'Next Week',
+            'Later This Month',
+            'Someday',
+            'None (clear)',
+          ],
+          cancelButtonIndex: 0,
+          destructiveButtonIndex: 6,
+        },
+        (buttonIndex) => {
+          const buckets: TimeBucket[] = ['TOMORROW', 'THIS_WEEKEND', 'NEXT_WEEK', 'LATER_THIS_MONTH', 'SOMEDAY'];
+
+          if (buttonIndex >= 1 && buttonIndex <= 5) {
+            setItemTimeBucket(item.id, buckets[buttonIndex - 1]);
+          } else if (buttonIndex === 6) {
+            setItemTimeBucket(item.id, 'NONE');
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        'When should I think about this again?',
+        'This is just for you — no reminders, no pressure',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Tomorrow',
+            onPress: () => setItemTimeBucket(item.id, 'TOMORROW'),
+          },
+          {
+            text: 'This Weekend',
+            onPress: () => setItemTimeBucket(item.id, 'THIS_WEEKEND'),
+          },
+          {
+            text: 'Next Week',
+            onPress: () => setItemTimeBucket(item.id, 'NEXT_WEEK'),
+          },
+          {
+            text: 'Later This Month',
+            onPress: () => setItemTimeBucket(item.id, 'LATER_THIS_MONTH'),
+          },
+          {
+            text: 'Someday',
+            onPress: () => setItemTimeBucket(item.id, 'SOMEDAY'),
+          },
+          {
+            text: 'None (clear)',
+            style: 'destructive',
+            onPress: () => setItemTimeBucket(item.id, 'NONE'),
+          },
+        ]
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Contextual coach mark */}
@@ -301,6 +372,11 @@ export function LaterList({ onStartFocus }: LaterListProps) {
                         {item.estimatedDuration && (
                           <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
                             {item.estimatedDuration}
+                          </Text>
+                        )}
+                        {item.timeBucket && item.timeBucket !== 'NONE' && (
+                          <Text style={[styles.itemTimeBucket, { color: theme.colors.textSecondary }]}>
+                            • {formatTimeBucket(item.timeBucket)}
                           </Text>
                         )}
                         {item.reminderDate && (
@@ -496,6 +572,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   itemDuration: {
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  itemTimeBucket: {
     fontSize: 14,
     fontWeight: '400',
   },

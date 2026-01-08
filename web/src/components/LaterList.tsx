@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { FocusItem, formatReminderDate } from '@/src/models/FocusItem';
+import { FocusItem, TimeBucket, formatReminderDate, formatTimeBucket } from '@/src/models/FocusItem';
 import { useFocusStore } from '@/src/stores/focusStore';
 
 interface LaterItemCardProps {
@@ -14,32 +14,44 @@ interface LaterItemCardProps {
   onMoveToToday: () => void;
   onComplete: () => void;
   onDelete: () => void;
+  onSetTimeBucket: (bucket: TimeBucket) => void;
 }
 
-function LaterItemCard({ item, onMoveToToday, onComplete, onDelete }: LaterItemCardProps) {
+function LaterItemCard({ item, onMoveToToday, onComplete, onDelete, onSetTimeBucket }: LaterItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [showTimeBucketMenu, setShowTimeBucketMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const timeBucketMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
       }
+      if (timeBucketMenuRef.current && !timeBucketMenuRef.current.contains(event.target as Node)) {
+        setShowTimeBucketMenu(false);
+      }
     }
 
-    if (showMenu) {
+    if (showMenu || showTimeBucketMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showMenu]);
+  }, [showMenu, showTimeBucketMenu]);
 
   return (
     <div className="bg-calm-surface border border-calm-border rounded-lg p-4 hover:border-calm-text/30 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-medium text-calm-text mb-1">{item.title}</h3>
-          <div className="flex items-center gap-3 text-sm text-calm-muted">
+          <div className="flex items-center gap-3 text-sm text-calm-muted flex-wrap">
             <span>{item.estimatedDuration}</span>
+            {item.timeBucket && item.timeBucket !== 'NONE' && (
+              <>
+                <span>•</span>
+                <span className="text-calm-text/70">{formatTimeBucket(item.timeBucket)}</span>
+              </>
+            )}
             {item.reminderDate && (
               <>
                 <span>•</span>
@@ -77,7 +89,7 @@ function LaterItemCard({ item, onMoveToToday, onComplete, onDelete }: LaterItemC
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-10">
+            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-10">
               <button
                 onClick={() => {
                   onMoveToToday();
@@ -86,6 +98,15 @@ function LaterItemCard({ item, onMoveToToday, onComplete, onDelete }: LaterItemC
                 className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
               >
                 Move to Today
+              </button>
+              <button
+                onClick={() => {
+                  setShowTimeBucketMenu(true);
+                  setShowMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+              >
+                When to think about this?
               </button>
               <button
                 onClick={() => {
@@ -98,6 +119,35 @@ function LaterItemCard({ item, onMoveToToday, onComplete, onDelete }: LaterItemC
               </button>
             </div>
           )}
+
+          {showTimeBucketMenu && (
+            <div ref={timeBucketMenuRef} className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-10">
+              <div className="px-4 py-2 text-xs text-calm-muted border-b border-calm-border">
+                No reminders, no pressure
+              </div>
+              {(['TOMORROW', 'THIS_WEEKEND', 'NEXT_WEEK', 'LATER_THIS_MONTH', 'SOMEDAY'] as TimeBucket[]).map((bucket) => (
+                <button
+                  key={bucket}
+                  onClick={() => {
+                    onSetTimeBucket(bucket);
+                    setShowTimeBucketMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                >
+                  {formatTimeBucket(bucket)}
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  onSetTimeBucket('NONE');
+                  setShowTimeBucketMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-calm-muted hover:bg-calm-bg transition-colors border-t border-calm-border"
+              >
+                None (clear)
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -105,7 +155,7 @@ function LaterItemCard({ item, onMoveToToday, onComplete, onDelete }: LaterItemC
 }
 
 export function LaterList() {
-  const { laterItems, moveToToday, completeItem, deleteItem, startFocus } = useFocusStore();
+  const { laterItems, moveToToday, completeItem, deleteItem, startFocus, setItemTimeBucket } = useFocusStore();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const incompleteItems = laterItems.filter((item) => !item.completedAt);
@@ -151,6 +201,7 @@ export function LaterList() {
               onMoveToToday={() => moveToToday(item.id)}
               onComplete={() => completeItem(item.id)}
               onDelete={() => deleteItem(item.id)}
+              onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
             />
           ))}
         </div>
