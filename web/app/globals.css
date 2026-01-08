@@ -114,3 +114,13 @@ select:focus-visible {
   clip: auto;
   white-space: normal;
 }
+
+/* Touch optimization - removes 300ms delay on mobile */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Safe area for mobile notches and bottom bars */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

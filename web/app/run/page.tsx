@@ -158,7 +158,7 @@ export default function RunPage() {
 
   return (
     <div className="min-h-screen bg-calm-bg">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-3xl mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -171,7 +171,8 @@ export default function RunPage() {
           </div>
           <button
             onClick={handleEnd}
-            className="text-sm text-calm-muted hover:text-calm-text transition-colors"
+            className="min-h-[44px] px-4 py-2 text-sm text-calm-muted hover:text-calm-text transition-colors touch-manipulation"
+            aria-label="End routine"
           >
             End routine
           </button>
@@ -221,29 +222,33 @@ export default function RunPage() {
             )}
           </div>
 
-          {/* Time adjustments */}
+          {/* Time adjustments - Touch-friendly 44x44px minimum */}
           <div className="flex items-center justify-center gap-2">
             <button
               onClick={() => handleExtend(-5 * 60 * 1000)}
-              className="px-3 py-2 text-sm text-calm-muted hover:text-calm-text hover:bg-calm-surface rounded-lg transition-colors"
+              className="min-w-[44px] min-h-[44px] px-4 py-3 text-sm text-calm-muted hover:text-calm-text hover:bg-calm-surface rounded-lg transition-colors touch-manipulation"
+              aria-label="Decrease time by 5 minutes"
             >
               -5m
             </button>
             <button
               onClick={() => handleExtend(-1 * 60 * 1000)}
-              className="px-3 py-2 text-sm text-calm-muted hover:text-calm-text hover:bg-calm-surface rounded-lg transition-colors"
+              className="min-w-[44px] min-h-[44px] px-4 py-3 text-sm text-calm-muted hover:text-calm-text hover:bg-calm-surface rounded-lg transition-colors touch-manipulation"
+              aria-label="Decrease time by 1 minute"
             >
               -1m
             </button>
             <button
               onClick={() => handleExtend(1 * 60 * 1000)}
-              className="px-3 py-2 text-sm text-calm-muted hover:text-calm-text hover:bg-calm-surface rounded-lg transition-colors"
+              className="min-w-[44px] min-h-[44px] px-4 py-3 text-sm text-calm-muted hover:text-calm-text hover:bg-calm-surface rounded-lg transition-colors touch-manipulation"
+              aria-label="Increase time by 1 minute"
             >
               +1m
             </button>
             <button
               onClick={() => handleExtend(5 * 60 * 1000)}
-              className="px-3 py-2 text-sm text-calm-muted hover:text-calm-text hover:bg-calm-surface rounded-lg transition-colors"
+              className="min-w-[44px] min-h-[44px] px-4 py-3 text-sm text-calm-muted hover:text-calm-text hover:bg-calm-surface rounded-lg transition-colors touch-manipulation"
+              aria-label="Increase time by 5 minutes"
             >
               +5m
             </button>

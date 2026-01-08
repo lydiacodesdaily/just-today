@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { LeftNav } from './LeftNav';
+import { BottomNav } from './BottomNav';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,11 +23,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <LeftNav />
       <main
         id="main-content"
-        className={isFocusMode ? 'flex-1' : 'flex-1 ml-64'}
+        className={isFocusMode ? 'flex-1 pb-0' : 'flex-1 md:ml-64 pb-16 md:pb-0'}
         role="main"
       >
         {children}
       </main>
+      <BottomNav />
     </div>
   );
 }

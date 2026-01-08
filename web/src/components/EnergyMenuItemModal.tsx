@@ -163,18 +163,18 @@ export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps)
             </select>
           </div>
 
-          {/* Actions */}
+          {/* Actions - Touch-friendly 44px minimum */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text/10 transition-colors font-medium"
+              className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text/10 transition-colors font-medium touch-manipulation"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-calm-text text-calm-bg rounded-lg hover:bg-calm-text/90 transition-colors font-medium"
+              className="flex-1 min-h-[48px] px-4 py-3 bg-calm-text text-calm-bg rounded-lg hover:bg-calm-text/90 transition-colors font-medium touch-manipulation"
             >
               {isEditing ? 'Save Changes' : 'Create Item'}
             </button>

@@ -130,7 +130,7 @@ export function CreateGuideModal({ isOpen, onClose, onSave, editingGuide }: Crea
                   {items.length > 1 && (
                     <button
                       onClick={() => handleRemoveItem(index)}
-                      className="px-3 py-2 text-calm-muted hover:text-red-600 transition-colors"
+                      className="min-w-[44px] min-h-[44px] px-3 py-2 text-calm-muted hover:text-red-600 transition-colors touch-manipulation"
                       aria-label="Remove item"
                     >
                       <svg
@@ -154,7 +154,7 @@ export function CreateGuideModal({ isOpen, onClose, onSave, editingGuide }: Crea
               {items.length < MAX_ITEMS && (
                 <button
                   onClick={handleAddItem}
-                  className="w-full px-4 py-2 border-2 border-dashed border-calm-border rounded-lg text-sm text-calm-muted hover:border-calm-text/30 hover:text-calm-text transition-colors"
+                  className="w-full min-h-[44px] px-4 py-3 border-2 border-dashed border-calm-border rounded-lg text-sm text-calm-muted hover:border-calm-text/30 hover:text-calm-text transition-colors touch-manipulation"
                 >
                   + Add Item
                 </button>
@@ -163,18 +163,18 @@ export function CreateGuideModal({ isOpen, onClose, onSave, editingGuide }: Crea
           </div>
         </div>
 
-        {/* Action buttons */}
+        {/* Action buttons - Touch-friendly 44px minimum */}
         <div className="flex gap-3 mt-6 pt-4 border-t border-calm-border">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-calm-border text-calm-text rounded-lg hover:bg-calm-border/80 transition-colors"
+            className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-border/80 transition-colors touch-manipulation"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!canSave}
-            className="flex-1 px-4 py-2 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 min-h-[48px] px-4 py-3 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
           >
             {editingGuide ? 'Save Changes' : 'Create Guide'}
           </button>
