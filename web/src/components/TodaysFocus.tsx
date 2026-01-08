@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useRouter } from 'next/navigation';
 import { FocusItem, FocusDuration } from '@/src/models/FocusItem';
 import { useFocusStore } from '@/src/stores/focusStore';
@@ -13,6 +13,8 @@ import { useRunStore } from '@/src/stores/runStore';
 import { useEnergyMenuStore } from '@/src/stores/energyMenuStore';
 import { createRunFromFocusItem } from '@/src/engine/runEngine';
 import { TodayOptionalItem } from '@/src/models/EnergyMenuItem';
+import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
+import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
@@ -229,7 +231,12 @@ function OptionalItemCard({ item, onComplete, onRemove, onStart }: OptionalItemC
   );
 }
 
-export function TodaysFocus() {
+export interface TodaysFocusRef {
+  openQuickAdd: () => void;
+  markCurrentTaskDone: () => void;
+}
+
+export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
   const { todayItems, addToToday, completeItem, moveToLater, deleteItem, rolloverCount, dismissRollover, completionCelebrationMessage } =
     useFocusStore();
   const { todayOptionalItems, completeOptionalItem, removeFromToday } = useEnergyMenuStore();
@@ -240,15 +247,36 @@ export function TodaysFocus() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [selectedDuration, setSelectedDuration] = useState<FocusDuration>('~15 min');
+  const [srAnnouncement, setSrAnnouncement] = useState('');
+
+  const addModalRef = useFocusTrap<HTMLDivElement>(showAddModal);
 
   const incompleteItems = todayItems.filter((item) => !item.completedAt);
   const incompleteOptionalItems = todayOptionalItems.filter((item) => !item.completedAt);
   const allIncompleteItems = [...incompleteItems, ...incompleteOptionalItems];
   const visibleItems = showAll ? incompleteItems : incompleteItems.slice(0, VISIBLE_ITEMS_DEFAULT);
 
+  // Expose methods for keyboard shortcuts
+  useImperativeHandle(ref, () => ({
+    openQuickAdd: () => {
+      setShowAddModal(true);
+    },
+    markCurrentTaskDone: () => {
+      // Mark the first incomplete item as done
+      if (incompleteItems.length > 0) {
+        completeItem(incompleteItems[0].id);
+        setSrAnnouncement(`Task completed: ${incompleteItems[0].title}`);
+      } else if (incompleteOptionalItems.length > 0) {
+        completeOptionalItem(incompleteOptionalItems[0].id);
+        setSrAnnouncement(`Task completed: ${incompleteOptionalItems[0].title}`);
+      }
+    },
+  }));
+
   const handleAdd = () => {
     if (newTitle.trim()) {
       addToToday(newTitle.trim(), selectedDuration);
+      setSrAnnouncement(`Added to today: ${newTitle.trim()}`);
       setNewTitle('');
       setSelectedDuration('~15 min');
       setShowAddModal(false);
@@ -291,7 +319,11 @@ export function TodaysFocus() {
 
       {/* Completion celebration message */}
       {completionCelebrationMessage && (
-        <div className="bg-calm-flow/20 border border-calm-flow/40 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div
+          className="bg-calm-flow/20 border border-calm-flow/40 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-300"
+          role="status"
+          aria-live="polite"
+        >
           <p className="text-sm text-calm-text font-medium text-center">
             {completionCelebrationMessage}
           </p>
@@ -300,7 +332,11 @@ export function TodaysFocus() {
 
       {/* Rollover notification */}
       {rolloverCount > 0 && (
-        <div className="bg-calm-steady/20 border border-calm-steady/40 rounded-lg p-4">
+        <div
+          className="bg-calm-steady/20 border border-calm-steady/40 rounded-lg p-4"
+          role="status"
+          aria-live="polite"
+        >
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm text-calm-text">
               {rolloverCount} item{rolloverCount === 1 ? '' : 's'} moved to Later from yesterday.
@@ -309,7 +345,7 @@ export function TodaysFocus() {
             <button
               onClick={dismissRollover}
               className="text-calm-muted hover:text-calm-text transition-colors"
-              aria-label="Dismiss"
+              aria-label="Dismiss rollover notification"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -385,9 +421,21 @@ export function TodaysFocus() {
 
       {/* Add item modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-calm-surface rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold text-calm-text mb-4">Add to Today</h3>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowAddModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-modal-title"
+        >
+          <div
+            ref={addModalRef}
+            className="bg-calm-surface rounded-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="add-modal-title" className="text-xl font-semibold text-calm-text mb-4">
+              Add to Today
+            </h3>
 
             <div className="space-y-4">
               <div>
@@ -451,6 +499,11 @@ export function TodaysFocus() {
           </div>
         </div>
       )}
+
+      {/* Screen reader announcements */}
+      <AriaLiveRegion message={srAnnouncement} politeness="polite" />
     </section>
   );
-}
+});
+
+TodaysFocus.displayName = 'TodaysFocus';

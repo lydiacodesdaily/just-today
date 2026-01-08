@@ -14,6 +14,7 @@ interface FocusStore {
   laterItems: FocusItem[];
   rolloverCount: number;
   lastCheckDate: string; // ISO date string
+  completionCelebrationMessage: string | null;
 
   // Actions
   addToToday: (title: string, duration: FocusDuration) => void;
@@ -61,6 +62,7 @@ export const useFocusStore = create<FocusStore>()(
       laterItems: [],
       rolloverCount: 0,
       lastCheckDate: getTodayDateString(),
+      completionCelebrationMessage: null,
 
       // Add to Today
       addToToday: (title, duration) => {
@@ -170,6 +172,15 @@ export const useFocusStore = create<FocusStore>()(
           // Only increment snapshot if item exists and wasn't already completed
           if (item && !item.completedAt) {
             useSnapshotStore.getState().incrementTodayCounter('focusItemsCompleted');
+
+            // Celebrate if item had rollover count
+            if (item.rolloverCount && item.rolloverCount > 0) {
+              set({ completionCelebrationMessage: "You got there in your own time ✓" });
+              // Clear message after 4 seconds
+              setTimeout(() => {
+                set({ completionCelebrationMessage: null });
+              }, 4000);
+            }
           }
 
           return {

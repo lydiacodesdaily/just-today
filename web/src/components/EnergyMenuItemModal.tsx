@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useEnergyMenuStore } from '@/src/stores/energyMenuStore';
 import { EnergyMenuItem, EnergyLevel, EstimatedDuration } from '@/src/models/EnergyMenuItem';
+import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 
 interface EnergyMenuItemModalProps {
   item?: EnergyMenuItem | null;
@@ -24,6 +25,7 @@ const DURATIONS: EstimatedDuration[] = ['~5 min', '~10 min', '~15 min', '~25 min
 
 export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps) {
   const { addMenuItem, updateMenuItem } = useEnergyMenuStore();
+  const modalRef = useFocusTrap<HTMLDivElement>(true);
   const isEditing = !!item;
 
   const [title, setTitle] = useState(item?.title || '');
@@ -64,17 +66,25 @@ export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps)
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="energy-modal-title"
+      aria-describedby="energy-modal-description"
+    >
       <div
+        ref={modalRef}
         className="bg-calm-surface border border-calm-border rounded-xl max-w-lg w-full p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-calm-text">
+          <h2 id="energy-modal-title" className="text-2xl font-semibold text-calm-text">
             {isEditing ? 'Edit Energy Menu Item' : 'Create Energy Menu Item'}
           </h2>
-          <p className="text-sm text-calm-muted mt-1">
+          <p id="energy-modal-description" className="text-sm text-calm-muted mt-1">
             Optional tasks you can add to Today based on your energy level
           </p>
         </div>

@@ -1,21 +1,67 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { EnergyPicker } from '@/src/components/EnergyPicker';
 import { EnergyMenu } from '@/src/components/EnergyMenu';
-import { TodaysFocus } from '@/src/components/TodaysFocus';
+import { TodaysFocus, TodaysFocusRef } from '@/src/components/TodaysFocus';
 import { RoutinesList } from '@/src/components/RoutineCard';
 import { LaterList } from '@/src/components/LaterList';
 import { BrainDump } from '@/src/components/BrainDump';
+import { KeyboardShortcutsModal } from '@/src/components/KeyboardShortcutsModal';
+import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { useEnergyStore } from '@/src/stores/energyStore';
 import { useAutoCheck } from '@/src/hooks/useAutoCheck';
+import { useGlobalKeyboardShortcuts, KeyboardShortcut } from '@/src/hooks/useGlobalKeyboardShortcuts';
 
 export default function TodayPage() {
   const { currentMode, setMode } = useEnergyStore();
   const [showMoreSections, setShowMoreSections] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [energyAnnouncement, setEnergyAnnouncement] = useState('');
+  const todaysFocusRef = useRef<TodaysFocusRef>(null);
 
   // Enable automatic daily checks and cleanup
   useAutoCheck();
+
+  // Global keyboard shortcuts
+  const shortcuts: KeyboardShortcut[] = [
+    {
+      key: 'k',
+      metaKey: true,
+      description: 'Quick add task to Today',
+      action: () => {
+        todaysFocusRef.current?.openQuickAdd();
+      },
+    },
+    {
+      key: '.',
+      metaKey: true,
+      description: 'Mark current task as done',
+      action: () => {
+        todaysFocusRef.current?.markCurrentTaskDone();
+      },
+    },
+    {
+      key: '?',
+      description: 'Show keyboard shortcuts help',
+      action: () => {
+        setShowShortcutsModal(true);
+      },
+    },
+  ];
+
+  useGlobalKeyboardShortcuts(shortcuts);
+
+  // Handle energy mode change with screen reader announcement
+  const handleEnergyModeChange = (mode: typeof currentMode) => {
+    setMode(mode);
+    const modeNames = {
+      low: 'Low Energy mode',
+      steady: 'Steady Energy mode',
+      flow: 'Flow Energy mode',
+    };
+    setEnergyAnnouncement(`Switched to ${modeNames[mode]}`);
+  };
 
   return (
     <div className="min-h-screen bg-calm-bg">
@@ -41,11 +87,11 @@ export default function TodayPage() {
         <div className="space-y-8">
           {/* 1. Energy Picker */}
           <section>
-            <EnergyPicker selectedMode={currentMode} onSelect={setMode} />
+            <EnergyPicker selectedMode={currentMode} onSelect={handleEnergyModeChange} />
           </section>
 
           {/* 2. Today's Focus */}
-          <TodaysFocus />
+          <TodaysFocus ref={todaysFocusRef} />
 
           {/* Show More sections - collapsed by default */}
           {showMoreSections && (
@@ -90,6 +136,13 @@ export default function TodayPage() {
         {/* Footer spacing */}
         <div className="h-16"></div>
       </div>
+
+      {/* Accessibility features */}
+      <AriaLiveRegion message={energyAnnouncement} politeness="polite" />
+      <KeyboardShortcutsModal
+        isOpen={showShortcutsModal}
+        onClose={() => setShowShortcutsModal(false)}
+      />
     </div>
   );
 }

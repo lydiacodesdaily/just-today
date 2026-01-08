@@ -3,7 +3,7 @@
  * Timer display with gentle, encouraging overtime messaging.
  */
 
-import React from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { TimeRemaining, formatTimeRemaining } from '@/src/engine/timerEngine';
 
 interface TimeDisplayProps {
@@ -15,6 +15,31 @@ interface TimeDisplayProps {
 }
 
 export function TimeDisplay({ timeRemaining, totalDurationMs, originalDurationMs }: TimeDisplayProps) {
+  const [srAnnouncement, setSrAnnouncement] = useState('');
+  const lastAnnouncedMinute = useRef<number>(-1);
+
+  // Announce timer updates every minute for screen readers
+  useEffect(() => {
+    if (!timeRemaining) return;
+
+    const remainingMinutes = Math.ceil(timeRemaining.remainingMs / 60000);
+    const currentMinute = timeRemaining.isOvertime
+      ? Math.floor(timeRemaining.overtimeMs / 60000)
+      : remainingMinutes;
+
+    // Only announce when the minute changes
+    if (currentMinute !== lastAnnouncedMinute.current) {
+      lastAnnouncedMinute.current = currentMinute;
+
+      if (timeRemaining.isOvertime) {
+        const overtimeMinutes = Math.floor(timeRemaining.overtimeMs / 60000);
+        setSrAnnouncement(`${overtimeMinutes} ${overtimeMinutes === 1 ? 'minute' : 'minutes'} overtime`);
+      } else if (remainingMinutes > 0) {
+        setSrAnnouncement(`${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'} remaining`);
+      }
+    }
+  }, [timeRemaining]);
+
   if (!timeRemaining) {
     return null;
   }
@@ -69,6 +94,7 @@ export function TimeDisplay({ timeRemaining, totalDurationMs, originalDurationMs
             ? 'text-amber-600'
             : 'text-calm-primary'
         }`}
+        aria-live="off"
       >
         {formatTimeRemaining(timeRemaining)}
       </div>
@@ -92,6 +118,16 @@ export function TimeDisplay({ timeRemaining, totalDurationMs, originalDurationMs
           </div>
         </div>
       )}
+
+      {/* Screen reader announcement - updates every minute */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {srAnnouncement}
+      </div>
     </div>
   );
 }

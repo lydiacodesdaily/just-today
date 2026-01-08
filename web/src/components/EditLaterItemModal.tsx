@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { FocusItem, FocusDuration, TimeBucket } from '@/src/models/FocusItem';
+import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 
 interface EditLaterItemModalProps {
   item: FocusItem;
@@ -36,6 +37,7 @@ const TIME_BUCKETS: { value: TimeBucket; label: string }[] = [
 
 export function EditLaterItemModal({ item, onClose }: EditLaterItemModalProps) {
   const { updateLaterItem } = useFocusStore();
+  const modalRef = useFocusTrap<HTMLDivElement>(true);
 
   const [title, setTitle] = useState(item.title);
   const [duration, setDuration] = useState<FocusDuration>(item.estimatedDuration);
@@ -66,15 +68,25 @@ export function EditLaterItemModal({ item, onClose }: EditLaterItemModalProps) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-modal-title"
+      aria-describedby="edit-modal-description"
+    >
       <div
+        ref={modalRef}
         className="bg-calm-surface border border-calm-border rounded-xl max-w-lg w-full p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-calm-text">Edit Later Item</h2>
-          <p className="text-sm text-calm-muted mt-1">
+          <h2 id="edit-modal-title" className="text-2xl font-semibold text-calm-text">
+            Edit Later Item
+          </h2>
+          <p id="edit-modal-description" className="text-sm text-calm-muted mt-1">
             Update the task details and when to think about it
           </p>
         </div>
