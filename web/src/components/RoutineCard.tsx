@@ -43,7 +43,10 @@ export function RoutineCard({ routine, energyMode, onStart, onEdit, onDelete }: 
           <h3 className="text-lg font-semibold text-calm-text">{routine.name}</h3>
           <div className="flex items-center gap-2 ml-2">
             <button
-              onClick={onEdit}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
               className="p-1.5 text-calm-muted hover:text-calm-text transition-colors"
               title="Edit routine"
             >
@@ -52,7 +55,10 @@ export function RoutineCard({ routine, energyMode, onStart, onEdit, onDelete }: 
               </svg>
             </button>
             <button
-              onClick={onDelete}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
               className="p-1.5 text-calm-muted hover:text-red-600 transition-colors"
               title="Delete routine"
             >
@@ -91,7 +97,8 @@ interface RoutinesListProps {
 }
 
 export function RoutinesList({ energyMode }: RoutinesListProps) {
-  const { templates, deleteTemplate } = useRoutineStore();
+  const templates = useRoutineStore((state) => state.templates);
+  const deleteTemplate = useRoutineStore((state) => state.deleteTemplate);
   const { setCurrentRun } = useRunStore();
   const router = useRouter();
 
