@@ -286,7 +286,6 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
   const handleStartFocus = (item: FocusItem) => {
     // Create a run from the focus item
     const run = createRunFromFocusItem(item);
-    console.log('[TodaysFocus] Created new run:', run.id, 'status:', run.status);
     setCurrentRun(run);
     // Navigate to run page where timer will auto-start
     router.push('/run');

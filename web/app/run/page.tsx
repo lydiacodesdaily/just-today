@@ -5,7 +5,7 @@
  * Active routine run execution page.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRunStore } from '@/src/stores/runStore';
 import { useSettingsStore } from '@/src/stores/settingsStore';
@@ -15,6 +15,7 @@ import { useAudio } from '@/src/hooks/useAudio';
 import { TimeDisplay } from '@/src/components/TimeDisplay';
 import { TaskControls } from '@/src/components/TaskControls';
 import { SubtaskList } from '@/src/components/SubtaskList';
+import { ConfirmDialog } from '@/src/components/Dialog';
 
 export default function RunPage() {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function RunPage() {
   const startedRunIds = useRef(new Set<string>());
   // Track if we're in a completion flow to prevent double redirect
   const isCompletingRef = useRef(false);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
 
   // Redirect if no run (but not if we just completed/abandoned - let those handle their own redirect)
   useEffect(() => {
@@ -48,7 +50,6 @@ export default function RunPage() {
   // Auto-start run if not started
   useEffect(() => {
     if (currentRun && currentRun.status === 'notStarted' && !startedRunIds.current.has(currentRun.id)) {
-      console.log('[RunPage] Auto-starting run:', currentRun.id, 'status:', currentRun.status);
       startedRunIds.current.add(currentRun.id);
       startCurrentRun();
     }
@@ -183,9 +184,11 @@ export default function RunPage() {
   };
 
   const handleEnd = () => {
-    if (confirm("End this routine? You can come back to it anytime.")) {
-      endCurrentRun();
-    }
+    setShowEndConfirm(true);
+  };
+
+  const confirmEnd = () => {
+    endCurrentRun();
   };
 
   return (
@@ -330,6 +333,18 @@ export default function RunPage() {
         {/* Footer spacing */}
         <div className="h-16"></div>
       </div>
+
+      {/* End Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showEndConfirm}
+        onClose={() => setShowEndConfirm(false)}
+        onConfirm={confirmEnd}
+        title="End This Routine?"
+        message="You can come back to it anytime from Today's Focus."
+        confirmLabel="End Routine"
+        cancelLabel="Keep Going"
+        variant="warning"
+      />
     </div>
   );
 }

@@ -58,7 +58,6 @@ export const useRunStore = create<RunStore>()(
       startCurrentRun: () => {
         const { currentRun } = get();
         if (currentRun) {
-          console.log('[runStore] Starting run:', currentRun.id, 'current status:', currentRun.status);
           const updatedRun = startRun(currentRun);
 
           // Track energy mode selection in snapshot
@@ -205,9 +204,9 @@ export const useRunStore = create<RunStore>()(
       },
     }),
     {
-      name: 'run-storage-v2', // Changed to clear old persisted data
-      // Don't persist runs - they should be ephemeral per session
-      partialize: () => ({}),
+      name: 'run-storage-v2',
+      // Persist currentRun so abandoned runs can be resumed
+      partialize: (state) => ({ currentRun: state.currentRun }),
     }
   )
 );

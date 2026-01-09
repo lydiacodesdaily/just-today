@@ -45,7 +45,7 @@ class AudioQueue {
       try {
         await this.speakFunction(task.text);
       } catch (error) {
-        console.error('[audioQueue] TTS error:', error);
+        // Silently ignore TTS errors
       }
       task.resolve();
     }

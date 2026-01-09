@@ -5,17 +5,19 @@ import { useGuideStore } from '@/src/stores/guideStore';
 import { DEFAULT_GUIDES } from '@/src/constants/defaultGuides';
 import { GuideCard } from '@/src/components/GuideCard';
 import { CreateGuideModal } from '@/src/components/CreateGuideModal';
+import { AlertDialog } from '@/src/components/Dialog';
 
 export default function GuidesPage() {
   const { customGuides, createGuide, canCreateCustomGuide, getCustomGuideCount } = useGuideStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [error, setError] = useState('');
 
   const handleCreateGuide = (title: string, items: string[]) => {
     try {
       createGuide(title, items);
       setShowCreateModal(false);
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to create guide');
+      setError(error instanceof Error ? error.message : 'Failed to create guide');
     }
   };
 
@@ -105,6 +107,14 @@ export default function GuidesPage() {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSave={handleCreateGuide}
+        />
+
+        {/* Error Dialog */}
+        <AlertDialog
+          isOpen={!!error}
+          onClose={() => setError('')}
+          title="Could Not Create Guide"
+          message={error}
         />
       </div>
     </div>

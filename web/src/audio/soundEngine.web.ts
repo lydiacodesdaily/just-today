@@ -39,7 +39,6 @@ const TICK_TOK_SOUNDS: Record<TickingSoundType, { tick: string; tok: string }> =
  */
 export async function initAudio(): Promise<void> {
   // No special initialization needed for web
-  console.log('Web audio initialized');
 }
 
 /**
@@ -73,7 +72,6 @@ export async function loadTickingSound(soundType?: TickingSoundType): Promise<vo
 
     audioLoadFailed = false; // Successfully loaded
   } catch (error) {
-    console.error('Failed to load ticking sounds:', error);
     audioLoadFailed = true;
     tickSound = null;
     tokSound = null;
@@ -96,7 +94,7 @@ async function unloadTickingSounds(): Promise<void> {
       tokSound = null;
     }
   } catch (error) {
-    console.error('Failed to unload ticking sounds:', error);
+    // Silently ignore
   }
 }
 
@@ -117,15 +115,15 @@ async function playAlternatingSound(): Promise<void> {
 
     // Handle play promise rejection (autoplay policy)
     if (playPromise !== undefined) {
-      playPromise.catch((error) => {
-        console.warn('Failed to play tick/tok sound:', error);
+      playPromise.catch(() => {
+        // Silently ignore autoplay policy errors
       });
     }
 
     // Toggle for next iteration
     isTickPhase = !isTickPhase;
   } catch (error) {
-    console.error('Failed to play tick/tok sound:', error);
+    // Silently ignore
   }
 }
 
@@ -144,7 +142,6 @@ export async function startTicking(): Promise<void> {
 
   // If sounds still aren't loaded after attempting to load, bail out gracefully
   if (!tickSound || !tokSound) {
-    console.warn('Ticking sounds not available, skipping audio');
     return;
   }
 
@@ -287,12 +284,12 @@ export async function playChime(): Promise<void> {
 
     // Handle play promise rejection (autoplay policy)
     if (playPromise !== undefined) {
-      playPromise.catch((error) => {
-        console.warn('Failed to play chime:', error);
+      playPromise.catch(() => {
+        // Silently ignore autoplay policy errors
       });
     }
   } catch (error) {
-    console.error('Failed to play chime:', error);
+    // Silently ignore
   }
 }
 

@@ -42,12 +42,13 @@ export function EditLaterItemModal({ item, onClose }: EditLaterItemModalProps) {
   const [title, setTitle] = useState(item.title);
   const [duration, setDuration] = useState<FocusDuration>(item.estimatedDuration);
   const [timeBucket, setTimeBucket] = useState<TimeBucket | undefined>(item.timeBucket);
+  const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
-      alert('Please enter a title');
+      setError('Please enter a title');
       return;
     }
 
@@ -102,11 +103,17 @@ export function EditLaterItemModal({ item, onClose }: EditLaterItemModalProps) {
               id="title"
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (error) setError('');
+              }}
               placeholder="What needs to be done?"
-              className="w-full px-4 py-2 bg-calm-bg border border-calm-border rounded-lg text-calm-text placeholder:text-calm-muted/50 focus:outline-none focus:ring-2 focus:ring-calm-text/30 focus:border-transparent"
+              className={`w-full px-4 py-2 bg-calm-bg border rounded-lg text-calm-text placeholder:text-calm-muted/50 focus:outline-none focus:ring-2 focus:ring-calm-text/30 focus:border-transparent ${
+                error ? 'border-red-500' : 'border-calm-border'
+              }`}
               autoFocus
             />
+            {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
           </div>
 
           {/* Duration Select */}

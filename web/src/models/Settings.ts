@@ -6,6 +6,8 @@
 export type TickingSoundType = 'tick1-tok1' | 'tick2-tok2' | 'beep';
 export type MilestoneInterval = 1 | 5;
 export type ThemePreference = 'light' | 'dark' | 'system';
+export type FontSize = 'system' | 'small' | 'medium' | 'large' | 'extra-large';
+export type FontFamily = 'system' | 'dyslexia-friendly';
 
 export interface Settings {
   /** Schema version for migrations */
@@ -32,6 +34,14 @@ export interface Settings {
   tickingSoundType: TickingSoundType;
   /** User's theme preference (light, dark, or system) */
   themePreference: ThemePreference;
+  /** Font size preference for improved readability */
+  fontSize: FontSize;
+  /** Font family preference (includes dyslexia-friendly option) */
+  fontFamily: FontFamily;
+  /** High contrast mode for better visibility */
+  highContrastMode: boolean;
+  /** Reduce motion for users sensitive to animations */
+  reduceMotion: boolean;
 }
 
 /** Current settings schema version */
@@ -47,6 +57,10 @@ export const DEFAULT_SETTINGS: Settings = {
   ttsVolume: 0.8,
   announcementVolume: 0.7,
   tickingVolume: 0.5,
-  tickingSoundType: 'tick2-tok2',
+  tickingSoundType: 'tick1-tok1',
   themePreference: 'system',
+  fontSize: 'system',
+  fontFamily: 'system',
+  highContrastMode: false,
+  reduceMotion: false,
 };

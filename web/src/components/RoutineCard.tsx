@@ -139,7 +139,6 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
 
     // Create a new run from the template
     const run = createRunFromTemplate(routine, energyMode);
-    console.log('[RoutineCard] Created new run:', run.id, 'status:', run.status);
     setCurrentRun(run);
     // Navigate to run page
     router.push('/run');

@@ -31,12 +31,13 @@ export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps)
   const [title, setTitle] = useState(item?.title || '');
   const [energyLevel, setEnergyLevel] = useState<EnergyLevel>(item?.energyLevel || 'steady');
   const [duration, setDuration] = useState<EstimatedDuration | ''>(item?.estimatedDuration || '');
+  const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
-      alert('Please enter a title');
+      setError('Please enter a title');
       return;
     }
 
@@ -100,11 +101,17 @@ export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps)
               id="title"
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (error) setError('');
+              }}
               placeholder="e.g., Take a short walk, Read for 10 minutes"
-              className="w-full px-4 py-2 bg-calm-bg border border-calm-border rounded-lg text-calm-text placeholder:text-calm-muted/50 focus:outline-none focus:ring-2 focus:ring-calm-primary focus:border-transparent"
+              className={`w-full px-4 py-2 bg-calm-bg border rounded-lg text-calm-text placeholder:text-calm-muted/50 focus:outline-none focus:ring-2 focus:ring-calm-primary focus:border-transparent ${
+                error ? 'border-red-500' : 'border-calm-border'
+              }`}
               autoFocus
             />
+            {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
           </div>
 
           {/* Energy Level Select */}

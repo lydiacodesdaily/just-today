@@ -21,7 +21,6 @@ export function initTTS() {
 async function speakDirect(text: string): Promise<void> {
   return new Promise((resolve) => {
     if (!window.speechSynthesis) {
-      console.warn('Speech synthesis not available');
       resolve();
       return;
     }

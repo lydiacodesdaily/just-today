@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useEnergyMenuStore } from '@/src/stores/energyMenuStore';
 import { EnergyLevel, EnergyMenuItem } from '@/src/models/EnergyMenuItem';
 import { EnergyMenuItemModal } from '@/src/components/EnergyMenuItemModal';
+import { ConfirmDialog } from '@/src/components/Dialog';
 
 const ENERGY_LEVEL_CONFIG: Record<
   EnergyLevel,
@@ -38,6 +39,7 @@ export default function EnergyMenuPage() {
   const { menuItems, deleteMenuItem } = useEnergyMenuStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<EnergyMenuItem | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const handleCreateNew = () => {
     setEditingItem(null);
@@ -50,8 +52,12 @@ export default function EnergyMenuPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Delete this Energy Menu item?')) {
-      deleteMenuItem(id);
+    setDeleteConfirm(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm) {
+      deleteMenuItem(deleteConfirm);
     }
   };
 
@@ -153,6 +159,18 @@ export default function EnergyMenuPage() {
           onClose={() => setIsModalOpen(false)}
         />
       )}
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={confirmDelete}
+        title="Delete Item?"
+        message="This Energy Menu item will be removed. You can always recreate it later."
+        confirmLabel="Delete"
+        cancelLabel="Keep It"
+        variant="danger"
+      />
     </div>
   );
 }

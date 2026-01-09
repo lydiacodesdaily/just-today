@@ -6,6 +6,7 @@ import { useGuideStore } from '@/src/stores/guideStore';
 import { GuideItemCheckbox } from '@/src/components/GuideItemCheckbox';
 import { CreateGuideModal } from '@/src/components/CreateGuideModal';
 import { GuideItem } from '@/src/models/Guide';
+import { AlertDialog, ConfirmDialog } from '@/src/components/Dialog';
 
 export default function GuideDetailPage() {
   const router = useRouter();
@@ -29,6 +30,8 @@ export default function GuideDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const guide = getGuideById(guideId);
 
@@ -80,15 +83,17 @@ export default function GuideDetailPage() {
       setShowDuplicateModal(false);
       router.push(`/guides/${newGuideId}`);
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to duplicate guide');
+      setError(error instanceof Error ? error.message : 'Failed to duplicate guide');
     }
   };
 
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this guide?')) {
-      deleteGuide(guideId);
-      router.push('/guides');
-    }
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    deleteGuide(guideId);
+    router.push('/guides');
   };
 
   return (
@@ -245,6 +250,26 @@ export default function GuideDetailPage() {
           onClose={() => setShowDuplicateModal(false)}
           onSave={handleDuplicate}
           editingGuide={guide}
+        />
+
+        {/* Error Dialog */}
+        <AlertDialog
+          isOpen={!!error}
+          onClose={() => setError('')}
+          title="Could Not Duplicate Guide"
+          message={error}
+        />
+
+        {/* Delete Confirmation */}
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={confirmDelete}
+          title="Delete This Guide?"
+          message="This custom guide will be permanently removed. You can always recreate it later."
+          confirmLabel="Delete"
+          cancelLabel="Keep It"
+          variant="danger"
         />
       </div>
     </div>

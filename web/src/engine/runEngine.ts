@@ -678,7 +678,7 @@ export function isRunFromToday(run: RoutineRun): boolean {
  * - The run is abandoned
  * - The run was created today
  * - The run matches the given template ID
- * - There are still pending tasks to complete
+ * - There are tasks that weren't completed (pending or skipped)
  */
 export function canResumeAbandonedRun(
   savedRun: RoutineRun | null,
@@ -689,9 +689,10 @@ export function canResumeAbandonedRun(
   if (savedRun.templateId !== templateId) return false;
   if (!isRunFromToday(savedRun)) return false;
 
-  // Check if there are any pending tasks left
-  const hasPendingTasks = savedRun.tasks.some((t) => t.status === 'pending');
-  return hasPendingTasks;
+  // Check if there are any incomplete tasks (pending or skipped)
+  // We want to offer resume if the user didn't complete everything
+  const hasIncompleteTasks = savedRun.tasks.some((t) => t.status === 'pending' || t.status === 'skipped');
+  return hasIncompleteTasks;
 }
 
 /**

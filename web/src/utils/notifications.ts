@@ -59,7 +59,7 @@ export async function sendTaskTransitionNotification(
 ): Promise<void> {
   const hasPermission = await hasNotificationPermission();
   if (!hasPermission) {
-    console.log('Notification permissions not granted, skipping notification');
+    // Silently skip if permissions not granted
     return;
   }
 
@@ -73,7 +73,7 @@ export async function sendTaskTransitionNotification(
       trigger: null, // Immediate notification
     });
   } catch (error) {
-    console.warn('Failed to send notification:', error);
+    // Silently ignore notification errors
   }
 }
 
@@ -83,7 +83,7 @@ export async function sendTaskTransitionNotification(
 export async function sendRoutineCompleteNotification(): Promise<void> {
   const hasPermission = await hasNotificationPermission();
   if (!hasPermission) {
-    console.log('Notification permissions not granted, skipping notification');
+    // Silently skip if permissions not granted
     return;
   }
 
@@ -97,7 +97,7 @@ export async function sendRoutineCompleteNotification(): Promise<void> {
       trigger: null,
     });
   } catch (error) {
-    console.warn('Failed to send notification:', error);
+    // Silently ignore notification errors
   }
 }
 
@@ -110,7 +110,7 @@ export async function sendTimeMilestoneNotification(
 ): Promise<void> {
   const hasPermission = await hasNotificationPermission();
   if (!hasPermission) {
-    console.log('Notification permissions not granted, skipping notification');
+    // Silently skip if permissions not granted
     return;
   }
 
@@ -124,6 +124,6 @@ export async function sendTimeMilestoneNotification(
       trigger: null,
     });
   } catch (error) {
-    console.warn('Failed to send notification:', error);
+    // Silently ignore notification errors
   }
 }
