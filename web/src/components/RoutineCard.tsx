@@ -35,10 +35,15 @@ export function RoutineCard({ routine, energyMode, onStart, onEdit, onDelete }: 
   const filteredTasks = deriveTasksForEnergyMode(routine.tasks, energyMode);
   const totalDuration = filteredTasks.reduce((sum, task) => sum + task.durationMs, 0);
 
+  // Get energy mode name for display
+  const energyModeName = energyMode.charAt(0).toUpperCase() + energyMode.slice(1);
+  const hasNoTasks = filteredTasks.length === 0;
+  const isFiltered = filteredTasks.length < routine.tasks.length;
+
   return (
     <div className="bg-calm-surface border border-calm-border rounded-lg p-5 hover:border-calm-text/30 transition-colors">
       {/* Info section */}
-      <div className="mb-4">
+      <div className={hasNoTasks ? 'mb-0' : 'mb-4'}>
         <div className="flex items-start justify-between mb-1">
           <h3 className="text-lg font-semibold text-calm-text">{routine.name}</h3>
           <div className="flex items-center gap-2 ml-2">
@@ -79,15 +84,29 @@ export function RoutineCard({ routine, energyMode, onStart, onEdit, onDelete }: 
           <span>•</span>
           <span>{formatDuration(totalDuration)}</span>
         </div>
+
+        {/* Empty state guidance when no tasks available */}
+        {isFiltered && hasNoTasks && (
+          <div className="mt-3 pt-3 border-t border-calm-border/50">
+            <p className="text-sm text-calm-muted leading-relaxed">
+              💫 No tasks for {energyModeName} mode
+            </p>
+            <p className="text-xs text-calm-muted/75 italic mt-1">
+              Tap edit to add tasks
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Start button */}
-      <button
-        onClick={onStart}
-        className="w-full px-4 py-2.5 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
-      >
-        Start Routine
-      </button>
+      {/* Only show Start Routine button if there are tasks available */}
+      {!hasNoTasks && (
+        <button
+          onClick={onStart}
+          className="w-full px-4 py-2.5 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
+        >
+          Start Routine
+        </button>
+      )}
     </div>
   );
 }

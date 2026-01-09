@@ -39,6 +39,11 @@ export function RoutineCard({ routine, onStart, onEdit, energyMode }: RoutineCar
     ? `${activeTasks} of ${totalTasks} task${totalTasks !== 1 ? 's' : ''}`
     : `${totalTasks} task${totalTasks !== 1 ? 's' : ''}`;
 
+  // Get energy mode name for display
+  const energyModeName = energyMode
+    ? energyMode.charAt(0).toUpperCase() + energyMode.slice(1)
+    : '';
+
   return (
     <View
       style={[
@@ -60,9 +65,14 @@ export function RoutineCard({ routine, onStart, onEdit, energyMode }: RoutineCar
             {taskCountText} · {durationText}
           </Text>
           {isFiltered && activeTasks === 0 && (
-            <Text style={[styles.noTasksHint, { color: theme.colors.textTertiary }]}>
-              No tasks for this energy level
-            </Text>
+            <View style={styles.emptyStateContainer}>
+              <Text style={[styles.emptyStateText, { color: theme.colors.textTertiary }]}>
+                💫 No tasks for {energyModeName} mode
+              </Text>
+              <Text style={[styles.emptyStateHint, { color: theme.colors.textTertiary }]}>
+                Tap to add tasks
+              </Text>
+            </View>
           )}
         </View>
         <Text style={[styles.editHint, { color: theme.colors.textTertiary }]}>
@@ -70,15 +80,18 @@ export function RoutineCard({ routine, onStart, onEdit, energyMode }: RoutineCar
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.startButton, { backgroundColor: theme.colors.primary }]}
-        onPress={onStart}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.startButtonText, { color: theme.colors.surface }]}>
-          Start Routine
-        </Text>
-      </TouchableOpacity>
+      {/* Only show Start Routine button if there are tasks available */}
+      {activeTasks > 0 && (
+        <TouchableOpacity
+          style={[styles.startButton, { backgroundColor: theme.colors.primary }]}
+          onPress={onStart}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.startButtonText, { color: theme.colors.surface }]}>
+            Start Routine
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -113,6 +126,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     marginTop: 2,
+  },
+  emptyStateContainer: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+  },
+  emptyStateText: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  emptyStateHint: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontStyle: 'italic',
   },
   editHint: {
     fontSize: 12,
