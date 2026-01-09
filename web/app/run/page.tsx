@@ -8,8 +8,10 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRunStore } from '@/src/stores/runStore';
+import { useSettingsStore } from '@/src/stores/settingsStore';
 import { useTimer } from '@/src/hooks/useTimer';
 import { useTaskTransition } from '@/src/hooks/useTaskTransition';
+import { useAudio } from '@/src/hooks/useAudio';
 import { TimeDisplay } from '@/src/components/TimeDisplay';
 import { TaskControls } from '@/src/components/TaskControls';
 import { SubtaskList } from '@/src/components/SubtaskList';
@@ -29,6 +31,7 @@ export default function RunPage() {
     toggleTaskSubtask,
     toggleTaskAutoAdvance,
   } = useRunStore();
+  const { settings } = useSettingsStore();
 
   // Track which runs we've already started to prevent double-start in React Strict Mode
   const startedRunIds = useRef(new Set<string>());
@@ -70,6 +73,14 @@ export default function RunPage() {
   const activeTask = currentRun?.tasks.find((t) => t.id === currentRun.activeTaskId);
   const isPaused = currentRun?.status === 'paused';
   const timeRemaining = useTimer(activeTask || null, isPaused || false, currentRun?.pausedAt);
+
+  // Manage audio (ticking and announcements)
+  useAudio({
+    activeTask: activeTask || null,
+    timeRemaining,
+    settings,
+    isPaused: isPaused || false,
+  });
 
   // Auto-advance when timer reaches 0 (only for tasks with autoAdvance enabled)
   useTaskTransition({

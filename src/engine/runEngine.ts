@@ -19,6 +19,7 @@ import {
   sendRoutineCompleteNotification,
 } from '../utils/notifications';
 import { speak } from '../audio/ttsEngine';
+import { getTaskStartAnnouncement } from '../utils/voiceAnnouncements';
 
 /**
  * Creates a new RoutineRun from a template and energy mode.
@@ -205,6 +206,13 @@ export function startTask(run: RoutineRun, taskId: string): RoutineRun {
   const updatedTasks = run.tasks.map((task) => {
     if (task.id === taskId) {
       const totalDuration = task.durationMs + task.extensionMs;
+
+      // Announce task start (non-blocking)
+      const announcement = getTaskStartAnnouncement(task.name);
+      speak(announcement).catch((err) => {
+        console.warn('Failed to announce task start:', err);
+      });
+
       return {
         ...task,
         status: 'active' as const,
