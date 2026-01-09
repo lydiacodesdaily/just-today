@@ -102,7 +102,7 @@ export function RoutineCard({ routine, energyMode, onStart, onEdit, onDelete }: 
       {!hasNoTasks && (
         <button
           onClick={onStart}
-          className="w-full px-4 py-2.5 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
+          className="w-full px-4 py-2.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
         >
           Start Routine
         </button>
@@ -220,7 +220,7 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
           <h2 className="text-2xl font-semibold text-calm-text">{getTitle()}</h2>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
+            className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
           >
             New
           </button>
@@ -296,7 +296,7 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
               </button>
               <button
                 onClick={handleContinueRun}
-                className="px-5 py-2.5 bg-calm-text text-calm-surface hover:opacity-90 rounded-lg transition-opacity font-semibold"
+                className="px-5 py-2.5 bg-calm-primary text-white hover:opacity-90 rounded-lg transition-opacity font-semibold"
               >
                 Continue
               </button>

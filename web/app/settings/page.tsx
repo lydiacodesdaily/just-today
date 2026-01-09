@@ -2,12 +2,19 @@
 
 import { useSettingsStore } from '@/src/stores/settingsStore';
 import { TickingSoundType, ThemePreference } from '@/src/models/Settings';
+import { useTheme } from 'next-themes';
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useSettingsStore();
+  const { setTheme } = useTheme();
 
   const toggleSetting = (key: keyof typeof settings) => {
     updateSettings({ [key]: !settings[key] });
+  };
+
+  const handleThemeChange = (theme: ThemePreference) => {
+    updateSettings({ themePreference: theme });
+    setTheme(theme);
   };
 
   return (
@@ -29,17 +36,17 @@ export default function SettingsPage() {
                   Theme
                 </label>
                 <div className="flex gap-3">
-                  {(['light', 'dark', 'system'] as ThemePreference[]).map((theme) => (
+                  {(['light', 'dark', 'system'] as ThemePreference[]).map((themeOption) => (
                     <button
-                      key={theme}
-                      onClick={() => updateSettings({ themePreference: theme })}
+                      key={themeOption}
+                      onClick={() => handleThemeChange(themeOption)}
                       className={`flex-1 px-4 py-2.5 rounded-lg border font-medium text-sm capitalize transition-colors ${
-                        settings.themePreference === theme
+                        settings.themePreference === themeOption
                           ? 'bg-calm-primary text-white border-calm-primary'
                           : 'bg-calm-bg text-calm-text border-calm-border hover:border-calm-text/30'
                       }`}
                     >
-                      {theme}
+                      {themeOption}
                     </button>
                   ))}
                 </div>

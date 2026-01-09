@@ -74,7 +74,7 @@ export function EnergyMenu({ energyLevel }: EnergyMenuProps) {
               </p>
               <Link
                 href="/energy-menu"
-                className="inline-block px-4 py-2 bg-calm-text text-calm-bg rounded-lg hover:bg-calm-text/90 transition-colors text-sm font-medium"
+                className="inline-block px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
               >
                 Create Energy Menu Items →
               </Link>
@@ -96,7 +96,7 @@ export function EnergyMenu({ energyLevel }: EnergyMenuProps) {
 
                     <button
                       onClick={() => addToToday(item)}
-                      className="px-3 py-1.5 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text hover:text-calm-surface transition-colors text-sm font-medium"
+                      className="px-3 py-1.5 bg-calm-border text-calm-text rounded-lg hover:bg-calm-primary hover:text-white dark:hover:text-calm-bg transition-colors text-sm font-medium"
                       title="Add to Today"
                     >
                       + Add

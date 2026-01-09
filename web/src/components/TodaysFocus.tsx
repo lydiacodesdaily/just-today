@@ -310,7 +310,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
         <h2 className="text-2xl font-semibold text-calm-text">Today&apos;s Focus</h2>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
+          className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
         >
           + Add
         </button>
@@ -368,7 +368,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
+            className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
           >
             Add your first item
           </button>
@@ -490,7 +490,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
               <button
                 onClick={handleAdd}
                 disabled={!newTitle.trim()}
-                className="flex-1 px-4 py-2 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add
               </button>

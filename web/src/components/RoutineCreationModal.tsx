@@ -240,7 +240,7 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
           </button>
           <button
             onClick={handleSave}
-            className="px-5 py-2.5 bg-calm-text text-calm-surface hover:opacity-90 rounded-lg transition-opacity font-semibold"
+            className="px-5 py-2.5 bg-calm-primary text-white hover:opacity-90 rounded-lg transition-opacity font-semibold"
           >
             {editingRoutine ? 'Save Changes' : 'Create Routine'}
           </button>
@@ -302,7 +302,7 @@ function TaskInput({ task, onUpdate, onDelete, autoFocus }: TaskInputProps) {
           onClick={() => onUpdate({ lowIncluded: !task.lowIncluded })}
           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
             task.lowIncluded
-              ? 'bg-calm-text text-calm-surface'
+              ? 'bg-calm-primary text-white'
               : 'bg-calm-border/50 text-calm-muted hover:bg-calm-border'
           }`}
         >
@@ -313,7 +313,7 @@ function TaskInput({ task, onUpdate, onDelete, autoFocus }: TaskInputProps) {
           onClick={() => onUpdate({ steadyIncluded: !task.steadyIncluded })}
           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
             task.steadyIncluded
-              ? 'bg-calm-text text-calm-surface'
+              ? 'bg-calm-primary text-white'
               : 'bg-calm-border/50 text-calm-muted hover:bg-calm-border'
           }`}
         >
@@ -324,7 +324,7 @@ function TaskInput({ task, onUpdate, onDelete, autoFocus }: TaskInputProps) {
           onClick={() => onUpdate({ flowIncluded: !task.flowIncluded })}
           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
             task.flowIncluded
-              ? 'bg-calm-text text-calm-surface'
+              ? 'bg-calm-primary text-white'
               : 'bg-calm-border/50 text-calm-muted hover:bg-calm-border'
           }`}
         >
@@ -335,7 +335,7 @@ function TaskInput({ task, onUpdate, onDelete, autoFocus }: TaskInputProps) {
           onClick={() => onUpdate({ autoAdvance: !task.autoAdvance })}
           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
             task.autoAdvance
-              ? 'bg-calm-text text-calm-surface'
+              ? 'bg-calm-primary text-white'
               : 'bg-calm-border/50 text-calm-muted hover:bg-calm-border'
           }`}
         >

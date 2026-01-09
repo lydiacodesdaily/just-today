@@ -71,15 +71,15 @@ export const getTheme = (isDark: boolean) => {
       dangerLight: isDark ? colors.dark.textSecondary : colors.states.error,
       dangerSubtle: isDark ? '#2A2C31' : colors.sand.surface,
 
-      // Energy mode colors - keeping calm and supportive with distinct identities
-      energyCare: isDark ? '#9FB2D8' : '#7891B8', // Calm lavender-blue
-      energySteady: isDark ? colors.dark.sageAccent : colors.sage.active, // Steady sage
-      energyFlow: isDark ? '#B8A8C2' : '#9B8AA3', // Gentle purple
+      // Energy mode colors - distinct, calm, and supportive
+      energyCare: isDark ? '#8FA6C8' : '#6B88AB', // Cool blue-grey (restful, gentle)
+      energySteady: isDark ? colors.dark.sageAccent : colors.sage.active, // Steady sage green
+      energyFlow: isDark ? '#D4B088' : '#C89968', // Warm amber (energizing, not aggressive)
 
       // Energy mode backgrounds - subtle tinted variations
-      energyCareSubtle: isDark ? '#2A2D35' : '#F0F2F8', // Soft blue tint
+      energyCareSubtle: isDark ? '#2A2E35' : '#EDF2F7', // Cool grey-blue tint
       energySteadySubtle: isDark ? '#2B2F2D' : '#F3F6F4', // Soft green tint
-      energyFlowSubtle: isDark ? '#2E2B30' : '#F6F3F7', // Soft purple tint
+      energyFlowSubtle: isDark ? '#32302D' : '#FBF5EF', // Warm amber tint
 
       // Supportive UI elements
       overlay: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)',

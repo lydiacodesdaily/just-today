@@ -181,7 +181,7 @@ export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps)
             </button>
             <button
               type="submit"
-              className="flex-1 min-h-[48px] px-4 py-3 bg-calm-text text-calm-bg rounded-lg hover:bg-calm-text/90 transition-colors font-medium touch-manipulation"
+              className="flex-1 min-h-[48px] px-4 py-3 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium touch-manipulation"
             >
               {isEditing ? 'Save Changes' : 'Create Item'}
             </button>

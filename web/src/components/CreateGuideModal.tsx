@@ -174,7 +174,7 @@ export function CreateGuideModal({ isOpen, onClose, onSave, editingGuide }: Crea
           <button
             onClick={handleSave}
             disabled={!canSave}
-            className="flex-1 min-h-[48px] px-4 py-3 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+            className="flex-1 min-h-[48px] px-4 py-3 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
           >
             {editingGuide ? 'Save Changes' : 'Create Guide'}
           </button>

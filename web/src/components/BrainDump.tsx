@@ -114,7 +114,7 @@ export function BrainDump() {
               <button
                 onClick={handleAddItem}
                 disabled={!inputText.trim()}
-                className="px-4 py-1.5 bg-calm-text text-calm-surface rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="px-4 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 Add
               </button>

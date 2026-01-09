@@ -39,6 +39,10 @@
   --color-calm-primary: var(--calm-primary);
   --color-calm-success: var(--calm-success);
 
+  /* Button colors */
+  --color-btn-primary-bg: var(--calm-text);
+  --color-btn-primary-text: var(--calm-surface);
+
   /* Energy mode colors */
   --color-calm-low: var(--calm-low);
   --color-calm-steady: var(--calm-steady);
@@ -96,8 +100,41 @@
   --default-transition-duration: 200ms;
 }
 
+/* Dark mode with class-based selector for next-themes */
+.dark {
+  /* Dark mode - matching mobile theme.ts dark colors */
+  --calm-bg: #1E2025;          /* Same as mobile dark.background */
+  --calm-surface: #2A2C31;     /* Same as mobile dark.surface */
+  --calm-border: #3A3A3E;
+  --calm-text: #E5E2DC;        /* Same as mobile dark.textPrimary */
+  --calm-muted: #B8B6B1;       /* Same as mobile dark.textSecondary */
+  --calm-hover: #363636;
+  --calm-primary: #6B8570;     /* Darker sage for buttons - better contrast (4.5:1) */
+  --calm-accent: #A7BCAD;      /* Lighter sage accent for non-button elements */
+  --calm-primary-dark: #1E2025; /* Dark text for sage buttons */
+  --calm-success: #6B8570;     /* Match primary for consistency */
+
+  /* Button colors for dark mode */
+  --color-btn-primary-bg: var(--calm-primary);
+  --color-btn-primary-text: var(--calm-bg);
+
+  /* Energy mode colors - dark variants */
+  --calm-low: #8FA6C8;         /* Cool blue-grey (lighter for dark) */
+  --calm-steady: #A7BCAD;      /* Sage accent for dark mode */
+  --calm-flow: #D4B088;        /* Warm amber (lighter for dark) */
+
+  /* Energy mode subtle backgrounds - dark variants */
+  --calm-low-subtle: #2A2E35;
+  --calm-steady-subtle: #2B2F2D;
+  --calm-flow-subtle: #32302D;
+
+  --background: var(--calm-bg);
+  --foreground: var(--calm-text);
+}
+
+/* Also support system preference for users without JS */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
     /* Dark mode - matching mobile theme.ts dark colors */
     --calm-bg: #1E2025;          /* Same as mobile dark.background */
     --calm-surface: #2A2C31;     /* Same as mobile dark.surface */
@@ -105,8 +142,14 @@
     --calm-text: #E5E2DC;        /* Same as mobile dark.textPrimary */
     --calm-muted: #B8B6B1;       /* Same as mobile dark.textSecondary */
     --calm-hover: #363636;
-    --calm-primary: #A7BCAD;     /* Same as mobile dark.sageAccent */
-    --calm-success: #A7BCAD;
+    --calm-primary: #6B8570;     /* Darker sage for buttons - better contrast (4.5:1) */
+    --calm-accent: #A7BCAD;      /* Lighter sage accent for non-button elements */
+    --calm-primary-dark: #1E2025; /* Dark text for sage buttons */
+    --calm-success: #6B8570;     /* Match primary for consistency */
+
+    /* Button colors for dark mode */
+    --color-btn-primary-bg: var(--calm-primary);
+    --color-btn-primary-text: var(--calm-bg);
 
     /* Energy mode colors - dark variants */
     --calm-low: #8FA6C8;         /* Cool blue-grey (lighter for dark) */
@@ -190,4 +233,55 @@ select:focus-visible {
 /* Safe area for mobile notches and bottom bars */
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Primary button style - uses sage/green like mobile */
+.btn-primary {
+  background-color: var(--calm-primary);
+  color: white;
+}
+
+/* Range slider styling */
+input[type="range"].slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--calm-primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+input[type="range"].slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--calm-primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+input[type="range"].slider::-webkit-slider-track {
+  background: var(--calm-border);
+  height: 8px;
+  border-radius: 4px;
+}
+
+input[type="range"].slider::-moz-range-track {
+  background: var(--calm-border);
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* Radio button styling */
+input[type="radio"]:checked {
+  background-color: var(--calm-primary);
+  border-color: var(--calm-primary);
+}
+
+input[type="radio"]:focus {
+  outline: 2px solid var(--calm-primary);
+  outline-offset: 2px;
 }
