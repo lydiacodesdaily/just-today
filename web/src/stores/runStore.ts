@@ -88,7 +88,18 @@ export const useRunStore = create<RunStore>()(
       endCurrentRun: () => {
         const { currentRun } = get();
         if (currentRun) {
-          set({ currentRun: endRun(currentRun) });
+          const updatedRun = endRun(currentRun);
+
+          // Log partial completions when routine is abandoned
+          const completedTasksCount = updatedRun.tasks.filter(
+            (t) => t.status === 'completed'
+          ).length;
+
+          if (completedTasksCount > 0) {
+            useSnapshotStore.getState().addCompletedTasks(completedTasksCount);
+          }
+
+          set({ currentRun: updatedRun });
         }
       },
 

@@ -19,7 +19,7 @@ import {
   toggleAutoAdvance,
 } from '../engine/runEngine';
 import { saveRunState, loadRunState, clearRunState } from '../persistence/runStateStore';
-import { incrementTodayCounter, addEnergyMode } from '../persistence/snapshotStore';
+import { incrementTodayCounter, addEnergyMode, addCompletedTasks } from '../persistence/snapshotStore';
 
 interface RunContextValue {
   currentRun: RoutineRun | null;
@@ -101,7 +101,18 @@ export function RunProvider({ children }: { children: React.ReactNode }) {
 
   const endCurrentRun = useCallback(() => {
     if (currentRun) {
-      setCurrentRun(endRun(currentRun));
+      const updatedRun = endRun(currentRun);
+
+      // Log partial completions when routine is abandoned
+      const completedTasksCount = updatedRun.tasks.filter(
+        (t) => t.status === 'completed'
+      ).length;
+
+      if (completedTasksCount > 0) {
+        addCompletedTasks(completedTasksCount);
+      }
+
+      setCurrentRun(updatedRun);
     }
   }, [currentRun]);
 

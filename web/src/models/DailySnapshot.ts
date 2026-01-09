@@ -19,6 +19,9 @@ export interface DailySnapshot {
   /** Number of routine runs completed */
   routineRunsCompleted: number;
 
+  /** Number of tasks completed across all routines (including partial) */
+  tasksCompletedInRoutines: number;
+
   /** Total time spent in focus sessions (milliseconds) */
   totalFocusTimeMs: number;
 
@@ -43,6 +46,7 @@ export function createEmptySnapshot(date: string): DailySnapshot {
     date,
     focusItemsCompleted: 0,
     routineRunsCompleted: 0,
+    tasksCompletedInRoutines: 0,
     totalFocusTimeMs: 0,
     energyModesSelected: [],
     itemsMovedToLater: 0,

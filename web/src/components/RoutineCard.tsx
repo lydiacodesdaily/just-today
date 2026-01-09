@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { RoutineTemplate, EnergyMode } from '@/src/models/RoutineTemplate';
 import { deriveTasksForEnergyMode, useRoutineStore } from '@/src/stores/routineStore';
 import { useRunStore } from '@/src/stores/runStore';
-import { createRunFromTemplate } from '@/src/engine/runEngine';
+import { createRunFromTemplate, canResumeAbandonedRun, resumeAbandonedRun } from '@/src/engine/runEngine';
 import { RoutineCreationModal } from './RoutineCreationModal';
 
 interface RoutineCardProps {
@@ -118,7 +118,7 @@ interface RoutinesListProps {
 export function RoutinesList({ energyMode }: RoutinesListProps) {
   const templates = useRoutineStore((state) => state.templates);
   const deleteTemplate = useRoutineStore((state) => state.deleteTemplate);
-  const { setCurrentRun } = useRunStore();
+  const { currentRun, setCurrentRun } = useRunStore();
   const router = useRouter();
 
   const VISIBLE_ROUTINES_LIMIT = 2;
@@ -126,16 +126,41 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<RoutineTemplate | null>(null);
   const [deletingRoutine, setDeletingRoutine] = useState<RoutineTemplate | null>(null);
+  const [resumeDialogRoutine, setResumeDialogRoutine] = useState<RoutineTemplate | null>(null);
 
   const visibleRoutines = showAll ? templates : templates.slice(0, VISIBLE_ROUTINES_LIMIT);
 
   const handleStartRoutine = (routine: RoutineTemplate) => {
+    // Check if there's an abandoned run from today for the same routine
+    if (canResumeAbandonedRun(currentRun, routine.id)) {
+      setResumeDialogRoutine(routine);
+      return;
+    }
+
     // Create a new run from the template
     const run = createRunFromTemplate(routine, energyMode);
     console.log('[RoutineCard] Created new run:', run.id, 'status:', run.status);
     setCurrentRun(run);
     // Navigate to run page
     router.push('/run');
+  };
+
+  const handleContinueRun = () => {
+    if (resumeDialogRoutine && currentRun) {
+      const resumedRun = resumeAbandonedRun(currentRun);
+      setCurrentRun(resumedRun);
+      setResumeDialogRoutine(null);
+      router.push('/run');
+    }
+  };
+
+  const handleStartFresh = () => {
+    if (resumeDialogRoutine) {
+      const run = createRunFromTemplate(resumeDialogRoutine, energyMode);
+      setCurrentRun(run);
+      setResumeDialogRoutine(null);
+      router.push('/run');
+    }
   };
 
   const handleEditRoutine = (routine: RoutineTemplate) => {
@@ -243,6 +268,43 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
         }}
         editingRoutine={editingRoutine}
       />
+
+      {/* Resume Abandoned Run Dialog */}
+      {resumeDialogRoutine && currentRun && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setResumeDialogRoutine(null)}
+          />
+
+          {/* Dialog */}
+          <div className="relative bg-calm-surface rounded-2xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-calm-text mb-2">
+              Continue {resumeDialogRoutine.name}?
+            </h3>
+            <p className="text-calm-muted mb-6">
+              You made it through {currentRun.tasks.filter((t) => t.status === 'completed').length} of{' '}
+              {currentRun.tasks.length} tasks earlier. Pick up where you left off, or start fresh.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={handleStartFresh}
+                className="px-5 py-2.5 text-calm-text hover:bg-calm-border/50 rounded-lg transition-colors font-medium"
+              >
+                Start Fresh
+              </button>
+              <button
+                onClick={handleContinueRun}
+                className="px-5 py-2.5 bg-calm-text text-calm-surface hover:opacity-90 rounded-lg transition-opacity font-semibold"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       {deletingRoutine && (

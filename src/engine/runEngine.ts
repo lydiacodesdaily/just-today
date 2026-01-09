@@ -612,6 +612,62 @@ export function endRun(run: RoutineRun): RoutineRun {
 }
 
 /**
+ * Checks if a run was abandoned on the same day (calendar day).
+ * Returns true if the run is abandoned and created today.
+ */
+export function isRunFromToday(run: RoutineRun): boolean {
+  if (!run.createdAt) return false;
+
+  const now = new Date();
+  const runDate = new Date(run.createdAt);
+
+  return (
+    now.getFullYear() === runDate.getFullYear() &&
+    now.getMonth() === runDate.getMonth() &&
+    now.getDate() === runDate.getDate()
+  );
+}
+
+/**
+ * Checks if a saved run can be resumed from where it was abandoned.
+ * Returns true if:
+ * - The run is abandoned
+ * - The run was created today
+ * - The run matches the given template ID
+ * - There are still pending tasks to complete
+ */
+export function canResumeAbandonedRun(
+  savedRun: RoutineRun | null,
+  templateId: string
+): boolean {
+  if (!savedRun) return false;
+  if (savedRun.status !== 'abandoned') return false;
+  if (savedRun.templateId !== templateId) return false;
+  if (!isRunFromToday(savedRun)) return false;
+
+  // Check if there are any pending tasks left
+  const hasPendingTasks = savedRun.tasks.some((t) => t.status === 'pending');
+  return hasPendingTasks;
+}
+
+/**
+ * Resumes an abandoned run by resetting its status to 'notStarted'.
+ * This allows the user to continue where they left off.
+ */
+export function resumeAbandonedRun(run: RoutineRun): RoutineRun {
+  if (run.status !== 'abandoned') {
+    throw new Error('Can only resume abandoned runs');
+  }
+
+  return {
+    ...run,
+    status: 'notStarted',
+    activeTaskId: null,
+    endedAt: null,
+  };
+}
+
+/**
  * Toggles a subtask's checked state.
  */
 export function toggleSubtask(

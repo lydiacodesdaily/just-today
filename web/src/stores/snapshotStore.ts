@@ -27,6 +27,7 @@ interface SnapshotStore {
   ) => void;
   addFocusTime: (durationMs: number) => void;
   addEnergyMode: (energyMode: EnergyMode) => void;
+  addCompletedTasks: (count: number) => void;
   updateActivityTimestamp: () => void;
   cleanupOldSnapshots: () => void;
 }
@@ -167,6 +168,35 @@ export const useSnapshotStore = create<SnapshotStore>()(
           const updatedSnapshot: DailySnapshot = {
             ...existingSnapshot,
             energyModesSelected,
+            lastActivityAt: now,
+          };
+
+          if (!updatedSnapshot.firstActivityAt) {
+            updatedSnapshot.firstActivityAt = now;
+          }
+
+          return {
+            snapshots: {
+              ...state.snapshots,
+              [dateKey]: updatedSnapshot,
+            },
+          };
+        });
+      },
+
+      // Add completed tasks count to today's snapshot
+      addCompletedTasks: (count: number) => {
+        const today = new Date();
+        const dateKey = formatDateKey(today);
+        const now = new Date().toISOString();
+
+        set((state) => {
+          const existingSnapshot =
+            state.snapshots[dateKey] || createEmptySnapshot(dateKey);
+
+          const updatedSnapshot: DailySnapshot = {
+            ...existingSnapshot,
+            tasksCompletedInRoutines: existingSnapshot.tasksCompletedInRoutines + count,
             lastActivityAt: now,
           };
 

@@ -118,6 +118,20 @@ export async function addEnergyMode(energyMode: 'low' | 'steady' | 'flow'): Prom
 }
 
 /**
+ * Add completed tasks count to today's snapshot
+ * Used to track progress even when routines are abandoned
+ */
+export async function addCompletedTasks(count: number): Promise<void> {
+  const today = new Date();
+  const snapshot = await loadTodaySnapshot();
+
+  await updateSnapshot(today, {
+    tasksCompletedInRoutines: snapshot.tasksCompletedInRoutines + count,
+    lastActivityAt: new Date().toISOString(),
+  });
+}
+
+/**
  * Get snapshots for the last N days
  */
 export async function getRecentSnapshots(days: number): Promise<DailySnapshot[]> {

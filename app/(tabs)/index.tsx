@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useRouter, useFocusEffect } from 'expo-router';
 import { EnergyMode, RoutineTemplate } from '../../src/models/RoutineTemplate';
 import { loadTemplates } from '../../src/persistence/templateStore';
-import { createRunFromTemplate, createRunFromFocusItem } from '../../src/engine/runEngine';
+import { createRunFromTemplate, createRunFromFocusItem, canResumeAbandonedRun, resumeAbandonedRun } from '../../src/engine/runEngine';
 import { useRun } from '../../src/context/RunContext';
 import { useFocus } from '../../src/context/FocusContext';
 import { useTheme } from '../../src/constants/theme';
@@ -117,6 +117,39 @@ export default function HomeScreen() {
               const run = createRunFromTemplate(template, energyMode);
               setCurrentRun(run);
               setHasShownResumePrompt(true); // Mark as shown since we're actively starting
+              router.push('/routine/run');
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    // Check if there's an abandoned run from today for the same routine
+    if (canResumeAbandonedRun(currentRun, template.id)) {
+      const completedCount = currentRun!.tasks.filter((t) => t.status === 'completed').length;
+      const totalCount = currentRun!.tasks.length;
+
+      Alert.alert(
+        `Continue ${template.name}?`,
+        `You made it through ${completedCount} of ${totalCount} tasks earlier. Pick up where you left off, or start fresh.`,
+        [
+          {
+            text: 'Start Fresh',
+            style: 'cancel',
+            onPress: () => {
+              const run = createRunFromTemplate(template, energyMode);
+              setCurrentRun(run);
+              setHasShownResumePrompt(true);
+              router.push('/routine/run');
+            },
+          },
+          {
+            text: 'Continue',
+            onPress: () => {
+              const resumedRun = resumeAbandonedRun(currentRun!);
+              setCurrentRun(resumedRun);
+              setHasShownResumePrompt(true);
               router.push('/routine/run');
             },
           },
