@@ -35,10 +35,12 @@ export default function RunPage() {
 
   // Track which runs we've already started to prevent double-start in React Strict Mode
   const startedRunIds = useRef(new Set<string>());
+  // Track if we're in a completion flow to prevent double redirect
+  const isCompletingRef = useRef(false);
 
-  // Redirect if no run
+  // Redirect if no run (but not if we just completed/abandoned - let those handle their own redirect)
   useEffect(() => {
-    if (!currentRun) {
+    if (!currentRun && !isCompletingRef.current) {
       router.push('/today');
     }
   }, [currentRun, router]);
@@ -55,16 +57,28 @@ export default function RunPage() {
   // Handle completion
   useEffect(() => {
     if (currentRun?.status === 'completed') {
+      // Mark that we're completing to prevent double redirect
+      isCompletingRef.current = true;
       // Show completion message
       setTimeout(() => {
-        setCurrentRun(null);
         router.push('/today');
+        // Clear run after navigation starts to prevent blank screen
+        setTimeout(() => {
+          setCurrentRun(null);
+          isCompletingRef.current = false;
+        }, 100);
       }, 2000);
     } else if (currentRun?.status === 'abandoned') {
+      // Mark that we're completing to prevent double redirect
+      isCompletingRef.current = true;
       // Show abandon message
       setTimeout(() => {
-        setCurrentRun(null);
         router.push('/today');
+        // Clear run after navigation starts to prevent blank screen
+        setTimeout(() => {
+          setCurrentRun(null);
+          isCompletingRef.current = false;
+        }, 100);
       }, 2000);
     }
   }, [currentRun?.status, setCurrentRun, router]);
@@ -91,10 +105,59 @@ export default function RunPage() {
     onAdvanceTask: advanceTask,
   });
 
-  if (!currentRun || !activeTask) {
+  // Early return if no run at all
+  if (!currentRun) {
     return null;
   }
 
+  const pendingTasks = currentRun.tasks.filter((t) => t.status === 'pending');
+  const completedCount = currentRun.tasks.filter((t) => t.status === 'completed').length;
+  const totalCount = currentRun.tasks.length;
+
+  // Completion state - check this BEFORE checking for activeTask
+  if (currentRun.status === 'completed') {
+    const messages = [
+      "You did it!",
+      "That's one done ✓",
+      "Nice work",
+      "You showed up today",
+    ];
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+    return (
+      <div className="min-h-screen bg-calm-bg flex items-center justify-center animate-in fade-in duration-300">
+        <div className="text-center px-4 animate-in slide-in-from-bottom-4 duration-500">
+          <h1 className="text-4xl font-bold text-calm-text mb-4">{randomMessage}</h1>
+          <p className="text-lg text-calm-muted mb-2">{currentRun.templateName} complete</p>
+          <p className="text-base text-calm-muted">
+            {completedCount} of {totalCount} {totalCount === 1 ? 'task' : 'tasks'} done
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Abandoned state
+  if (currentRun.status === 'abandoned') {
+    return (
+      <div className="min-h-screen bg-calm-bg flex items-center justify-center animate-in fade-in duration-300">
+        <div className="text-center px-4 animate-in slide-in-from-bottom-4 duration-500">
+          <h1 className="text-3xl font-bold text-calm-text mb-4">Taking a break</h1>
+          <p className="text-lg text-calm-muted mb-2">That's part of the process</p>
+          <p className="text-base text-calm-muted">
+            You can come back to this anytime you're ready
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // If we reach here, we need an active task to render the running UI
+  if (!activeTask) {
+    return null;
+  }
+
+  // Handler functions for the running state
   const handleComplete = () => {
     if (activeTask) {
       advanceTask();
@@ -124,48 +187,6 @@ export default function RunPage() {
       endCurrentRun();
     }
   };
-
-  const pendingTasks = currentRun.tasks.filter((t) => t.status === 'pending');
-  const completedCount = currentRun.tasks.filter((t) => t.status === 'completed').length;
-  const totalCount = currentRun.tasks.length;
-
-  // Completion state
-  if (currentRun.status === 'completed') {
-    const messages = [
-      "You did it!",
-      "That's one done ✓",
-      "Nice work",
-      "You showed up today",
-    ];
-    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-
-    return (
-      <div className="min-h-screen bg-calm-bg flex items-center justify-center">
-        <div className="text-center px-4">
-          <h1 className="text-4xl font-bold text-calm-text mb-4">{randomMessage}</h1>
-          <p className="text-lg text-calm-muted mb-2">{currentRun.templateName} complete</p>
-          <p className="text-base text-calm-muted">
-            {completedCount} of {totalCount} {totalCount === 1 ? 'task' : 'tasks'} done
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Abandoned state
-  if (currentRun.status === 'abandoned') {
-    return (
-      <div className="min-h-screen bg-calm-bg flex items-center justify-center">
-        <div className="text-center px-4">
-          <h1 className="text-3xl font-bold text-calm-text mb-4">Taking a break</h1>
-          <p className="text-lg text-calm-muted mb-2">That's part of the process</p>
-          <p className="text-base text-calm-muted">
-            You can come back to this anytime you're ready
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-calm-bg">

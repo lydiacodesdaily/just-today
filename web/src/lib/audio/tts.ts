@@ -21,8 +21,15 @@ export async function speak(text: string, options: { volume?: number } = {}): Pr
     utterance.pitch = 1.0;
 
     utterance.onend = () => resolve();
-    utterance.onerror = (error) => {
-      console.error('TTS error:', error);
+    utterance.onerror = (event) => {
+      // TTS errors are common and expected (browser policies, user interaction, etc.)
+      // Log with more context but don't treat as critical since we gracefully degrade
+      console.warn(
+        'TTS announcement skipped (this is normal):',
+        event.error || 'unknown reason',
+        '\nAttempted text:',
+        text.substring(0, 50) + (text.length > 50 ? '...' : '')
+      );
       resolve(); // Resolve anyway, don't break the app
     };
 
