@@ -290,17 +290,15 @@ export default function RunPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex justify-center">
-            <TaskControls
-              isPaused={isPaused}
-              autoAdvance={activeTask.autoAdvance ?? false}
-              onPause={pauseCurrentRun}
-              onResume={resumeCurrentRun}
-              onComplete={handleComplete}
-              onSkip={handleSkip}
-              onToggleAutoAdvance={handleToggleAutoAdvance}
-            />
-          </div>
+          <TaskControls
+            isPaused={isPaused}
+            autoAdvance={activeTask.autoAdvance ?? false}
+            onPause={pauseCurrentRun}
+            onResume={resumeCurrentRun}
+            onComplete={handleComplete}
+            onSkip={handleSkip}
+            onToggleAutoAdvance={handleToggleAutoAdvance}
+          />
 
           {/* Queue preview */}
           {pendingTasks.length > 0 && (
