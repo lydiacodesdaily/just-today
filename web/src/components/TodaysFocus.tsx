@@ -429,14 +429,18 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
         >
           <div
             ref={addModalRef}
-            className="bg-calm-surface rounded-xl p-6 w-full max-w-md"
+            className="bg-calm-surface border border-calm-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 id="add-modal-title" className="text-xl font-semibold text-calm-text mb-4">
-              Add to Today
-            </h3>
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4 border-b border-calm-border">
+              <h3 id="add-modal-title" className="text-xl font-semibold text-calm-text">
+                Add to Today
+              </h3>
+            </div>
 
-            <div className="space-y-4">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-calm-text mb-2">
                   What do you want to focus on?
@@ -480,17 +484,18 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-calm-border flex gap-3">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 px-4 py-2 bg-calm-border text-calm-text rounded-lg hover:bg-calm-border/80 transition-colors"
+                className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-border/80 transition-colors touch-manipulation"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAdd}
                 disabled={!newTitle.trim()}
-                className="flex-1 px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 min-h-[48px] px-4 py-3 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
               >
                 Add
               </button>

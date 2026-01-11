@@ -18,7 +18,7 @@ export function KeyboardShortcutsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -26,19 +26,20 @@ export function KeyboardShortcutsModal({
     >
       <div
         ref={modalRef}
-        className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800"
+        className="relative w-full max-w-2xl rounded-xl bg-calm-surface border border-calm-border max-h-[90vh] overflow-hidden flex flex-col shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b border-calm-border flex items-center justify-between">
           <h2
             id="shortcuts-title"
-            className="text-xl font-semibold text-gray-900 dark:text-white"
+            className="text-xl font-semibold text-calm-text"
           >
             Keyboard Shortcuts
           </h2>
           <button
             onClick={onClose}
-            className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-calm-primary focus:ring-offset-2 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+            className="rounded-full p-1 text-calm-muted transition-colors hover:bg-calm-border hover:text-calm-text focus:outline-none focus:ring-2 focus:ring-calm-primary focus:ring-offset-2"
             aria-label="Close keyboard shortcuts dialog"
           >
             <svg
@@ -57,26 +58,28 @@ export function KeyboardShortcutsModal({
           </button>
         </div>
 
-        <div className="space-y-3">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
           {KEYBOARD_SHORTCUTS.map((shortcut, index) => (
             <div
               key={index}
-              className="flex items-center justify-between rounded-md border border-gray-200 p-3 dark:border-gray-700"
+              className="flex items-center justify-between rounded-md border border-calm-border p-3 bg-calm-bg"
             >
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-calm-text">
                 {shortcut.description}
               </span>
-              <kbd className="rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+              <kbd className="rounded bg-calm-surface px-2 py-1 text-xs font-semibold text-calm-text border border-calm-border">
                 {shortcut.keys}
               </kbd>
             </div>
           ))}
         </div>
 
-        <div className="mt-6 text-center">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-calm-border text-center">
           <button
             onClick={onClose}
-            className="rounded-lg bg-calm-primary px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-calm-primary/90 focus:outline-none focus:ring-2 focus:ring-calm-primary focus:ring-offset-2"
+            className="min-h-[48px] px-6 py-3 rounded-lg bg-calm-primary text-white font-medium transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-calm-primary focus:ring-offset-2"
           >
             Got it
           </button>

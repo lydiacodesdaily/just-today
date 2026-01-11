@@ -23,7 +23,7 @@ export function TaskControls({
   onToggleAutoAdvance,
 }: TaskControlsProps) {
   return (
-    <div className="flex flex-col gap-4 w-full max-w-md">
+    <div className="flex flex-col gap-4 w-full max-w-xl">
       {/* Primary action - Done - Touch-friendly 44x44px minimum */}
       <button
         onClick={onComplete}

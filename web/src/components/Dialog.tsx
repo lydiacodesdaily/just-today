@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 
 interface DialogProps {
@@ -83,35 +83,39 @@ export function Dialog({
     >
       <div
         ref={modalRef}
-        className={`relative w-full max-w-md rounded-xl border ${variantStyles[variant]} bg-calm-bg-secondary p-6 shadow-2xl`}
+        className={`relative w-full max-w-2xl rounded-xl border ${variantStyles[variant]} bg-calm-surface max-h-[90vh] overflow-hidden flex flex-col shadow-2xl`}
       >
-        <h2
-          id="dialog-title"
-          className="text-xl font-medium text-calm-text mb-3"
-        >
-          {title}
-        </h2>
+        {/* Header & Content */}
+        <div className="px-6 py-6">
+          <h2
+            id="dialog-title"
+            className="text-xl font-medium text-calm-text mb-3"
+          >
+            {title}
+          </h2>
 
-        {message && (
-          <p className="text-calm-text-secondary mb-6 leading-relaxed">
-            {message}
-          </p>
-        )}
+          {message && (
+            <p className="text-calm-muted leading-relaxed">
+              {message}
+            </p>
+          )}
 
-        {children}
+          {children}
+        </div>
 
-        <div className="flex gap-3 mt-6">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-calm-border flex gap-3">
           {cancelLabel && (
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-calm-border bg-calm-bg hover:bg-calm-bg-secondary text-calm-text font-medium transition-colors"
+              className="flex-1 min-h-[48px] px-4 py-3 rounded-lg border border-calm-border bg-calm-bg hover:bg-calm-border/80 text-calm-text font-medium transition-colors touch-manipulation"
             >
               {cancelLabel}
             </button>
           )}
           <button
             onClick={handleConfirm}
-            className={`flex-1 px-4 py-2.5 rounded-lg ${confirmButtonStyles[variant]} text-white font-medium transition-colors`}
+            className={`flex-1 min-h-[48px] px-4 py-3 rounded-lg ${confirmButtonStyles[variant]} text-white font-medium transition-colors touch-manipulation`}
           >
             {confirmLabel}
           </button>

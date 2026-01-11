@@ -77,11 +77,11 @@ export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps)
     >
       <div
         ref={modalRef}
-        className="bg-calm-surface border border-calm-border rounded-xl max-w-lg w-full p-6 shadow-2xl"
+        className="bg-calm-surface border border-calm-border rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="mb-6">
+        <div className="px-6 pt-6 pb-4 border-b border-calm-border">
           <h2 id="energy-modal-title" className="text-2xl font-semibold text-calm-text">
             {isEditing ? 'Edit Energy Menu Item' : 'Create Energy Menu Item'}
           </h2>
@@ -91,7 +91,7 @@ export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps)
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form id="energy-menu-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {/* Title Input */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-calm-text mb-2">
@@ -170,23 +170,25 @@ export function EnergyMenuItemModal({ item, onClose }: EnergyMenuItemModalProps)
             </select>
           </div>
 
-          {/* Actions - Touch-friendly 44px minimum */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text/10 transition-colors font-medium touch-manipulation"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 min-h-[48px] px-4 py-3 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium touch-manipulation"
-            >
-              {isEditing ? 'Save Changes' : 'Create Item'}
-            </button>
-          </div>
         </form>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-calm-border flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text/10 transition-colors font-medium touch-manipulation"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="energy-menu-form"
+            className="flex-1 min-h-[48px] px-4 py-3 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium touch-manipulation"
+          >
+            {isEditing ? 'Save Changes' : 'Create Item'}
+          </button>
+        </div>
       </div>
     </div>
   );

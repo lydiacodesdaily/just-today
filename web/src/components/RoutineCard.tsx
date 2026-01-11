@@ -278,25 +278,29 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
           />
 
           {/* Dialog */}
-          <div className="relative bg-calm-surface rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-calm-text mb-2">
-              Continue {resumeDialogRoutine.name}?
-            </h3>
-            <p className="text-calm-muted mb-6">
-              You made it through {currentRun.tasks.filter((t) => t.status === 'completed').length} of{' '}
-              {currentRun.tasks.length} tasks earlier. Pick up where you left off, or start fresh.
-            </p>
+          <div className="relative bg-calm-surface border border-calm-border rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header & Content */}
+            <div className="px-6 py-6">
+              <h3 className="text-xl font-bold text-calm-text mb-2">
+                Continue {resumeDialogRoutine.name}?
+              </h3>
+              <p className="text-calm-muted">
+                You made it through {currentRun.tasks.filter((t) => t.status === 'completed').length} of{' '}
+                {currentRun.tasks.length} tasks earlier. Pick up where you left off, or start fresh.
+              </p>
+            </div>
 
-            <div className="flex gap-3 justify-end">
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-calm-border flex gap-3 justify-end">
               <button
                 onClick={handleStartFresh}
-                className="px-5 py-2.5 text-calm-text hover:bg-calm-border/50 rounded-lg transition-colors font-medium"
+                className="min-h-[48px] px-5 py-3 text-calm-text hover:bg-calm-border/50 rounded-lg transition-colors font-medium touch-manipulation"
               >
                 Start Fresh
               </button>
               <button
                 onClick={handleContinueRun}
-                className="px-5 py-2.5 bg-calm-primary text-white hover:opacity-90 rounded-lg transition-opacity font-semibold"
+                className="min-h-[48px] px-5 py-3 bg-calm-primary text-white hover:opacity-90 rounded-lg transition-opacity font-semibold touch-manipulation"
               >
                 Continue
               </button>
@@ -315,22 +319,26 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
           />
 
           {/* Dialog */}
-          <div className="relative bg-calm-surface rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-calm-text mb-2">Delete Routine?</h3>
-            <p className="text-calm-muted mb-6">
-              Are you sure you want to delete "{deletingRoutine.name}"? This action cannot be undone.
-            </p>
+          <div className="relative bg-calm-surface border border-calm-border rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header & Content */}
+            <div className="px-6 py-6">
+              <h3 className="text-xl font-bold text-calm-text mb-2">Delete Routine?</h3>
+              <p className="text-calm-muted">
+                Are you sure you want to delete "{deletingRoutine.name}"? This action cannot be undone.
+              </p>
+            </div>
 
-            <div className="flex gap-3 justify-end">
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-calm-border flex gap-3 justify-end">
               <button
                 onClick={() => setDeletingRoutine(null)}
-                className="px-5 py-2.5 text-calm-text hover:bg-calm-border/50 rounded-lg transition-colors font-medium"
+                className="min-h-[48px] px-5 py-3 text-calm-text hover:bg-calm-border/50 rounded-lg transition-colors font-medium touch-manipulation"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-5 py-2.5 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors font-semibold"
+                className="min-h-[48px] px-5 py-3 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors font-semibold touch-manipulation"
               >
                 Delete
               </button>

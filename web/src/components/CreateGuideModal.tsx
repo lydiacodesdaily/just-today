@@ -81,12 +81,16 @@ export function CreateGuideModal({ isOpen, onClose, onSave, editingGuide }: Crea
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-calm-surface rounded-xl p-6 w-full max-w-lg max-h-[90vh] flex flex-col">
-        <h3 className="text-xl font-semibold text-calm-text mb-4">
-          {editingGuide ? 'Edit Guide' : 'Create Custom Guide'}
-        </h3>
+      <div className="bg-calm-surface rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b border-calm-border">
+          <h3 className="text-xl font-semibold text-calm-text">
+            {editingGuide ? 'Edit Guide' : 'Create Custom Guide'}
+          </h3>
+        </div>
 
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           {/* Title input */}
           <div>
             <label className="block text-sm font-medium text-calm-text mb-2">
@@ -163,8 +167,8 @@ export function CreateGuideModal({ isOpen, onClose, onSave, editingGuide }: Crea
           </div>
         </div>
 
-        {/* Action buttons - Touch-friendly 44px minimum */}
-        <div className="flex gap-3 mt-6 pt-4 border-t border-calm-border">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-calm-border flex gap-3">
           <button
             onClick={onClose}
             className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-border/80 transition-colors touch-manipulation"
