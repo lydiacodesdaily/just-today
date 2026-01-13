@@ -16,12 +16,13 @@ export function BrainDump() {
   const { addToLater } = useFocusStore();
 
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showAllItems, setShowAllItems] = useState(false);
   const [inputText, setInputText] = useState('');
   const [showMenuForId, setShowMenuForId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const unsortedItems = items.filter((item) => item.status === 'unsorted');
-  const visibleItems = unsortedItems.slice(0, VISIBLE_ITEMS_DEFAULT);
+  const visibleItems = showAllItems ? unsortedItems : unsortedItems.slice(0, VISIBLE_ITEMS_DEFAULT);
   const remainingCount = Math.max(0, unsortedItems.length - VISIBLE_ITEMS_DEFAULT);
 
   useEffect(() => {
@@ -176,10 +177,21 @@ export function BrainDump() {
                 </div>
               ))}
 
-              {remainingCount > 0 && (
-                <p className="text-sm text-calm-muted text-center py-2">
+              {remainingCount > 0 && !showAllItems && (
+                <button
+                  onClick={() => setShowAllItems(true)}
+                  className="w-full text-sm text-calm-muted text-center py-2 hover:text-calm-text transition-colors"
+                >
                   +{remainingCount} more thought{remainingCount === 1 ? '' : 's'}
-                </p>
+                </button>
+              )}
+              {showAllItems && unsortedItems.length > VISIBLE_ITEMS_DEFAULT && (
+                <button
+                  onClick={() => setShowAllItems(false)}
+                  className="w-full text-sm text-calm-muted text-center py-2 hover:text-calm-text transition-colors"
+                >
+                  Show less
+                </button>
               )}
             </div>
           )}
