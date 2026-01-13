@@ -133,8 +133,8 @@ export default function TodayPage() {
           )}
         </div>
 
-        {/* Footer spacing */}
-        <div className="h-16"></div>
+        {/* Footer spacing for mobile bottom nav - ensures tooltips and content aren't hidden */}
+        <div className="h-24 md:h-0"></div>
       </div>
 
       {/* Accessibility features */}

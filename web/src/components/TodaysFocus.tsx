@@ -84,7 +84,7 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart }: F
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-10">
+            <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
               <button
                 onClick={() => {
                   onStart();
@@ -195,7 +195,7 @@ function OptionalItemCard({ item, onComplete, onRemove, onStart }: OptionalItemC
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-10">
+            <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
               <button
                 onClick={() => {
                   onStart();

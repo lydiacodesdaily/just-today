@@ -156,7 +156,7 @@ export function BrainDump() {
                       </button>
 
                       {showMenuForId === item.id && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-10">
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
                           <button
                             onClick={() => handleKeepItem(item.id, item.text)}
                             className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"

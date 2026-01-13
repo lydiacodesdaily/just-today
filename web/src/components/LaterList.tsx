@@ -110,7 +110,7 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSe
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-10">
+            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
               <button
                 onClick={() => {
                   onEdit();
@@ -154,7 +154,7 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSe
           )}
 
           {showTimeBucketMenu && (
-            <div ref={timeBucketMenuRef} className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-10">
+            <div ref={timeBucketMenuRef} className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
               <div className="px-4 py-2 text-xs text-calm-muted border-b border-calm-border">
                 No reminders, no pressure
               </div>

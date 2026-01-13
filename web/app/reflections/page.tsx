@@ -195,6 +195,9 @@ export default function ReflectionsPage() {
             </div>
           </div>
         </div>
+
+        {/* Footer spacing for mobile bottom nav - ensures tooltips and content aren't hidden */}
+        <div className="h-24 md:h-0"></div>
       </div>
     </div>
   );

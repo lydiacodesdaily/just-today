@@ -23,7 +23,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <LeftNav />
       <main
         id="main-content"
-        className={isFocusMode ? 'flex-1 pb-0' : 'flex-1 md:ml-64 pb-16 md:pb-0'}
+        className={isFocusMode ? 'flex-1 pb-0' : 'flex-1 md:ml-64 pb-24 md:pb-0'}
         role="main"
       >
         {children}

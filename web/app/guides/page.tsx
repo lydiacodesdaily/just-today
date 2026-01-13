@@ -102,6 +102,9 @@ export default function GuidesPage() {
           </section>
         </div>
 
+        {/* Footer spacing for mobile bottom nav - ensures tooltips and content aren't hidden */}
+        <div className="h-24 md:h-0"></div>
+
         {/* Create Guide Modal */}
         <CreateGuideModal
           isOpen={showCreateModal}
