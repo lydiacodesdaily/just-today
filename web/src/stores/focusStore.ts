@@ -26,6 +26,9 @@ interface FocusStore {
   deleteItem: (itemId: string) => void;
   setItemReminder: (itemId: string, reminderTiming?: ReminderTiming, customDate?: Date) => void;
   setItemTimeBucket: (itemId: string, timeBucket?: TimeBucket) => void;
+  setCheckOnce: (itemId: string, checkOnceDate: string) => void;
+  clearCheckOnce: (itemId: string) => void;
+  triggerCheckOnce: (itemId: string) => void;
   startFocus: (itemId: string) => void;
   endFocus: (itemId: string) => void;
   dismissRollover: () => void;
@@ -226,6 +229,50 @@ export const useFocusStore = create<FocusStore>()(
         set((state) => ({
           laterItems: state.laterItems.map((item) =>
             item.id === itemId ? { ...item, timeBucket } : item
+          ),
+        }));
+      },
+
+      // Set check once date for item
+      setCheckOnce: (itemId, checkOnceDate) => {
+        set((state) => ({
+          todayItems: state.todayItems.map((item) =>
+            item.id === itemId
+              ? { ...item, checkOnceDate, checkOnceTriggeredAt: undefined }
+              : item
+          ),
+          laterItems: state.laterItems.map((item) =>
+            item.id === itemId
+              ? { ...item, checkOnceDate, checkOnceTriggeredAt: undefined }
+              : item
+          ),
+        }));
+      },
+
+      // Clear check once date for item
+      clearCheckOnce: (itemId) => {
+        set((state) => ({
+          todayItems: state.todayItems.map((item) =>
+            item.id === itemId
+              ? { ...item, checkOnceDate: undefined, checkOnceTriggeredAt: undefined }
+              : item
+          ),
+          laterItems: state.laterItems.map((item) =>
+            item.id === itemId
+              ? { ...item, checkOnceDate: undefined, checkOnceTriggeredAt: undefined }
+              : item
+          ),
+        }));
+      },
+
+      // Mark check once as triggered (called when item becomes due)
+      triggerCheckOnce: (itemId) => {
+        const now = new Date().toISOString();
+        set((state) => ({
+          laterItems: state.laterItems.map((item) =>
+            item.id === itemId && item.checkOnceDate && !item.checkOnceTriggeredAt
+              ? { ...item, checkOnceTriggeredAt: now }
+              : item
           ),
         }));
       },

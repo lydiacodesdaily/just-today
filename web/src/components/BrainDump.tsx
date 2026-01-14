@@ -8,6 +8,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useBrainDumpStore } from '@/src/stores/brainDumpStore';
 import { useFocusStore } from '@/src/stores/focusStore';
+import { CheckOncePicker } from './CheckOncePicker';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
@@ -18,12 +19,13 @@ interface BrainDumpProps {
 
 export function BrainDump({ initialExpanded = false, arrivalMode = false }: BrainDumpProps) {
   const { items, addItem, deleteItem, keepItem } = useBrainDumpStore();
-  const { addToLater } = useFocusStore();
+  const { addToLater, setCheckOnce } = useFocusStore();
 
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [showAllItems, setShowAllItems] = useState(false);
   const [inputText, setInputText] = useState('');
   const [showMenuForId, setShowMenuForId] = useState<string | null>(null);
+  const [checkOnceItemData, setCheckOnceItemData] = useState<{ id: string; text: string } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const unsortedItems = items.filter((item) => item.status === 'unsorted');
@@ -56,6 +58,31 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
     // Add to Later with default 15-30min duration
     addToLater(itemText, '~15 min');
     setShowMenuForId(null);
+  };
+
+  const handleCheckOnceLater = (itemId: string, itemText: string) => {
+    setCheckOnceItemData({ id: itemId, text: itemText });
+    setShowMenuForId(null);
+  };
+
+  const handleCheckOnceConfirm = (checkOnceDate: string) => {
+    if (checkOnceItemData) {
+      // Mark as kept in brain dump
+      keepItem(checkOnceItemData.id);
+      // Add to Later with check once date
+      addToLater(checkOnceItemData.text, '~15 min');
+      // Get the newly added item ID (it will be the last one in laterItems after adding)
+      // We need to find it and set the check once date
+      // For now, we'll use a timeout to ensure the item is added first
+      setTimeout(() => {
+        const laterItems = useFocusStore.getState().laterItems;
+        const newItem = laterItems.find(item => item.title === checkOnceItemData.text && !item.checkOnceDate);
+        if (newItem) {
+          setCheckOnce(newItem.id, checkOnceDate);
+        }
+      }, 0);
+      setCheckOnceItemData(null);
+    }
   };
 
   const handleDeleteItem = (itemId: string) => {
@@ -162,12 +189,21 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
                       </button>
 
                       {showMenuForId === item.id && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+                        <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
                           <button
                             onClick={() => handleKeepItem(item.id, item.text)}
                             className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
                           >
                             Keep (Move to Later)
+                          </button>
+                          <button
+                            onClick={() => handleCheckOnceLater(item.id, item.text)}
+                            className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
+                          >
+                            <div>Check once later...</div>
+                            <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
+                              Keep and resurface once
+                            </div>
                           </button>
                           <button
                             onClick={() => handleDeleteItem(item.id)}
@@ -207,6 +243,14 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
             </p>
           )}
         </div>
+      )}
+
+      {/* Check Once Picker */}
+      {checkOnceItemData && (
+        <CheckOncePicker
+          onConfirm={handleCheckOnceConfirm}
+          onCancel={() => setCheckOnceItemData(null)}
+        />
       )}
     </section>
   );

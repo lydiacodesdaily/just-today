@@ -59,6 +59,10 @@ export interface FocusItem {
   reminderTiming?: ReminderTiming; // How the reminder was set
   timeBucket?: TimeBucket; // Optional manual time bucket label (defaults to NONE)
 
+  // Check Once resurfacing (calm, single-time resurfacing)
+  checkOnceDate?: string; // ISO date string (YYYY-MM-DD) for when to resurface once
+  checkOnceTriggeredAt?: string; // ISO timestamp when item became due (ensures one-time resurfacing)
+
   // Focus session tracking
   focusStartedAt?: string;
   focusEndedAt?: string;
@@ -169,4 +173,82 @@ export function formatTimeBucket(bucket?: TimeBucket): string {
   };
 
   return mapping[bucket] || '';
+}
+
+/**
+ * Helper function to calculate check once date from preset
+ */
+export function calculateCheckOnceDate(preset: 'few-days' | 'next-week' | 'two-weeks' | 'custom', customDate?: Date): string | null {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  switch (preset) {
+    case 'few-days':
+      const fewDays = new Date(today);
+      fewDays.setDate(fewDays.getDate() + 3);
+      return fewDays.toISOString().split('T')[0];
+
+    case 'next-week':
+      const nextWeek = new Date(today);
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      return nextWeek.toISOString().split('T')[0];
+
+    case 'two-weeks':
+      const twoWeeks = new Date(today);
+      twoWeeks.setDate(twoWeeks.getDate() + 14);
+      return twoWeeks.toISOString().split('T')[0];
+
+    case 'custom':
+      if (!customDate) return null;
+      const custom = new Date(customDate);
+      custom.setHours(0, 0, 0, 0);
+      return custom.toISOString().split('T')[0];
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * Helper function to check if check once date is due (using local date comparison)
+ */
+export function isCheckOnceDue(item: FocusItem): boolean {
+  if (!item.checkOnceDate || item.checkOnceTriggeredAt) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayString = today.toISOString().split('T')[0];
+
+  return todayString >= item.checkOnceDate;
+}
+
+/**
+ * Helper function to format check once date for display
+ */
+export function formatCheckOnceDate(checkOnceDate?: string): string {
+  if (!checkOnceDate) return '';
+
+  const date = new Date(checkOnceDate + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const todayString = today.toISOString().split('T')[0];
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowString = tomorrow.toISOString().split('T')[0];
+
+  if (checkOnceDate === todayString) {
+    return 'Check today';
+  }
+
+  if (checkOnceDate === tomorrowString) {
+    return 'Check tomorrow';
+  }
+
+  if (checkOnceDate < todayString) {
+    return 'Ready to check';
+  }
+
+  // Future date
+  return `Check on ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
 }

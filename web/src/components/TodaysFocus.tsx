@@ -15,6 +15,7 @@ import { createRunFromFocusItem } from '@/src/engine/runEngine';
 import { TodayOptionalItem } from '@/src/models/EnergyMenuItem';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
+import { CheckOncePicker } from '@/src/components/CheckOncePicker';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
@@ -35,9 +36,10 @@ interface FocusItemCardProps {
   onMoveToLater: () => void;
   onDelete: () => void;
   onStart: () => void;
+  onCheckOnceLater: () => void;
 }
 
-function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart }: FocusItemCardProps) {
+function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onCheckOnceLater }: FocusItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -84,7 +86,7 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart }: F
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
               <button
                 onClick={() => {
                   onStart();
@@ -113,6 +115,18 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart }: F
                 <div>Move to Later</div>
                 <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
                   That&apos;s okay — you can come back when ready
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  onCheckOnceLater();
+                  setShowMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
+              >
+                <div>Check once later...</div>
+                <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
+                  Resurface once to close the loop
                 </div>
               </button>
               <button
@@ -237,7 +251,7 @@ export interface TodaysFocusRef {
 }
 
 export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
-  const { todayItems, addToToday, completeItem, moveToLater, deleteItem, rolloverCount, dismissRollover, completionCelebrationMessage } =
+  const { todayItems, addToToday, completeItem, moveToLater, deleteItem, setCheckOnce, rolloverCount, dismissRollover, completionCelebrationMessage } =
     useFocusStore();
   const { todayOptionalItems, completeOptionalItem, removeFromToday } = useEnergyMenuStore();
   const { setCurrentRun } = useRunStore();
@@ -248,6 +262,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
   const [newTitle, setNewTitle] = useState('');
   const [selectedDuration, setSelectedDuration] = useState<FocusDuration>('~15 min');
   const [srAnnouncement, setSrAnnouncement] = useState('');
+  const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
 
   const addModalRef = useFocusTrap<HTMLDivElement>(showAddModal);
 
@@ -301,6 +316,21 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
       location: 'today',
     };
     handleStartFocus(focusItem);
+  };
+
+  const handleCheckOnceLater = (itemId: string) => {
+    setCheckOnceItemId(itemId);
+  };
+
+  const handleCheckOnceConfirm = (checkOnceDate: string) => {
+    if (checkOnceItemId) {
+      // Set the check once date
+      setCheckOnce(checkOnceItemId, checkOnceDate);
+      // Move item to Later
+      moveToLater(checkOnceItemId);
+      setCheckOnceItemId(null);
+      setSrAnnouncement('Item moved to Later with check date set');
+    }
   };
 
   return (
@@ -384,6 +414,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
               onMoveToLater={() => moveToLater(item.id)}
               onDelete={() => deleteItem(item.id)}
               onStart={() => handleStartFocus(item)}
+              onCheckOnceLater={() => handleCheckOnceLater(item.id)}
             />
           ))}
 
@@ -502,6 +533,14 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Check Once Picker */}
+      {checkOnceItemId && (
+        <CheckOncePicker
+          onConfirm={handleCheckOnceConfirm}
+          onCancel={() => setCheckOnceItemId(null)}
+        />
       )}
 
       {/* Screen reader announcements */}

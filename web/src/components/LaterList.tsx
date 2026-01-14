@@ -6,9 +6,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { FocusItem, TimeBucket, formatReminderDate, formatTimeBucket } from '@/src/models/FocusItem';
+import { FocusItem, TimeBucket, formatReminderDate, formatTimeBucket, formatCheckOnceDate } from '@/src/models/FocusItem';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { EditLaterItemModal } from './EditLaterItemModal';
+import { CheckOncePicker } from './CheckOncePicker';
+import { useCheckOnce } from '@/src/hooks/useCheckOnce';
 
 interface LaterItemCardProps {
   item: FocusItem;
@@ -17,9 +19,10 @@ interface LaterItemCardProps {
   onComplete: () => void;
   onDelete: () => void;
   onSetTimeBucket: (bucket: TimeBucket) => void;
+  onCheckOnceLater: () => void;
 }
 
-function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSetTimeBucket }: LaterItemCardProps) {
+function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSetTimeBucket, onCheckOnceLater }: LaterItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showTimeBucketMenu, setShowTimeBucketMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -75,6 +78,12 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSe
               <>
                 <span>•</span>
                 <span>{formatReminderDate(item.reminderDate)}</span>
+              </>
+            )}
+            {item.checkOnceDate && (
+              <>
+                <span>•</span>
+                <span className="text-calm-text/70">{formatCheckOnceDate(item.checkOnceDate)}</span>
               </>
             )}
             {item.rolloverCount && item.rolloverCount > 0 && (
@@ -140,6 +149,18 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSe
               </button>
               <button
                 onClick={() => {
+                  onCheckOnceLater();
+                  setShowMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
+              >
+                <div>{item.checkOnceDate ? 'Change check date...' : 'Check once later...'}</div>
+                <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
+                  Resurface once to close the loop
+                </div>
+              </button>
+              <button
+                onClick={() => {
                   onDelete();
                   setShowMenu(false);
                 }}
@@ -189,11 +210,37 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onComplete, onDelete, onSe
 }
 
 export function LaterList() {
-  const { laterItems, moveToToday, completeItem, deleteItem, startFocus, setItemTimeBucket } = useFocusStore();
+  const { laterItems, moveToToday, completeItem, deleteItem, startFocus, setItemTimeBucket, setCheckOnce, triggerCheckOnce } = useFocusStore();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isCheckOnExpanded, setIsCheckOnExpanded] = useState(false);
   const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
+  const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
 
   const incompleteItems = laterItems.filter((item) => !item.completedAt);
+  const { scheduled, due, none } = useCheckOnce(incompleteItems);
+
+  // Trigger check once for due items (mark as triggered on first render when due)
+  useEffect(() => {
+    due.forEach((item) => {
+      if (!item.checkOnceTriggeredAt) {
+        triggerCheckOnce(item.id);
+      }
+    });
+  }, [due, triggerCheckOnce]);
+
+  const handleCheckOnceLater = (itemId: string) => {
+    setCheckOnceItemId(itemId);
+  };
+
+  const handleCheckOnceConfirm = (checkOnceDate: string) => {
+    if (checkOnceItemId) {
+      setCheckOnce(checkOnceItemId, checkOnceDate);
+      setCheckOnceItemId(null);
+    }
+  };
+
+  const hasCheckOnItems = due.length > 0 || scheduled.length > 0;
+  const totalLaterItems = none.length;
 
   if (incompleteItems.length === 0) {
     return null;
@@ -201,48 +248,134 @@ export function LaterList() {
 
   return (
     <section className="space-y-3">
-      {/* Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
-        aria-expanded={isExpanded}
-      >
-        <span className="text-lg font-medium text-calm-text">Later</span>
-
-        <div className="flex items-center gap-3">
-          {!isExpanded && incompleteItems.length > 0 && (
-            <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
-              {incompleteItems.length}
-            </span>
-          )}
-          <svg
-            className={`w-5 h-5 text-calm-muted transition-transform ${
-              isExpanded ? 'transform rotate-180' : ''
-            }`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      {/* Check On Section */}
+      {hasCheckOnItems && (
+        <>
+          <button
+            onClick={() => setIsCheckOnExpanded(!isCheckOnExpanded)}
+            className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
+            aria-expanded={isCheckOnExpanded}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </button>
+            <span className="text-lg font-medium text-calm-text">Check on</span>
 
-      {/* Items list */}
-      {isExpanded && (
-        <div className="space-y-3 pl-0">
-          {incompleteItems.map((item) => (
-            <LaterItemCard
-              key={item.id}
-              item={item}
-              onEdit={() => setEditingItem(item)}
-              onMoveToToday={() => moveToToday(item.id)}
-              onComplete={() => completeItem(item.id)}
-              onDelete={() => deleteItem(item.id)}
-              onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
-            />
-          ))}
-        </div>
+            <div className="flex items-center gap-3">
+              {!isCheckOnExpanded && due.length > 0 && (
+                <span className="w-2 h-2 bg-calm-text/50 rounded-full" title="Items ready to check" />
+              )}
+              {!isCheckOnExpanded && (scheduled.length + due.length) > 0 && (
+                <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
+                  {scheduled.length + due.length}
+                </span>
+              )}
+              <svg
+                className={`w-5 h-5 text-calm-muted transition-transform ${
+                  isCheckOnExpanded ? 'transform rotate-180' : ''
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+
+          {isCheckOnExpanded && (
+            <div className="space-y-3 pl-0">
+              {due.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-calm-muted px-2">Ready to check</p>
+                  {due.map((item) => (
+                    <LaterItemCard
+                      key={item.id}
+                      item={item}
+                      onEdit={() => setEditingItem(item)}
+                      onMoveToToday={() => moveToToday(item.id)}
+                      onComplete={() => completeItem(item.id)}
+                      onDelete={() => deleteItem(item.id)}
+                      onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                      onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                    />
+                  ))}
+                </div>
+              )}
+              {scheduled.length > 0 && (
+                <div className="space-y-2">
+                  {due.length > 0 && <div className="border-t border-calm-border my-3" />}
+                  <p className="text-xs text-calm-muted px-2">Scheduled</p>
+                  {scheduled.map((item) => (
+                    <LaterItemCard
+                      key={item.id}
+                      item={item}
+                      onEdit={() => setEditingItem(item)}
+                      onMoveToToday={() => moveToToday(item.id)}
+                      onComplete={() => completeItem(item.id)}
+                      onDelete={() => deleteItem(item.id)}
+                      onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                      onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Later Section */}
+      {totalLaterItems > 0 && (
+        <>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
+            aria-expanded={isExpanded}
+          >
+            <span className="text-lg font-medium text-calm-text">Later</span>
+
+            <div className="flex items-center gap-3">
+              {!isExpanded && totalLaterItems > 0 && (
+                <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
+                  {totalLaterItems}
+                </span>
+              )}
+              <svg
+                className={`w-5 h-5 text-calm-muted transition-transform ${
+                  isExpanded ? 'transform rotate-180' : ''
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+
+          {isExpanded && (
+            <div className="space-y-3 pl-0">
+              {none.map((item) => (
+                <LaterItemCard
+                  key={item.id}
+                  item={item}
+                  onEdit={() => setEditingItem(item)}
+                  onMoveToToday={() => moveToToday(item.id)}
+                  onComplete={() => completeItem(item.id)}
+                  onDelete={() => deleteItem(item.id)}
+                  onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                  onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Check Once Picker */}
+      {checkOnceItemId && (
+        <CheckOncePicker
+          onConfirm={handleCheckOnceConfirm}
+          onCancel={() => setCheckOnceItemId(null)}
+        />
       )}
 
       {/* Edit Modal */}
