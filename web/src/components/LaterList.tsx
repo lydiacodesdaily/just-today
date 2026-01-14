@@ -207,23 +207,25 @@ export function LaterList() {
         className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
         aria-expanded={isExpanded}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-lg font-medium text-calm-text">Later</span>
-          <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
-            {incompleteItems.length}
-          </span>
-        </div>
+        <span className="text-lg font-medium text-calm-text">Later</span>
 
-        <svg
-          className={`w-5 h-5 text-calm-muted transition-transform ${
-            isExpanded ? 'transform rotate-180' : ''
-          }`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <div className="flex items-center gap-3">
+          {!isExpanded && incompleteItems.length > 0 && (
+            <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
+              {incompleteItems.length}
+            </span>
+          )}
+          <svg
+            className={`w-5 h-5 text-calm-muted transition-transform ${
+              isExpanded ? 'transform rotate-180' : ''
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </button>
 
       {/* Items list */}

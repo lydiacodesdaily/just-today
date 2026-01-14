@@ -11,11 +11,16 @@ import { useFocusStore } from '@/src/stores/focusStore';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
-export function BrainDump() {
+interface BrainDumpProps {
+  initialExpanded?: boolean;
+  arrivalMode?: boolean;
+}
+
+export function BrainDump({ initialExpanded = false, arrivalMode = false }: BrainDumpProps) {
   const { items, addItem, deleteItem, keepItem } = useBrainDumpStore();
   const { addToLater } = useFocusStore();
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [showAllItems, setShowAllItems] = useState(false);
   const [inputText, setInputText] = useState('');
   const [showMenuForId, setShowMenuForId] = useState<string | null>(null);
@@ -107,7 +112,7 @@ export function BrainDump() {
                   handleAddItem();
                 }
               }}
-              placeholder="Dump anything on your mind..."
+              placeholder={arrivalMode ? "What's on your mind right now?" : "Dump anything on your mind..."}
               className="w-full min-h-[80px] bg-transparent border-none focus:outline-none text-calm-text placeholder-calm-muted resize-none"
             />
             <div className="flex justify-between items-center mt-2">
