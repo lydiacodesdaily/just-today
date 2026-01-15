@@ -7,6 +7,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { FocusItem, FocusDuration, ReminderTiming, TimeBucket, calculateReminderDate } from '@/src/models/FocusItem';
 import { useSnapshotStore } from './snapshotStore';
+import type { BrainDumpItem } from '@/src/models/BrainDumpItem';
+import { brainDumpToFocusItem } from '@/src/lib/dnd/conversions';
 
 interface FocusStore {
   // State
@@ -19,6 +21,7 @@ interface FocusStore {
   // Actions
   addToToday: (title: string, duration: FocusDuration) => void;
   addToLater: (title: string, duration: FocusDuration, reminderTiming?: ReminderTiming, customDate?: Date) => void;
+  addFromBrainDump: (item: BrainDumpItem, location: 'today' | 'later') => void;
   moveToLater: (itemId: string, reminderTiming?: ReminderTiming, customDate?: Date) => void;
   moveToToday: (itemId: string) => void;
   updateLaterItem: (itemId: string, title: string, duration: FocusDuration, timeBucket?: TimeBucket) => void;
@@ -90,6 +93,15 @@ export const useFocusStore = create<FocusStore>()(
 
         set((state) => ({
           laterItems: [...state.laterItems, item],
+        }));
+      },
+
+      // Add from Brain Dump (drag-drop conversion)
+      addFromBrainDump: (brainDumpItem, location) => {
+        const focusItem = brainDumpToFocusItem(brainDumpItem, location);
+        set((state) => ({
+          todayItems: location === 'today' ? [...state.todayItems, focusItem] : state.todayItems,
+          laterItems: location === 'later' ? [...state.laterItems, focusItem] : state.laterItems,
         }));
       },
 

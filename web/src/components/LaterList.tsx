@@ -11,6 +11,7 @@ import { useFocusStore } from '@/src/stores/focusStore';
 import { EditLaterItemModal } from './EditLaterItemModal';
 import { CheckOncePicker } from './CheckOncePicker';
 import { useCheckOnce } from '@/src/hooks/useCheckOnce';
+import { DraggableItem, DroppableZone } from './dnd';
 
 interface LaterItemCardProps {
   item: FocusItem;
@@ -281,21 +282,29 @@ export function LaterList() {
           </button>
 
           {isCheckOnExpanded && (
-            <div className="space-y-3 pl-0">
+            <DroppableZone id="later" className="space-y-3 pl-0">
               {due.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs text-calm-muted px-2">Ready to check</p>
                   {due.map((item) => (
-                    <LaterItemCard
-                      key={item.id}
-                      item={item}
-                      onEdit={() => setEditingItem(item)}
-                      onMoveToToday={() => moveToToday(item.id)}
-                      onComplete={() => completeItem(item.id)}
-                      onDelete={() => deleteItem(item.id)}
-                      onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
-                      onCheckOnceLater={() => handleCheckOnceLater(item.id)}
-                    />
+                    <div key={item.id} className="group">
+                      <DraggableItem
+                        id={item.id}
+                        type="focus-later"
+                        sourceZone="later"
+                        item={item}
+                      >
+                        <LaterItemCard
+                          item={item}
+                          onEdit={() => setEditingItem(item)}
+                          onMoveToToday={() => moveToToday(item.id)}
+                          onComplete={() => completeItem(item.id)}
+                          onDelete={() => deleteItem(item.id)}
+                          onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                          onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                        />
+                      </DraggableItem>
+                    </div>
                   ))}
                 </div>
               )}
@@ -304,20 +313,28 @@ export function LaterList() {
                   {due.length > 0 && <div className="border-t border-calm-border my-3" />}
                   <p className="text-xs text-calm-muted px-2">Scheduled</p>
                   {scheduled.map((item) => (
-                    <LaterItemCard
-                      key={item.id}
-                      item={item}
-                      onEdit={() => setEditingItem(item)}
-                      onMoveToToday={() => moveToToday(item.id)}
-                      onComplete={() => completeItem(item.id)}
-                      onDelete={() => deleteItem(item.id)}
-                      onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
-                      onCheckOnceLater={() => handleCheckOnceLater(item.id)}
-                    />
+                    <div key={item.id} className="group">
+                      <DraggableItem
+                        id={item.id}
+                        type="focus-later"
+                        sourceZone="later"
+                        item={item}
+                      >
+                        <LaterItemCard
+                          item={item}
+                          onEdit={() => setEditingItem(item)}
+                          onMoveToToday={() => moveToToday(item.id)}
+                          onComplete={() => completeItem(item.id)}
+                          onDelete={() => deleteItem(item.id)}
+                          onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                          onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                        />
+                      </DraggableItem>
+                    </div>
                   ))}
                 </div>
               )}
-            </div>
+            </DroppableZone>
           )}
         </>
       )}
@@ -352,20 +369,28 @@ export function LaterList() {
           </button>
 
           {isExpanded && (
-            <div className="space-y-3 pl-0">
+            <DroppableZone id="later" className="space-y-3 pl-0">
               {none.map((item) => (
-                <LaterItemCard
-                  key={item.id}
-                  item={item}
-                  onEdit={() => setEditingItem(item)}
-                  onMoveToToday={() => moveToToday(item.id)}
-                  onComplete={() => completeItem(item.id)}
-                  onDelete={() => deleteItem(item.id)}
-                  onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
-                  onCheckOnceLater={() => handleCheckOnceLater(item.id)}
-                />
+                <div key={item.id} className="group">
+                  <DraggableItem
+                    id={item.id}
+                    type="focus-later"
+                    sourceZone="later"
+                    item={item}
+                  >
+                    <LaterItemCard
+                      item={item}
+                      onEdit={() => setEditingItem(item)}
+                      onMoveToToday={() => moveToToday(item.id)}
+                      onComplete={() => completeItem(item.id)}
+                      onDelete={() => deleteItem(item.id)}
+                      onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                      onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                    />
+                  </DraggableItem>
+                </div>
               ))}
-            </div>
+            </DroppableZone>
           )}
         </>
       )}

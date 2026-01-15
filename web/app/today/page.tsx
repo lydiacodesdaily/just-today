@@ -9,6 +9,7 @@ import { LaterList } from '@/src/components/LaterList';
 import { BrainDump } from '@/src/components/BrainDump';
 import { KeyboardShortcutsModal } from '@/src/components/KeyboardShortcutsModal';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
+import { DndProvider } from '@/src/components/dnd';
 import { useEnergyStore } from '@/src/stores/energyStore';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { useAutoCheck } from '@/src/hooks/useAutoCheck';
@@ -95,104 +96,106 @@ export default function TodayPage() {
         </header>
 
         {/* Main content */}
-        <div className="space-y-8">
-          {/* 1. Energy Picker - always visible */}
-          <section>
-            <EnergyPicker selectedMode={currentMode} onSelect={handleEnergyModeChange} />
-          </section>
+        <DndProvider>
+          <div className="space-y-8">
+            {/* 1. Energy Picker - always visible */}
+            <section>
+              <EnergyPicker selectedMode={currentMode} onSelect={handleEnergyModeChange} />
+            </section>
 
-          {/* Arrival State: Brain Dump prioritized, Focus secondary */}
-          {isArrivalState ? (
-            <>
-              {/* Brain Dump - expanded and prioritized */}
-              <BrainDump initialExpanded={true} arrivalMode={true} />
+            {/* Arrival State: Brain Dump prioritized, Focus secondary */}
+            {isArrivalState ? (
+              <>
+                {/* Brain Dump - expanded and prioritized */}
+                <BrainDump initialExpanded={true} arrivalMode={true} />
 
-              {/* Today's Focus - secondary */}
-              <TodaysFocus ref={todaysFocusRef} />
+                {/* Today's Focus - secondary */}
+                <TodaysFocus ref={todaysFocusRef} />
 
-              {/* Show More sections - collapsed by default */}
-              {showMoreSections && (
-                <>
-                  {/* Optional Energy Menu */}
-                  <EnergyMenu energyLevel={currentMode} />
+                {/* Show More sections - collapsed by default */}
+                {showMoreSections && (
+                  <>
+                    {/* Optional Energy Menu */}
+                    <EnergyMenu energyLevel={currentMode} />
 
-                  {/* Routines Section */}
-                  <RoutinesList energyMode={currentMode} />
+                    {/* Routines Section */}
+                    <RoutinesList energyMode={currentMode} />
 
-                  {/* Later & Ideas Divider */}
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-calm-border"></div>
+                    {/* Later & Ideas Divider */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-calm-border"></div>
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-calm-bg px-4 text-sm text-calm-muted">Later & Ideas</span>
+                      </div>
                     </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-calm-bg px-4 text-sm text-calm-muted">Later & Ideas</span>
-                    </div>
+
+                    {/* Later List */}
+                    <LaterList />
+                  </>
+                )}
+
+                {/* Show More button if sections are hidden */}
+                {!showMoreSections && (
+                  <div className="text-center">
+                    <button
+                      onClick={() => setShowMoreSections(true)}
+                      className="px-6 py-3 bg-calm-surface border border-calm-border rounded-lg text-calm-text hover:border-calm-text/30 transition-colors text-sm font-medium"
+                    >
+                      Show Optional Items, Routines & Later
+                    </button>
                   </div>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Action State: Today's Focus prioritized */}
+                {/* Today's Focus - primary */}
+                <TodaysFocus ref={todaysFocusRef} />
 
-                  {/* Later List */}
-                  <LaterList />
-                </>
-              )}
+                {/* Show More sections - collapsed by default */}
+                {showMoreSections && (
+                  <>
+                    {/* Optional Energy Menu */}
+                    <EnergyMenu energyLevel={currentMode} />
 
-              {/* Show More button if sections are hidden */}
-              {!showMoreSections && (
-                <div className="text-center">
-                  <button
-                    onClick={() => setShowMoreSections(true)}
-                    className="px-6 py-3 bg-calm-surface border border-calm-border rounded-lg text-calm-text hover:border-calm-text/30 transition-colors text-sm font-medium"
-                  >
-                    Show Optional Items, Routines & Later
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              {/* Action State: Today's Focus prioritized */}
-              {/* Today's Focus - primary */}
-              <TodaysFocus ref={todaysFocusRef} />
+                    {/* Routines Section */}
+                    <RoutinesList energyMode={currentMode} />
 
-              {/* Show More sections - collapsed by default */}
-              {showMoreSections && (
-                <>
-                  {/* Optional Energy Menu */}
-                  <EnergyMenu energyLevel={currentMode} />
-
-                  {/* Routines Section */}
-                  <RoutinesList energyMode={currentMode} />
-
-                  {/* Later & Ideas Divider */}
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-calm-border"></div>
+                    {/* Later & Ideas Divider */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-calm-border"></div>
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-calm-bg px-4 text-sm text-calm-muted">Later & Ideas</span>
+                      </div>
                     </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-calm-bg px-4 text-sm text-calm-muted">Later & Ideas</span>
-                    </div>
+
+                    {/* Later List */}
+                    <LaterList />
+
+                    {/* Brain Dump - collapsed but accessible */}
+                    <BrainDump initialExpanded={false} arrivalMode={false} />
+                  </>
+                )}
+
+                {/* Show More button if sections are hidden */}
+                {!showMoreSections && (
+                  <div className="text-center">
+                    <button
+                      onClick={() => setShowMoreSections(true)}
+                      className="px-6 py-3 bg-calm-surface border border-calm-border rounded-lg text-calm-text hover:border-calm-text/30 transition-colors text-sm font-medium"
+                    >
+                      Show Optional Items, Routines, Later & Ideas
+                    </button>
                   </div>
-
-                  {/* Later List */}
-                  <LaterList />
-
-                  {/* Brain Dump - collapsed but accessible */}
-                  <BrainDump initialExpanded={false} arrivalMode={false} />
-                </>
-              )}
-
-              {/* Show More button if sections are hidden */}
-              {!showMoreSections && (
-                <div className="text-center">
-                  <button
-                    onClick={() => setShowMoreSections(true)}
-                    className="px-6 py-3 bg-calm-surface border border-calm-border rounded-lg text-calm-text hover:border-calm-text/30 transition-colors text-sm font-medium"
-                  >
-                    Show Optional Items, Routines, Later & Ideas
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                )}
+              </>
+            )}
+          </div>
+        </DndProvider>
 
         {/* Footer spacing for mobile bottom nav - ensures tooltips and content aren't hidden */}
         <div className="h-24 md:h-0"></div>

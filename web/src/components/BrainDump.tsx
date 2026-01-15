@@ -9,6 +9,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useBrainDumpStore } from '@/src/stores/brainDumpStore';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { CheckOncePicker } from './CheckOncePicker';
+import { DraggableItem, DroppableZone } from './dnd';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
@@ -156,65 +157,71 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
 
           {/* Items list */}
           {unsortedItems.length > 0 && (
-            <div className="space-y-2">
+            <DroppableZone id="braindump" className="space-y-2">
               {visibleItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-calm-surface border border-calm-border rounded-lg p-3 hover:border-calm-text/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm text-calm-text flex-1">{item.text}</p>
+                <div key={item.id} className="group">
+                  <DraggableItem
+                    id={item.id}
+                    type="braindump"
+                    sourceZone="braindump"
+                    item={item}
+                  >
+                    <div className="bg-calm-surface border border-calm-border rounded-lg p-3 hover:border-calm-text/30 transition-colors">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-sm text-calm-text flex-1">{item.text}</p>
 
-                    <div className="relative" ref={showMenuForId === item.id ? menuRef : null}>
-                      <button
-                        onClick={() =>
-                          setShowMenuForId(showMenuForId === item.id ? null : item.id)
-                        }
-                        className="p-1 hover:bg-calm-border/50 rounded transition-colors"
-                        aria-label="Options"
-                      >
-                        <svg
-                          className="w-4 h-4 text-calm-muted"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                          />
-                        </svg>
-                      </button>
-
-                      {showMenuForId === item.id && (
-                        <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+                        <div className="relative" ref={showMenuForId === item.id ? menuRef : null}>
                           <button
-                            onClick={() => handleKeepItem(item.id, item.text)}
-                            className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                            onClick={() =>
+                              setShowMenuForId(showMenuForId === item.id ? null : item.id)
+                            }
+                            className="p-1 hover:bg-calm-border/50 rounded transition-colors"
+                            aria-label="Options"
                           >
-                            Keep (Move to Later)
+                            <svg
+                              className="w-4 h-4 text-calm-muted"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                              />
+                            </svg>
                           </button>
-                          <button
-                            onClick={() => handleCheckOnceLater(item.id, item.text)}
-                            className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
-                          >
-                            <div>Check once later...</div>
-                            <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
-                              Keep and resurface once
+
+                          {showMenuForId === item.id && (
+                            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+                              <button
+                                onClick={() => handleKeepItem(item.id, item.text)}
+                                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                              >
+                                Keep (Move to Later)
+                              </button>
+                              <button
+                                onClick={() => handleCheckOnceLater(item.id, item.text)}
+                                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
+                              >
+                                <div>Check once later...</div>
+                                <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
+                                  Keep and resurface once
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors"
+                              >
+                                Delete
+                              </button>
                             </div>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors"
-                          >
-                            Delete
-                          </button>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  </DraggableItem>
                 </div>
               ))}
 
@@ -234,13 +241,15 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
                   Show less
                 </button>
               )}
-            </div>
+            </DroppableZone>
           )}
 
           {unsortedItems.length === 0 && (
-            <p className="text-sm text-calm-muted text-center py-4">
-              No thoughts captured yet
-            </p>
+            <DroppableZone id="braindump">
+              <p className="text-sm text-calm-muted text-center py-4">
+                No thoughts captured yet
+              </p>
+            </DroppableZone>
           )}
         </div>
       )}

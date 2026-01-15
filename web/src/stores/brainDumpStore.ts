@@ -15,6 +15,8 @@ interface BrainDumpStore {
   addItem: (text: string) => void;
   keepItem: (itemId: string) => void;
   deleteItem: (itemId: string) => void;
+  removeItem: (itemId: string) => void; // Remove without marking as kept (for drag-drop)
+  restoreItem: (text: string) => void; // Restore from focus item back to brain dump
   cleanupExpired: () => void;
 }
 
@@ -46,6 +48,21 @@ export const useBrainDumpStore = create<BrainDumpStore>()(
       deleteItem: (itemId) => {
         set((state) => ({
           items: state.items.filter((item) => item.id !== itemId),
+        }));
+      },
+
+      // Remove item without marking as kept (for drag-drop to Today/Later)
+      removeItem: (itemId) => {
+        set((state) => ({
+          items: state.items.filter((item) => item.id !== itemId),
+        }));
+      },
+
+      // Restore item from focus back to brain dump (for drag-drop from Today/Later)
+      restoreItem: (text) => {
+        const item = createBrainDumpItem(text);
+        set((state) => ({
+          items: [item, ...state.items],
         }));
       },
 

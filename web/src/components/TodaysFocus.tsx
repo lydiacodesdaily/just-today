@@ -16,6 +16,7 @@ import { TodayOptionalItem } from '@/src/models/EnergyMenuItem';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 import { CheckOncePicker } from '@/src/components/CheckOncePicker';
+import { DraggableItem, DroppableZone } from './dnd';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
@@ -391,34 +392,44 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
 
       {/* Items list */}
       {allIncompleteItems.length === 0 ? (
-        <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
-          <p className="text-calm-text mb-2">Ready when you are</p>
-          <p className="text-sm text-calm-muted mb-6">
-            Add your first task, or try an item from your Energy Menu
-          </p>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
-          >
-            Add your first item
-          </button>
-        </div>
+        <DroppableZone id="today">
+          <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
+            <p className="text-calm-text mb-2">Ready when you are</p>
+            <p className="text-sm text-calm-muted mb-6">
+              Add your first task, or try an item from your Energy Menu
+            </p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
+            >
+              Add your first item
+            </button>
+          </div>
+        </DroppableZone>
       ) : (
-        <div className="space-y-3">
+        <DroppableZone id="today" className="space-y-3">
           {/* Regular focus items */}
           {visibleItems.map((item) => (
-            <FocusItemCard
-              key={item.id}
-              item={item}
-              onComplete={() => completeItem(item.id)}
-              onMoveToLater={() => moveToLater(item.id)}
-              onDelete={() => deleteItem(item.id)}
-              onStart={() => handleStartFocus(item)}
-              onCheckOnceLater={() => handleCheckOnceLater(item.id)}
-            />
+            <div key={item.id} className="group">
+              <DraggableItem
+                id={item.id}
+                type="focus-today"
+                sourceZone="today"
+                item={item}
+              >
+                <FocusItemCard
+                  item={item}
+                  onComplete={() => completeItem(item.id)}
+                  onMoveToLater={() => moveToLater(item.id)}
+                  onDelete={() => deleteItem(item.id)}
+                  onStart={() => handleStartFocus(item)}
+                  onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                />
+              </DraggableItem>
+            </div>
           ))}
 
-          {/* Optional items from Energy Menu */}
+          {/* Optional items from Energy Menu - not draggable */}
           {incompleteOptionalItems.map((item) => (
             <OptionalItemCard
               key={item.id}
@@ -446,7 +457,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
               Show less
             </button>
           )}
-        </div>
+        </DroppableZone>
       )}
 
       {/* Add item modal */}
