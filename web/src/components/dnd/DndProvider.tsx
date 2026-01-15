@@ -34,6 +34,8 @@ export function DndProvider({ children }: DndProviderProps) {
   const moveToToday = useFocusStore((state) => state.moveToToday);
   const moveToLater = useFocusStore((state) => state.moveToLater);
   const deleteFromFocus = useFocusStore((state) => state.deleteItem);
+  const reorderTodayItems = useFocusStore((state) => state.reorderTodayItems);
+  const reorderLaterItems = useFocusStore((state) => state.reorderLaterItems);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -58,12 +60,32 @@ export function DndProvider({ children }: DndProviderProps) {
     if (!over || !active.data.current) return;
 
     const dragData = active.data.current as DragData;
-    const targetZone = over.id as DroppableZone;
+    const overId = over.id as string;
 
-    // Skip if dropping in same zone
+    // Check if we're dropping on another item (reordering within zone)
+    const overData = over.data.current as DragData | undefined;
+    if (overData && overData.sourceZone === dragData.sourceZone) {
+      // Same zone - reorder
+      if (active.id !== over.id) {
+        handleReorder(dragData.sourceZone, active.id as string, overId);
+      }
+      return;
+    }
+
+    // Check if dropping on a zone (cross-zone move)
+    const targetZone = overId as DroppableZone;
     if (dragData.sourceZone === targetZone) return;
 
     handleMove(dragData, targetZone);
+  };
+
+  const handleReorder = (zone: DroppableZone, activeId: string, overId: string) => {
+    if (zone === 'today') {
+      reorderTodayItems(activeId, overId);
+    } else if (zone === 'later') {
+      reorderLaterItems(activeId, overId);
+    }
+    // Brain dump reordering could be added later if needed
   };
 
   const handleMove = (dragData: DragData, targetZone: DroppableZone) => {

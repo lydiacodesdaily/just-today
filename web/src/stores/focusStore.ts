@@ -36,6 +36,8 @@ interface FocusStore {
   endFocus: (itemId: string) => void;
   dismissRollover: () => void;
   checkAndRollover: () => void;
+  reorderTodayItems: (activeId: string, overId: string) => void;
+  reorderLaterItems: (activeId: string, overId: string) => void;
 }
 
 const getTodayDateString = (): string => {
@@ -371,6 +373,50 @@ export const useFocusStore = create<FocusStore>()(
             set({ lastCheckDate: currentDate });
           }
         }
+      },
+
+      // Reorder items within Today section
+      reorderTodayItems: (activeId, overId) => {
+        set((state) => {
+          const oldIndex = state.todayItems.findIndex((item) => item.id === activeId);
+          const newIndex = state.todayItems.findIndex((item) => item.id === overId);
+
+          if (oldIndex === -1 || newIndex === -1) return state;
+
+          const newItems = [...state.todayItems];
+          const [movedItem] = newItems.splice(oldIndex, 1);
+          newItems.splice(newIndex, 0, movedItem);
+
+          // Update order property for all items
+          const orderedItems = newItems.map((item, index) => ({
+            ...item,
+            order: index,
+          }));
+
+          return { todayItems: orderedItems };
+        });
+      },
+
+      // Reorder items within Later section
+      reorderLaterItems: (activeId, overId) => {
+        set((state) => {
+          const oldIndex = state.laterItems.findIndex((item) => item.id === activeId);
+          const newIndex = state.laterItems.findIndex((item) => item.id === overId);
+
+          if (oldIndex === -1 || newIndex === -1) return state;
+
+          const newItems = [...state.laterItems];
+          const [movedItem] = newItems.splice(oldIndex, 1);
+          newItems.splice(newIndex, 0, movedItem);
+
+          // Update order property for all items
+          const orderedItems = newItems.map((item, index) => ({
+            ...item,
+            order: index,
+          }));
+
+          return { laterItems: orderedItems };
+        });
       },
     }),
     {

@@ -16,7 +16,8 @@ import { TodayOptionalItem } from '@/src/models/EnergyMenuItem';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 import { CheckOncePicker } from '@/src/components/CheckOncePicker';
-import { DraggableItem, DroppableZone } from './dnd';
+import { SortableItem, DroppableZone } from './dnd';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
@@ -408,26 +409,28 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
         </DroppableZone>
       ) : (
         <DroppableZone id="today" className="space-y-3">
-          {/* Regular focus items */}
-          {visibleItems.map((item) => (
-            <div key={item.id} className="group">
-              <DraggableItem
-                id={item.id}
-                type="focus-today"
-                sourceZone="today"
-                item={item}
-              >
-                <FocusItemCard
+          {/* Regular focus items - sortable */}
+          <SortableContext items={visibleItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
+            {visibleItems.map((item) => (
+              <div key={item.id} className="group">
+                <SortableItem
+                  id={item.id}
+                  type="focus-today"
+                  sourceZone="today"
                   item={item}
-                  onComplete={() => completeItem(item.id)}
-                  onMoveToLater={() => moveToLater(item.id)}
-                  onDelete={() => deleteItem(item.id)}
-                  onStart={() => handleStartFocus(item)}
-                  onCheckOnceLater={() => handleCheckOnceLater(item.id)}
-                />
-              </DraggableItem>
-            </div>
-          ))}
+                >
+                  <FocusItemCard
+                    item={item}
+                    onComplete={() => completeItem(item.id)}
+                    onMoveToLater={() => moveToLater(item.id)}
+                    onDelete={() => deleteItem(item.id)}
+                    onStart={() => handleStartFocus(item)}
+                    onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                  />
+                </SortableItem>
+              </div>
+            ))}
+          </SortableContext>
 
           {/* Optional items from Energy Menu - not draggable */}
           {incompleteOptionalItems.map((item) => (

@@ -70,6 +70,9 @@ export interface FocusItem {
   // Rollover tracking
   rolledOverFromDate?: string; // Original date if item was rolled over
   rolloverCount?: number; // How many times this item has rolled over
+
+  // Ordering within section
+  order?: number; // Position within the section (lower = higher priority)
 }
 
 /**
