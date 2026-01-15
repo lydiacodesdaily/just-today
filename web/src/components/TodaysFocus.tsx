@@ -59,7 +59,7 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onC
   }, [showMenu]);
 
   return (
-    <div className="bg-calm-surface border border-calm-border rounded-lg p-4 hover:border-calm-text/30 transition-colors">
+    <div className="bg-calm-surface border border-calm-border rounded-lg rounded-l-none border-l-0 p-4 hover:border-calm-text/30 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-medium text-calm-text mb-1">{item.title}</h3>

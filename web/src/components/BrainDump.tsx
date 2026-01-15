@@ -166,7 +166,7 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
                     sourceZone="braindump"
                     item={item}
                   >
-                    <div className="bg-calm-surface border border-calm-border rounded-lg p-3 hover:border-calm-text/30 transition-colors">
+                    <div className="bg-calm-surface border border-calm-border rounded-lg rounded-l-none border-l-0 p-3 hover:border-calm-text/30 transition-colors">
                       <div className="flex items-start justify-between gap-3">
                         <p className="text-sm text-calm-text flex-1">{item.text}</p>
 

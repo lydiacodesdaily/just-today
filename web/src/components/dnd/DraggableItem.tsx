@@ -39,30 +39,21 @@ export function DraggableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`${isDragging ? 'opacity-50 scale-[1.02]' : ''} transition-transform`}
+      className={`${isDragging ? 'opacity-60 scale-[1.01] z-50 shadow-lg' : ''} transition-all duration-200`}
     >
-      <div className="flex items-start gap-2">
-        {/* Drag handle */}
+      <div className="relative flex items-stretch">
+        {/* Drag handle - always visible indicator on the left */}
         <button
           {...listeners}
           {...attributes}
-          className="flex-shrink-0 p-1.5 -ml-1 text-calm-muted hover:text-calm-text cursor-grab active:cursor-grabbing touch-manipulation opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+          className="flex-shrink-0 w-6 flex items-center justify-center rounded-l-lg bg-calm-border/40 group-hover:bg-calm-border/70 cursor-grab active:cursor-grabbing touch-manipulation transition-colors"
           aria-label="Drag to move item"
         >
-          <svg
-            width="12"
-            height="16"
-            viewBox="0 0 12 16"
-            fill="currentColor"
-            className="pointer-events-none"
-          >
-            <circle cx="3" cy="3" r="1.5" />
-            <circle cx="9" cy="3" r="1.5" />
-            <circle cx="3" cy="8" r="1.5" />
-            <circle cx="9" cy="8" r="1.5" />
-            <circle cx="3" cy="13" r="1.5" />
-            <circle cx="9" cy="13" r="1.5" />
-          </svg>
+          <div className="flex flex-col gap-[3px] opacity-40 group-hover:opacity-70 transition-opacity">
+            <div className="w-1 h-1 rounded-full bg-calm-muted" />
+            <div className="w-1 h-1 rounded-full bg-calm-muted" />
+            <div className="w-1 h-1 rounded-full bg-calm-muted" />
+          </div>
         </button>
         <div className="flex-1 min-w-0">{children}</div>
       </div>
