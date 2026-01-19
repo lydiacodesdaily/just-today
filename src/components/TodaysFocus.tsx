@@ -13,6 +13,7 @@ import { FocusItem, formatCheckOnceDate } from '../models/FocusItem';
 import { shouldShowTodayExamples } from '../persistence/onboardingStore';
 import { CoachMark } from './CoachMark';
 import { CheckOncePicker } from './CheckOncePicker';
+import { EditTodayItemModal } from './EditTodayItemModal';
 
 interface TodaysFocusProps {
   onStartFocus: (item: FocusItem) => void;
@@ -25,6 +26,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
 
   // Check if we should show example link
   useEffect(() => {
@@ -69,20 +71,22 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           title: item.title,
-          options: ['Cancel', '▶ Start', '✓ Mark Done', '⏭ Later', '🔄 Check once later...', 'Delete'],
-          destructiveButtonIndex: 5,
+          options: ['Cancel', '✏️ Edit...', '▶ Start', '✓ Mark Done', '⏭ Later', '🔄 Check once later...', 'Delete'],
+          destructiveButtonIndex: 6,
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
           if (buttonIndex === 1) {
-            onStartFocus(item);
+            setEditingItem(item);
           } else if (buttonIndex === 2) {
-            completeItem(item.id);
+            onStartFocus(item);
           } else if (buttonIndex === 3) {
-            moveItemToLater(item.id);
+            completeItem(item.id);
           } else if (buttonIndex === 4) {
-            setCheckOnceItemId(item.id);
+            moveItemToLater(item.id);
           } else if (buttonIndex === 5) {
+            setCheckOnceItemId(item.id);
+          } else if (buttonIndex === 6) {
             deleteItem(item.id);
           }
         }
@@ -93,6 +97,10 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
         'What would you like to do?',
         [
           { text: 'Cancel', style: 'cancel' },
+          {
+            text: '✏️ Edit...',
+            onPress: () => setEditingItem(item),
+          },
           {
             text: '▶ Start',
             onPress: () => onStartFocus(item),
@@ -281,6 +289,15 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
         onConfirm={handleCheckOnceConfirm}
         onCancel={() => setCheckOnceItemId(null)}
       />
+
+      {/* Edit Today Item Modal */}
+      {editingItem && (
+        <EditTodayItemModal
+          item={editingItem}
+          visible={true}
+          onClose={() => setEditingItem(null)}
+        />
+      )}
     </View>
   );
 }

@@ -56,7 +56,8 @@ interface FocusContextValue {
   // Check Once feature
   setCheckOnce: (itemId: string, checkOnceDate: string) => Promise<void>;
 
-  // Edit Later item
+  // Edit items
+  updateTodayItem: (itemId: string, title: string, duration: FocusDuration) => Promise<void>;
   updateLaterItem: (itemId: string, title: string, duration: FocusDuration, timeBucket?: TimeBucket) => Promise<void>;
 
   // Cross-list transfer from Brain Dump
@@ -233,6 +234,22 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  // Edit Today item
+  const updateTodayItemFn = useCallback(async (
+    itemId: string,
+    title: string,
+    duration: FocusDuration
+  ): Promise<void> => {
+    await updateFocusItem(itemId, { title, estimatedDuration: duration });
+    setTodayItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? { ...item, title, estimatedDuration: duration }
+          : item
+      )
+    );
+  }, []);
+
   // Edit Later item
   const updateLaterItemFn = useCallback(async (
     itemId: string,
@@ -286,6 +303,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
       reorderTodayItems,
       reorderLaterItems,
       setCheckOnce,
+      updateTodayItem: updateTodayItemFn,
       updateLaterItem: updateLaterItemFn,
       addFromBrainDump,
     }),
@@ -309,6 +327,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
       reorderTodayItems,
       reorderLaterItems,
       setCheckOnce,
+      updateTodayItemFn,
       updateLaterItemFn,
       addFromBrainDump,
     ]
