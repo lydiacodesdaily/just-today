@@ -13,6 +13,7 @@ interface BrainDumpStore {
 
   // Actions
   addItem: (text: string) => void;
+  updateItem: (itemId: string, newText: string) => void;
   keepItem: (itemId: string) => void;
   deleteItem: (itemId: string) => void;
   removeItem: (itemId: string) => void; // Remove without marking as kept (for drag-drop)
@@ -31,6 +32,15 @@ export const useBrainDumpStore = create<BrainDumpStore>()(
         const item = createBrainDumpItem(text);
         set((state) => ({
           items: [item, ...state.items], // Add to beginning
+        }));
+      },
+
+      // Update item text
+      updateItem: (itemId, newText) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === itemId ? { ...item, text: newText } : item
+          ),
         }));
       },
 
