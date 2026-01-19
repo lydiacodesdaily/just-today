@@ -1,15 +1,18 @@
 /**
  * TodaysFocus.tsx
  * Today's Focus section component - displays items for today only
+ * Now with drag-and-drop reordering
  */
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
+import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
-import { FocusItem } from '../models/FocusItem';
+import { FocusItem, formatCheckOnceDate } from '../models/FocusItem';
 import { shouldShowTodayExamples } from '../persistence/onboardingStore';
 import { CoachMark } from './CoachMark';
+import { CheckOncePicker } from './CheckOncePicker';
 
 interface TodaysFocusProps {
   onStartFocus: (item: FocusItem) => void;
@@ -18,9 +21,10 @@ interface TodaysFocusProps {
 
 export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
   const theme = useTheme();
-  const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage, addToToday } = useFocus();
+  const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage, addToToday, reorderTodayItems, setCheckOnce } = useFocus();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
+  const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
 
   // Check if we should show example link
   useEffect(() => {
@@ -65,8 +69,8 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           title: item.title,
-          options: ['Cancel', '▶ Start', '✓ Mark Done', '⏭ Later', 'Delete'],
-          destructiveButtonIndex: 4,
+          options: ['Cancel', '▶ Start', '✓ Mark Done', '⏭ Later', '🔄 Check once later...', 'Delete'],
+          destructiveButtonIndex: 5,
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
@@ -77,6 +81,8 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
           } else if (buttonIndex === 3) {
             moveItemToLater(item.id);
           } else if (buttonIndex === 4) {
+            setCheckOnceItemId(item.id);
+          } else if (buttonIndex === 5) {
             deleteItem(item.id);
           }
         }
@@ -100,6 +106,10 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
             onPress: () => moveItemToLater(item.id),
           },
           {
+            text: '🔄 Check once later...',
+            onPress: () => setCheckOnceItemId(item.id),
+          },
+          {
             text: 'Delete',
             style: 'destructive',
             onPress: () => deleteItem(item.id),
@@ -107,6 +117,78 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
         ]
       );
     }
+  };
+
+  const handleCheckOnceConfirm = (checkOnceDate: string) => {
+    if (checkOnceItemId) {
+      setCheckOnce(checkOnceItemId, checkOnceDate);
+      setCheckOnceItemId(null);
+    }
+  };
+
+  const handleDragEnd = ({ data }: { data: FocusItem[] }) => {
+    // If we're showing only a subset, we need to preserve items not shown
+    if (!isExpanded && hasMoreItems) {
+      const hiddenItems = todayItems.slice(VISIBLE_ITEMS_LIMIT);
+      reorderTodayItems([...data, ...hiddenItems]);
+    } else {
+      reorderTodayItems(data);
+    }
+  };
+
+  const renderItem = ({ item, drag, isActive }: RenderItemParams<FocusItem>) => {
+    return (
+      <ScaleDecorator>
+        <View style={[styles.itemRow, isActive && styles.itemRowActive]}>
+          {/* Drag Handle */}
+          <TouchableOpacity
+            onLongPress={drag}
+            delayLongPress={100}
+            style={[styles.dragHandle, { backgroundColor: theme.colors.border }]}
+          >
+            <View style={styles.dragDots}>
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Item Content */}
+          <TouchableOpacity
+            style={[styles.item, { backgroundColor: theme.colors.surface }]}
+            onPress={() => handleItemPress(item)}
+            activeOpacity={0.7}
+            disabled={isActive}
+          >
+            <View style={styles.itemContent}>
+              <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+                {item.title}
+              </Text>
+              <View style={styles.itemMeta}>
+                {item.estimatedDuration && (
+                  <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
+                    {item.estimatedDuration}
+                  </Text>
+                )}
+                {item.checkOnceDate && (
+                  <Text style={[styles.checkOnceDate, { color: theme.colors.primary }]}>
+                    • {formatCheckOnceDate(item.checkOnceDate)}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View style={styles.itemActions}>
+              <Text style={[styles.itemActionHint, { color: theme.colors.textSecondary }]}>
+                Tap for options
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScaleDecorator>
+    );
   };
 
   return (
@@ -140,7 +222,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
             activeOpacity={0.8}
           >
             <Text style={[styles.addButtonText, { color: theme.colors.surface }]}>
-              ➕ Add a task
+              + Add a task
             </Text>
           </TouchableOpacity>
           {showExamples && (
@@ -157,31 +239,15 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
         </View>
       ) : (
         <View style={styles.itemsList}>
-          {/* Items List */}
-          {visibleItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.item, { backgroundColor: theme.colors.surface }]}
-              onPress={() => handleItemPress(item)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.itemContent}>
-                <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-                  {item.title}
-                </Text>
-                {item.estimatedDuration && (
-                  <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
-                    {item.estimatedDuration}
-                  </Text>
-                )}
-              </View>
-              <View style={styles.itemActions}>
-                <Text style={[styles.itemActionHint, { color: theme.colors.textSecondary }]}>
-                  Tap for options
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {/* Items List with Drag and Drop */}
+          <DraggableFlatList
+            data={visibleItems}
+            onDragEnd={handleDragEnd}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            scrollEnabled={false}
+            containerStyle={styles.listContainer}
+          />
 
           {/* Expand/Collapse affordance */}
           {hasMoreItems && (
@@ -203,11 +269,18 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
             activeOpacity={0.7}
           >
             <Text style={[styles.addAnotherText, { color: theme.colors.primary }]}>
-              ＋ Add to Today
+              + Add to Today
             </Text>
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Check Once Picker Modal */}
+      <CheckOncePicker
+        visible={checkOnceItemId !== null}
+        onConfirm={handleCheckOnceConfirm}
+        onCancel={() => setCheckOnceItemId(null)}
+      />
     </View>
   );
 }
@@ -270,9 +343,41 @@ const styles = StyleSheet.create({
   itemsList: {
     gap: 10,
   },
+  listContainer: {
+    gap: 10,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  itemRowActive: {
+    opacity: 0.9,
+    transform: [{ scale: 1.02 }],
+  },
+  dragHandle: {
+    width: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+  },
+  dragDots: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: 10,
+    gap: 3,
+    justifyContent: 'center',
+  },
+  dragDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+  },
   item: {
+    flex: 1,
     padding: 16,
-    borderRadius: 12,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -286,9 +391,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 24,
   },
+  itemMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   itemDuration: {
     fontSize: 14,
     fontWeight: '400',
+  },
+  checkOnceDate: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   itemActions: {
     marginLeft: 12,

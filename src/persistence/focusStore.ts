@@ -361,3 +361,82 @@ export async function archiveOldCompletedItems(): Promise<void> {
     console.error('Failed to archive old items:', error);
   }
 }
+
+/**
+ * Reorder items within a location (today or later)
+ * Updates the order property for all items in that location
+ */
+export async function reorderItems(
+  reorderedItems: FocusItem[],
+  location: 'today' | 'later'
+): Promise<void> {
+  try {
+    const allItems = await loadFocusItems();
+
+    // Create a map of reordered item IDs to their new order
+    const orderMap = new Map<string, number>();
+    reorderedItems.forEach((item, index) => {
+      orderMap.set(item.id, index);
+    });
+
+    // Update order for items in the specified location
+    const updatedItems = allItems.map((item) => {
+      if (item.location === location && orderMap.has(item.id)) {
+        return {
+          ...item,
+          order: orderMap.get(item.id),
+        };
+      }
+      return item;
+    });
+
+    await saveFocusItems(updatedItems);
+  } catch (error) {
+    console.error('Failed to reorder items:', error);
+  }
+}
+
+/**
+ * Update specific fields on a focus item
+ */
+export async function updateFocusItem(
+  itemId: string,
+  updates: Partial<FocusItem>
+): Promise<void> {
+  try {
+    const items = await loadFocusItems();
+    const itemIndex = items.findIndex((item) => item.id === itemId);
+
+    if (itemIndex === -1) return;
+
+    items[itemIndex] = {
+      ...items[itemIndex],
+      ...updates,
+    };
+
+    await saveFocusItems(items);
+  } catch (error) {
+    console.error('Failed to update focus item:', error);
+  }
+}
+
+/**
+ * Set check once date for an item
+ */
+export async function setCheckOnceDate(itemId: string, checkOnceDate: string): Promise<void> {
+  await updateFocusItem(itemId, { checkOnceDate, checkOnceTriggeredAt: undefined });
+}
+
+/**
+ * Clear check once date for an item
+ */
+export async function clearCheckOnceDate(itemId: string): Promise<void> {
+  await updateFocusItem(itemId, { checkOnceDate: undefined, checkOnceTriggeredAt: undefined });
+}
+
+/**
+ * Mark check once as triggered (prevents re-showing)
+ */
+export async function triggerCheckOnce(itemId: string): Promise<void> {
+  await updateFocusItem(itemId, { checkOnceTriggeredAt: new Date().toISOString() });
+}

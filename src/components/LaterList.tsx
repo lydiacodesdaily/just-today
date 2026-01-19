@@ -1,17 +1,21 @@
 /**
  * LaterList.tsx
  * Later section component - collapsible list for deferred items
+ * Now with drag-and-drop reordering and edit modal
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform, Modal } from 'react-native';
+import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
-import { FocusItem, TimeBucket, formatTimeBucket } from '../models/FocusItem';
+import { FocusItem, TimeBucket, formatTimeBucket, formatCheckOnceDate } from '../models/FocusItem';
 import { formatReminderDate } from '../models/FocusItem';
 import { shouldShowLaterExamples } from '../persistence/onboardingStore';
 import { CoachMark } from './CoachMark';
+import { EditLaterItemModal } from './EditLaterItemModal';
+import { CheckOncePicker } from './CheckOncePicker';
 
 interface LaterListProps {
   onStartFocus: (item: FocusItem) => void;
@@ -19,12 +23,14 @@ interface LaterListProps {
 
 export function LaterList({ onStartFocus }: LaterListProps) {
   const theme = useTheme();
-  const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder, setItemTimeBucket, addToLater } = useFocus();
+  const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder, setItemTimeBucket, addToLater, reorderLaterItems, setCheckOnce } = useFocus();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentItem, setCurrentItem] = useState<FocusItem | null>(null);
   const [showExamples, setShowExamples] = useState(false);
+  const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
+  const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
 
   // Check if we should show example link
   useEffect(() => {
@@ -48,28 +54,34 @@ export function LaterList({ onStartFocus }: LaterListProps) {
           title: item.title,
           options: [
             'Cancel',
+            '✏️ Edit...',
             '↩ Move to Today',
             '▶ Start Now',
             '✓ Mark Done',
             '🔔 Set Reminder',
             '🗓 When to think about this?',
+            '🔄 Check once later...',
             'Delete',
           ],
-          destructiveButtonIndex: 6,
+          destructiveButtonIndex: 8,
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
           if (buttonIndex === 1) {
-            moveItemToToday(item.id);
+            setEditingItem(item);
           } else if (buttonIndex === 2) {
-            onStartFocus(item);
+            moveItemToToday(item.id);
           } else if (buttonIndex === 3) {
-            completeItem(item.id);
+            onStartFocus(item);
           } else if (buttonIndex === 4) {
-            showReminderPicker(item);
+            completeItem(item.id);
           } else if (buttonIndex === 5) {
-            showTimeBucketPicker(item);
+            showReminderPicker(item);
           } else if (buttonIndex === 6) {
+            showTimeBucketPicker(item);
+          } else if (buttonIndex === 7) {
+            setCheckOnceItemId(item.id);
+          } else if (buttonIndex === 8) {
             deleteItem(item.id);
           }
         }
@@ -80,6 +92,10 @@ export function LaterList({ onStartFocus }: LaterListProps) {
         'What would you like to do?',
         [
           { text: 'Cancel', style: 'cancel' },
+          {
+            text: '✏️ Edit...',
+            onPress: () => setEditingItem(item),
+          },
           {
             text: '↩ Move to Today',
             onPress: () => moveItemToToday(item.id),
@@ -99,6 +115,10 @@ export function LaterList({ onStartFocus }: LaterListProps) {
           {
             text: '🗓 When to think about this?',
             onPress: () => showTimeBucketPicker(item),
+          },
+          {
+            text: '🔄 Check once later...',
+            onPress: () => setCheckOnceItemId(item.id),
           },
           {
             text: 'Delete',
@@ -134,11 +154,9 @@ export function LaterList({ onStartFocus }: LaterListProps) {
             setItemReminder(item.id, fewDays.toISOString());
           } else if (buttonIndex === 3) {
             // Pick a date - show date picker
-            console.log('Opening date picker for item:', item.title);
             setCurrentItem(item);
             setSelectedDate(new Date());
             setShowDatePicker(true);
-            console.log('Date picker state set to true');
           } else if (buttonIndex === 4) {
             // Clear reminder
             setItemReminder(item.id, undefined);
@@ -272,6 +290,86 @@ export function LaterList({ onStartFocus }: LaterListProps) {
     }
   };
 
+  const handleCheckOnceConfirm = (checkOnceDate: string) => {
+    if (checkOnceItemId) {
+      setCheckOnce(checkOnceItemId, checkOnceDate);
+      setCheckOnceItemId(null);
+    }
+  };
+
+  const handleDragEnd = ({ data }: { data: FocusItem[] }) => {
+    reorderLaterItems(data);
+  };
+
+  const renderItem = ({ item, drag, isActive }: RenderItemParams<FocusItem>) => {
+    return (
+      <ScaleDecorator>
+        <View style={[styles.itemRow, isActive && styles.itemRowActive]}>
+          {/* Drag Handle */}
+          <TouchableOpacity
+            onLongPress={drag}
+            delayLongPress={100}
+            style={[styles.dragHandle, { backgroundColor: theme.colors.border }]}
+          >
+            <View style={styles.dragDots}>
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Item Content */}
+          <TouchableOpacity
+            style={[styles.item, { backgroundColor: theme.colors.surface }]}
+            onPress={() => handleItemPress(item)}
+            activeOpacity={0.7}
+            disabled={isActive}
+          >
+            <View style={styles.itemContent}>
+              <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+                {item.title}
+              </Text>
+              <View style={styles.itemMeta}>
+                {item.estimatedDuration && (
+                  <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
+                    {item.estimatedDuration}
+                  </Text>
+                )}
+                {item.timeBucket && item.timeBucket !== 'NONE' && (
+                  <Text style={[styles.itemTimeBucket, { color: theme.colors.textSecondary }]}>
+                    • {formatTimeBucket(item.timeBucket)}
+                  </Text>
+                )}
+                {item.reminderDate && (
+                  <Text style={[styles.itemReminder, { color: theme.colors.textSecondary }]}>
+                    • Remind {formatReminderDate(item.reminderDate)}
+                  </Text>
+                )}
+                {item.checkOnceDate && (
+                  <Text style={[styles.itemCheckOnce, { color: theme.colors.primary }]}>
+                    • {formatCheckOnceDate(item.checkOnceDate)}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <TouchableOpacity
+              style={[styles.moveButton, { borderColor: theme.colors.primary }]}
+              onPress={() => moveItemToToday(item.id)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.moveButtonText, { color: theme.colors.primary }]}>
+                ↩ Today
+              </Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
+      </ScaleDecorator>
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Contextual coach mark */}
@@ -312,7 +410,7 @@ export function LaterList({ onStartFocus }: LaterListProps) {
               activeOpacity={0.8}
             >
               <Text style={[styles.addButtonText, { color: theme.colors.surface }]}>
-                ➕ Add something for later
+                + Add something for later
               </Text>
             </TouchableOpacity>
             {showExamples && (
@@ -356,48 +454,15 @@ export function LaterList({ onStartFocus }: LaterListProps) {
                 Not for today. No rush.
               </Text>
 
-              <View style={styles.itemsList}>
-                {laterItems.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[styles.item, { backgroundColor: theme.colors.surface }]}
-                    onPress={() => handleItemPress(item)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.itemContent}>
-                      <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-                        {item.title}
-                      </Text>
-                      <View style={styles.itemMeta}>
-                        {item.estimatedDuration && (
-                          <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
-                            {item.estimatedDuration}
-                          </Text>
-                        )}
-                        {item.timeBucket && item.timeBucket !== 'NONE' && (
-                          <Text style={[styles.itemTimeBucket, { color: theme.colors.textSecondary }]}>
-                            • {formatTimeBucket(item.timeBucket)}
-                          </Text>
-                        )}
-                        {item.reminderDate && (
-                          <Text style={[styles.itemReminder, { color: theme.colors.textSecondary }]}>
-                            • Remind {formatReminderDate(item.reminderDate)}
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.moveButton, { borderColor: theme.colors.primary }]}
-                      onPress={() => moveItemToToday(item.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.moveButtonText, { color: theme.colors.primary }]}>
-                        ↩ Move to Today
-                      </Text>
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              {/* Items List with Drag and Drop */}
+              <DraggableFlatList
+                data={laterItems}
+                onDragEnd={handleDragEnd}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                scrollEnabled={false}
+                containerStyle={styles.listContainer}
+              />
             </View>
           )}
         </>
@@ -468,6 +533,22 @@ export function LaterList({ onStartFocus }: LaterListProps) {
           minimumDate={minimumDate}
         />
       )}
+
+      {/* Edit Later Item Modal */}
+      {editingItem && (
+        <EditLaterItemModal
+          item={editingItem}
+          visible={true}
+          onClose={() => setEditingItem(null)}
+        />
+      )}
+
+      {/* Check Once Picker Modal */}
+      <CheckOncePicker
+        visible={checkOnceItemId !== null}
+        onConfirm={handleCheckOnceConfirm}
+        onCancel={() => setCheckOnceItemId(null)}
+      />
     </View>
   );
 }
@@ -550,12 +631,42 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
     marginTop: -4,
   },
-  itemsList: {
+  listContainer: {
     gap: 10,
   },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginBottom: 10,
+  },
+  itemRowActive: {
+    opacity: 0.9,
+    transform: [{ scale: 1.02 }],
+  },
+  dragHandle: {
+    width: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+  },
+  dragDots: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: 10,
+    gap: 3,
+    justifyContent: 'center',
+  },
+  dragDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+  },
   item: {
+    flex: 1,
     padding: 16,
-    borderRadius: 12,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
     gap: 12,
   },
   itemContent: {
@@ -569,6 +680,7 @@ const styles = StyleSheet.create({
   itemMeta: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
   },
   itemDuration: {
@@ -582,6 +694,10 @@ const styles = StyleSheet.create({
   itemReminder: {
     fontSize: 14,
     fontWeight: '400',
+  },
+  itemCheckOnce: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   moveButton: {
     paddingHorizontal: 16,

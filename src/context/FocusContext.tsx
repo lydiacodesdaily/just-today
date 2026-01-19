@@ -21,6 +21,9 @@ import {
   checkAndRolloverIfNewDay,
   getRolloverCount,
   clearRolloverTracking,
+  reorderItems,
+  updateFocusItem,
+  setCheckOnceDate as persistSetCheckOnce,
 } from '../persistence/focusStore';
 
 interface FocusContextValue {
@@ -45,6 +48,19 @@ interface FocusContextValue {
   // Focus session tracking
   startItemFocus: (itemId: string) => Promise<void>;
   endItemFocus: (itemId: string) => Promise<void>;
+
+  // Reordering
+  reorderTodayItems: (reorderedItems: FocusItem[]) => Promise<void>;
+  reorderLaterItems: (reorderedItems: FocusItem[]) => Promise<void>;
+
+  // Check Once feature
+  setCheckOnce: (itemId: string, checkOnceDate: string) => Promise<void>;
+
+  // Edit Later item
+  updateLaterItem: (itemId: string, title: string, duration: FocusDuration, timeBucket?: TimeBucket) => Promise<void>;
+
+  // Cross-list transfer from Brain Dump
+  addFromBrainDump: (text: string, location: 'today' | 'later') => Promise<FocusItem>;
 
   // Utility
   refreshItems: () => Promise<void>;
@@ -190,6 +206,65 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     setRolloverCount(0);
   }, []);
 
+  // Reordering functions
+  const reorderTodayItems = useCallback(async (reorderedItems: FocusItem[]): Promise<void> => {
+    // Update local state immediately for smooth UX
+    setTodayItems(reorderedItems);
+    // Persist to storage
+    await reorderItems(reorderedItems, 'today');
+  }, []);
+
+  const reorderLaterItems = useCallback(async (reorderedItems: FocusItem[]): Promise<void> => {
+    // Update local state immediately for smooth UX
+    setLaterItems(reorderedItems);
+    // Persist to storage
+    await reorderItems(reorderedItems, 'later');
+  }, []);
+
+  // Check Once feature
+  const setCheckOnce = useCallback(async (itemId: string, checkOnceDate: string): Promise<void> => {
+    await persistSetCheckOnce(itemId, checkOnceDate);
+    // Update local state
+    setTodayItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, checkOnceDate } : item))
+    );
+    setLaterItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, checkOnceDate } : item))
+    );
+  }, []);
+
+  // Edit Later item
+  const updateLaterItemFn = useCallback(async (
+    itemId: string,
+    title: string,
+    duration: FocusDuration,
+    timeBucket?: TimeBucket
+  ): Promise<void> => {
+    await updateFocusItem(itemId, { title, estimatedDuration: duration, timeBucket });
+    setLaterItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? { ...item, title, estimatedDuration: duration, timeBucket }
+          : item
+      )
+    );
+  }, []);
+
+  // Cross-list transfer from Brain Dump
+  const addFromBrainDump = useCallback(async (
+    text: string,
+    location: 'today' | 'later'
+  ): Promise<FocusItem> => {
+    // Default duration for brain dump items
+    const defaultDuration: FocusDuration = '~15 min';
+
+    if (location === 'today') {
+      return addToToday(text, defaultDuration);
+    } else {
+      return addToLater(text, defaultDuration);
+    }
+  }, [addToToday, addToLater]);
+
   const value: FocusContextValue = useMemo(
     () => ({
       todayItems,
@@ -208,6 +283,11 @@ export function FocusProvider({ children }: { children: ReactNode }) {
       endItemFocus,
       refreshItems,
       dismissRolloverMessage,
+      reorderTodayItems,
+      reorderLaterItems,
+      setCheckOnce,
+      updateLaterItem: updateLaterItemFn,
+      addFromBrainDump,
     }),
     [
       todayItems,
@@ -226,6 +306,11 @@ export function FocusProvider({ children }: { children: ReactNode }) {
       endItemFocus,
       refreshItems,
       dismissRolloverMessage,
+      reorderTodayItems,
+      reorderLaterItems,
+      setCheckOnce,
+      updateLaterItemFn,
+      addFromBrainDump,
     ]
   );
 

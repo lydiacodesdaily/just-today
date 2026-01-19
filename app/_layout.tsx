@@ -4,6 +4,7 @@
  */
 
 import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SettingsProvider } from '../src/context/SettingsContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { RunProvider } from '../src/context/RunContext';
@@ -62,22 +63,24 @@ function RootStack() {
 
 export default function RootLayout() {
   return (
-    <ErrorBoundary>
-      <SettingsProvider>
-        <ThemeProvider>
-          <RunProvider>
-            <TodayOptionalProvider>
-              <FocusProvider>
-                <BrainDumpProvider>
-                  <GuidesProvider>
-                    <RootStack />
-                  </GuidesProvider>
-                </BrainDumpProvider>
-              </FocusProvider>
-            </TodayOptionalProvider>
-          </RunProvider>
-        </ThemeProvider>
-      </SettingsProvider>
-    </ErrorBoundary>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
+        <SettingsProvider>
+          <ThemeProvider>
+            <RunProvider>
+              <TodayOptionalProvider>
+                <FocusProvider>
+                  <BrainDumpProvider>
+                    <GuidesProvider>
+                      <RootStack />
+                    </GuidesProvider>
+                  </BrainDumpProvider>
+                </FocusProvider>
+              </TodayOptionalProvider>
+            </RunProvider>
+          </ThemeProvider>
+        </SettingsProvider>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }

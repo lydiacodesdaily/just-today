@@ -20,7 +20,6 @@ import { useTheme } from '../constants/theme';
 import { useBrainDump } from '../context/BrainDumpContext';
 import { useFocus } from '../context/FocusContext';
 import { BrainDumpItem } from '../models/BrainDumpItem';
-import { FocusDuration } from '../models/FocusItem';
 import { shouldShowBrainDumpExample } from '../persistence/onboardingStore';
 import { CoachMark } from './CoachMark';
 
@@ -32,7 +31,7 @@ interface BrainDumpProps {
 export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
   const theme = useTheme();
   const { items, addItem, keepItem, deleteItem } = useBrainDump();
-  const { addToLater } = useFocus();
+  const { addFromBrainDump } = useFocus();
   const [inputText, setInputText] = useState('');
   const [showExample, setShowExample] = useState(false);
   const [showExampleModal, setShowExampleModal] = useState(false);
@@ -54,14 +53,16 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           title: item.text,
-          options: ['Cancel', '🧷 Keep (Move to Later)', 'Delete'],
-          destructiveButtonIndex: 2,
+          options: ['Cancel', '↗️ Move to Today', '🧷 Move to Later', 'Delete'],
+          destructiveButtonIndex: 3,
           cancelButtonIndex: 0,
         },
         async (buttonIndex) => {
           if (buttonIndex === 1) {
-            await handleKeepItem(item);
+            await handleMoveToToday(item);
           } else if (buttonIndex === 2) {
+            await handleMoveToLater(item);
+          } else if (buttonIndex === 3) {
             deleteItem(item.id);
           }
         }
@@ -73,8 +74,12 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
         [
           { text: 'Cancel', style: 'cancel' },
           {
-            text: '🧷 Keep (Move to Later)',
-            onPress: () => handleKeepItem(item),
+            text: '↗️ Move to Today',
+            onPress: () => handleMoveToToday(item),
+          },
+          {
+            text: '🧷 Move to Later',
+            onPress: () => handleMoveToLater(item),
           },
           {
             text: 'Delete',
@@ -86,10 +91,17 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
     }
   };
 
-  const handleKeepItem = async (item: BrainDumpItem) => {
-    // Move to Later list with default duration
-    await addToLater(item.text, '15-30min' as FocusDuration);
+  const handleMoveToToday = async (item: BrainDumpItem) => {
+    // Move to Today's Focus with default duration
+    await addFromBrainDump(item.text, 'today');
     // Remove from brain dump
+    await deleteItem(item.id);
+  };
+
+  const handleMoveToLater = async (item: BrainDumpItem) => {
+    // Move to Later list with default duration
+    await addFromBrainDump(item.text, 'later');
+    // Remove from brain dump (using keepItem to mark as processed)
     await keepItem(item.id);
   };
 
