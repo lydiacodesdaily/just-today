@@ -103,3 +103,20 @@ export async function getBrainDumpItem(itemId: string): Promise<BrainDumpItem | 
   const items = await loadBrainDumpItems();
   return items.find((item) => item.id === itemId) || null;
 }
+
+/**
+ * Update a brain dump item's text
+ */
+export async function updateBrainDumpItem(itemId: string, newText: string): Promise<void> {
+  const items = await loadBrainDumpItems();
+  const itemIndex = items.findIndex((item) => item.id === itemId);
+
+  if (itemIndex === -1) return;
+
+  items[itemIndex] = {
+    ...items[itemIndex],
+    text: newText,
+  };
+
+  await saveBrainDumpItems(items);
+}

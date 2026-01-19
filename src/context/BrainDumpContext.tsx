@@ -10,6 +10,7 @@ import {
   addBrainDumpItem,
   keepBrainDumpItem,
   deleteBrainDumpItem,
+  updateBrainDumpItem,
   cleanupExpiredItems,
 } from '../persistence/brainDumpStore';
 
@@ -20,6 +21,7 @@ interface BrainDumpContextValue {
 
   // Actions
   addItem: (text: string) => Promise<BrainDumpItem>;
+  updateItem: (itemId: string, newText: string) => Promise<void>;
   keepItem: (itemId: string) => Promise<void>;
   deleteItem: (itemId: string) => Promise<void>;
   refreshItems: () => Promise<void>;
@@ -65,6 +67,13 @@ export function BrainDumpProvider({ children }: { children: ReactNode }) {
     return newItem;
   };
 
+  const updateItem = async (itemId: string, newText: string): Promise<void> => {
+    await updateBrainDumpItem(itemId, newText);
+    setItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, text: newText } : item))
+    );
+  };
+
   const keepItem = async (itemId: string): Promise<void> => {
     await keepBrainDumpItem(itemId);
     // Remove from unsorted items immediately (optimistic update)
@@ -84,6 +93,7 @@ export function BrainDumpProvider({ children }: { children: ReactNode }) {
     items,
     isLoading,
     addItem,
+    updateItem,
     keepItem,
     deleteItem,
     refreshItems,

@@ -30,11 +30,13 @@ interface BrainDumpProps {
 
 export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
   const theme = useTheme();
-  const { items, addItem, keepItem, deleteItem } = useBrainDump();
+  const { items, addItem, updateItem, keepItem, deleteItem } = useBrainDump();
   const { addFromBrainDump } = useFocus();
   const [inputText, setInputText] = useState('');
   const [showExample, setShowExample] = useState(false);
   const [showExampleModal, setShowExampleModal] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
 
   // Check if we should show example link
   useEffect(() => {
@@ -48,21 +50,41 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
     setInputText('');
   };
 
+  const handleStartEdit = (item: BrainDumpItem) => {
+    setEditingItemId(item.id);
+    setEditingText(item.text);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingItemId && editingText.trim()) {
+      await updateItem(editingItemId, editingText.trim());
+    }
+    setEditingItemId(null);
+    setEditingText('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItemId(null);
+    setEditingText('');
+  };
+
   const handleItemPress = (item: BrainDumpItem) => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           title: item.text,
-          options: ['Cancel', '↗️ Move to Today', '🧷 Move to Later', 'Delete'],
-          destructiveButtonIndex: 3,
+          options: ['Cancel', '✏️ Edit', '↗️ Move to Today', '🧷 Move to Later', 'Delete'],
+          destructiveButtonIndex: 4,
           cancelButtonIndex: 0,
         },
         async (buttonIndex) => {
           if (buttonIndex === 1) {
-            await handleMoveToToday(item);
+            handleStartEdit(item);
           } else if (buttonIndex === 2) {
-            await handleMoveToLater(item);
+            await handleMoveToToday(item);
           } else if (buttonIndex === 3) {
+            await handleMoveToLater(item);
+          } else if (buttonIndex === 4) {
             deleteItem(item.id);
           }
         }
@@ -73,6 +95,10 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
         'What would you like to do?',
         [
           { text: 'Cancel', style: 'cancel' },
+          {
+            text: '✏️ Edit',
+            onPress: () => handleStartEdit(item),
+          },
           {
             text: '↗️ Move to Today',
             onPress: () => handleMoveToToday(item),
@@ -224,23 +250,66 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
         {recentItems.length > 0 && (
           <View style={styles.itemsList}>
             {recentItems.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.item, { backgroundColor: theme.colors.surface }]}
-                onPress={() => handleItemPress(item)}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[styles.itemText, { color: theme.colors.text }]}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {item.text}
-                </Text>
-                <Text style={[styles.keepHint, { color: theme.colors.textTertiary }]}>
-                  Tap to keep or discard
-                </Text>
-              </TouchableOpacity>
+              <View key={item.id}>
+                {editingItemId === item.id ? (
+                  <View style={[styles.item, styles.editingItem, { backgroundColor: theme.colors.surface }]}>
+                    <TextInput
+                      style={[
+                        styles.editInput,
+                        {
+                          color: theme.colors.text,
+                          backgroundColor: theme.colors.background,
+                          borderColor: theme.colors.primary,
+                        },
+                      ]}
+                      value={editingText}
+                      onChangeText={setEditingText}
+                      autoFocus
+                      multiline
+                      onBlur={handleSaveEdit}
+                      onSubmitEditing={handleSaveEdit}
+                      returnKeyType="done"
+                    />
+                    <View style={styles.editActions}>
+                      <TouchableOpacity
+                        style={[styles.editButton, { backgroundColor: theme.colors.border }]}
+                        onPress={handleCancelEdit}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.editButtonText, { color: theme.colors.textSecondary }]}>
+                          Cancel
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.editButton, { backgroundColor: theme.colors.primary }]}
+                        onPress={handleSaveEdit}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.editButtonText, { color: theme.colors.surface }]}>
+                          Save
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.item, { backgroundColor: theme.colors.surface }]}
+                    onPress={() => handleItemPress(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[styles.itemText, { color: theme.colors.text }]}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
+                      {item.text}
+                    </Text>
+                    <Text style={[styles.keepHint, { color: theme.colors.textTertiary }]}>
+                      Tap to keep or discard
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             ))}
           </View>
         )}
@@ -399,6 +468,32 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     gap: 6,
+  },
+  editingItem: {
+    gap: 12,
+  },
+  editInput: {
+    fontSize: 16,
+    lineHeight: 22,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    minHeight: 44,
+  },
+  editActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  editButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  editButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   itemText: {
     fontSize: 16,
