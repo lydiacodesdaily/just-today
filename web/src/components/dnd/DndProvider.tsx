@@ -1,29 +1,103 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, createContext, useContext } from 'react';
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
+  pointerWithin,
+  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragStartEvent,
   DragEndEvent,
+  DragOverEvent,
+  CollisionDetection,
+  UniqueIdentifier,
 } from '@dnd-kit/core';
 import { useBrainDumpStore } from '@/src/stores/brainDumpStore';
 import { useFocusStore } from '@/src/stores/focusStore';
-import type { DragData, DroppableZone } from '@/src/lib/dnd/types';
+import type { DragData, DroppableZone as DroppableZoneType } from '@/src/lib/dnd/types';
 import { isBrainDumpItem, isFocusItem } from '@/src/lib/dnd/types';
 import { DragOverlayContent } from './DragOverlayContent';
+
+// Context to share drag state with droppable zones
+interface DndStateContextType {
+  overZone: DroppableZoneType | null;
+  isDragging: boolean;
+}
+
+const DndStateContext = createContext<DndStateContextType>({
+  overZone: null,
+  isDragging: false,
+});
+
+export const useDndState = () => useContext(DndStateContext);
 
 interface DndProviderProps {
   children: React.ReactNode;
 }
 
+// Helper to check if an ID is a droppable zone
+const isDroppableZone = (id: UniqueIdentifier): boolean => {
+  return id === 'braindump' || id === 'today' || id === 'later';
+};
+
+// Custom collision detection that prioritizes droppable zones for cross-zone drops
+// and items for same-zone reordering
+const customCollisionDetection: CollisionDetection = (args) => {
+  const { droppableContainers, active } = args;
+
+  // Get the active item's source zone
+  const activeData = active.data.current as DragData | undefined;
+  const sourceZone = activeData?.sourceZone;
+
+  // First, check for pointer intersection with any droppable
+  const pointerCollisions = pointerWithin(args);
+
+  if (pointerCollisions.length > 0) {
+    // Separate zone containers from item containers
+    const zoneCollisions: typeof pointerCollisions = [];
+    const itemCollisions: typeof pointerCollisions = [];
+
+    for (const collision of pointerCollisions) {
+      if (isDroppableZone(collision.id)) {
+        zoneCollisions.push(collision);
+      } else {
+        itemCollisions.push(collision);
+      }
+    }
+
+    // If we have item collisions in the same zone, prioritize them for reordering
+    const sameZoneItemCollisions = itemCollisions.filter((collision) => {
+      const container = droppableContainers.find((c) => c.id === collision.id);
+      const itemData = container?.data.current as DragData | undefined;
+      return itemData?.sourceZone === sourceZone;
+    });
+
+    if (sameZoneItemCollisions.length > 0) {
+      return sameZoneItemCollisions;
+    }
+
+    // Otherwise, prioritize zone collisions for cross-zone drops
+    if (zoneCollisions.length > 0) {
+      return zoneCollisions;
+    }
+
+    // Fall back to any item collisions
+    if (itemCollisions.length > 0) {
+      return itemCollisions;
+    }
+  }
+
+  // Fall back to rect intersection
+  return rectIntersection(args);
+};
+
 export function DndProvider({ children }: DndProviderProps) {
   const [activeData, setActiveData] = useState<DragData | null>(null);
+  const [overZone, setOverZone] = useState<DroppableZoneType | null>(null);
 
   // Brain dump store actions
   const removeFromBrainDump = useBrainDumpStore((state) => state.removeItem);
@@ -53,33 +127,74 @@ export function DndProvider({ children }: DndProviderProps) {
     }
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over, active } = event;
+
+    if (!over || !active.data.current) {
+      setOverZone(null);
+      return;
+    }
+
+    const overId = over.id as string;
+    const dragData = active.data.current as DragData;
+
+    // Check if hovering over a zone
+    if (overId === 'braindump' || overId === 'today' || overId === 'later') {
+      // Only highlight if it's a different zone
+      if (overId !== dragData.sourceZone) {
+        setOverZone(overId as DroppableZoneType);
+      } else {
+        setOverZone(null);
+      }
+      return;
+    }
+
+    // Check if hovering over an item in a different zone
+    const overData = over.data.current as DragData | undefined;
+    if (overData && overData.sourceZone !== dragData.sourceZone) {
+      setOverZone(overData.sourceZone);
+    } else {
+      setOverZone(null);
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveData(null);
+    setOverZone(null);
 
     if (!over || !active.data.current) return;
 
     const dragData = active.data.current as DragData;
     const overId = over.id as string;
 
-    // Check if we're dropping on another item (reordering within zone)
+    // Check if we're dropping on another item
     const overData = over.data.current as DragData | undefined;
-    if (overData && overData.sourceZone === dragData.sourceZone) {
-      // Same zone - reorder
-      if (active.id !== over.id) {
-        handleReorder(dragData.sourceZone, active.id as string, overId);
+
+    if (overData) {
+      // Dropping on an item
+      if (overData.sourceZone === dragData.sourceZone) {
+        // Same zone - reorder
+        if (active.id !== over.id) {
+          handleReorder(dragData.sourceZone, active.id as string, overId);
+        }
+      } else {
+        // Different zone - move to that zone
+        handleMove(dragData, overData.sourceZone);
       }
       return;
     }
 
-    // Check if dropping on a zone (cross-zone move)
-    const targetZone = overId as DroppableZone;
-    if (dragData.sourceZone === targetZone) return;
-
-    handleMove(dragData, targetZone);
+    // Dropping on a zone directly
+    const targetZone = overId as DroppableZoneType;
+    if (targetZone === 'braindump' || targetZone === 'today' || targetZone === 'later') {
+      if (dragData.sourceZone !== targetZone) {
+        handleMove(dragData, targetZone);
+      }
+    }
   };
 
-  const handleReorder = (zone: DroppableZone, activeId: string, overId: string) => {
+  const handleReorder = (zone: DroppableZoneType, activeId: string, overId: string) => {
     if (zone === 'today') {
       reorderTodayItems(activeId, overId);
     } else if (zone === 'later') {
@@ -88,7 +203,7 @@ export function DndProvider({ children }: DndProviderProps) {
     // Brain dump reordering could be added later if needed
   };
 
-  const handleMove = (dragData: DragData, targetZone: DroppableZone) => {
+  const handleMove = (dragData: DragData, targetZone: DroppableZoneType) => {
     const { item, sourceZone } = dragData;
 
     // Brain Dump -> Today
@@ -122,16 +237,19 @@ export function DndProvider({ children }: DndProviderProps) {
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      {children}
-      <DragOverlay>
-        {activeData && <DragOverlayContent data={activeData} />}
-      </DragOverlay>
-    </DndContext>
+    <DndStateContext.Provider value={{ overZone, isDragging: activeData !== null }}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={customCollisionDetection}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        {children}
+        <DragOverlay>
+          {activeData && <DragOverlayContent data={activeData} />}
+        </DragOverlay>
+      </DndContext>
+    </DndStateContext.Provider>
   );
 }

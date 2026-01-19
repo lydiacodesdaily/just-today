@@ -248,173 +248,178 @@ export function LaterList() {
     return null;
   }
 
+  // All later items for the single SortableContext
+  const allLaterItems = [...due, ...scheduled, ...none];
+
   return (
-    <section className="space-y-3">
-      {/* Check On Section */}
-      {hasCheckOnItems && (
-        <>
-          <button
-            onClick={() => setIsCheckOnExpanded(!isCheckOnExpanded)}
-            className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
-            aria-expanded={isCheckOnExpanded}
-          >
-            <span className="text-lg font-medium text-calm-text">Check on</span>
+    <DroppableZone id="later">
+      <section className="space-y-3">
+        {/* Check On Section */}
+        {hasCheckOnItems && (
+          <>
+            <button
+              onClick={() => setIsCheckOnExpanded(!isCheckOnExpanded)}
+              className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
+              aria-expanded={isCheckOnExpanded}
+            >
+              <span className="text-lg font-medium text-calm-text">Check on</span>
 
-            <div className="flex items-center gap-3">
-              {!isCheckOnExpanded && due.length > 0 && (
-                <span className="w-2 h-2 bg-calm-text/50 rounded-full" title="Items ready to check" />
-              )}
-              {!isCheckOnExpanded && (scheduled.length + due.length) > 0 && (
-                <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
-                  {scheduled.length + due.length}
-                </span>
-              )}
-              <svg
-                className={`w-5 h-5 text-calm-muted transition-transform ${
-                  isCheckOnExpanded ? 'transform rotate-180' : ''
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </button>
+              <div className="flex items-center gap-3">
+                {!isCheckOnExpanded && due.length > 0 && (
+                  <span className="w-2 h-2 bg-calm-text/50 rounded-full" title="Items ready to check" />
+                )}
+                {!isCheckOnExpanded && (scheduled.length + due.length) > 0 && (
+                  <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
+                    {scheduled.length + due.length}
+                  </span>
+                )}
+                <svg
+                  className={`w-5 h-5 text-calm-muted transition-transform ${
+                    isCheckOnExpanded ? 'transform rotate-180' : ''
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
 
-          {isCheckOnExpanded && (
-            <DroppableZone id="later" className="space-y-3 pl-0">
-              <SortableContext items={[...due, ...scheduled].map(item => item.id)} strategy={verticalListSortingStrategy}>
-                {due.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-calm-muted px-2">Ready to check</p>
-                    {due.map((item) => (
-                      <div key={item.id} className="group">
-                        <SortableItem
-                          id={item.id}
-                          type="focus-later"
-                          sourceZone="later"
-                          item={item}
-                        >
-                          <LaterItemCard
+            {isCheckOnExpanded && (
+              <SortableContext items={allLaterItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3 pl-0">
+                  {due.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-calm-muted px-2">Ready to check</p>
+                      {due.map((item) => (
+                        <div key={item.id} className="group">
+                          <SortableItem
+                            id={item.id}
+                            type="focus-later"
+                            sourceZone="later"
                             item={item}
-                            onEdit={() => setEditingItem(item)}
-                            onMoveToToday={() => moveToToday(item.id)}
-                            onComplete={() => completeItem(item.id)}
-                            onDelete={() => deleteItem(item.id)}
-                            onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
-                            onCheckOnceLater={() => handleCheckOnceLater(item.id)}
-                          />
-                        </SortableItem>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {scheduled.length > 0 && (
-                  <div className="space-y-2">
-                    {due.length > 0 && <div className="border-t border-calm-border my-3" />}
-                    <p className="text-xs text-calm-muted px-2">Scheduled</p>
-                    {scheduled.map((item) => (
-                      <div key={item.id} className="group">
-                        <SortableItem
-                          id={item.id}
-                          type="focus-later"
-                          sourceZone="later"
-                          item={item}
-                        >
-                          <LaterItemCard
+                          >
+                            <LaterItemCard
+                              item={item}
+                              onEdit={() => setEditingItem(item)}
+                              onMoveToToday={() => moveToToday(item.id)}
+                              onComplete={() => completeItem(item.id)}
+                              onDelete={() => deleteItem(item.id)}
+                              onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                              onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                            />
+                          </SortableItem>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {scheduled.length > 0 && (
+                    <div className="space-y-2">
+                      {due.length > 0 && <div className="border-t border-calm-border my-3" />}
+                      <p className="text-xs text-calm-muted px-2">Scheduled</p>
+                      {scheduled.map((item) => (
+                        <div key={item.id} className="group">
+                          <SortableItem
+                            id={item.id}
+                            type="focus-later"
+                            sourceZone="later"
                             item={item}
-                            onEdit={() => setEditingItem(item)}
-                            onMoveToToday={() => moveToToday(item.id)}
-                            onComplete={() => completeItem(item.id)}
-                            onDelete={() => deleteItem(item.id)}
-                            onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
-                            onCheckOnceLater={() => handleCheckOnceLater(item.id)}
-                          />
-                        </SortableItem>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          >
+                            <LaterItemCard
+                              item={item}
+                              onEdit={() => setEditingItem(item)}
+                              onMoveToToday={() => moveToToday(item.id)}
+                              onComplete={() => completeItem(item.id)}
+                              onDelete={() => deleteItem(item.id)}
+                              onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                              onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                            />
+                          </SortableItem>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </SortableContext>
-            </DroppableZone>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
 
-      {/* Later Section */}
-      {totalLaterItems > 0 && (
-        <>
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
-            aria-expanded={isExpanded}
-          >
-            <span className="text-lg font-medium text-calm-text">Later</span>
+        {/* Later Section */}
+        {totalLaterItems > 0 && (
+          <>
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
+              aria-expanded={isExpanded}
+            >
+              <span className="text-lg font-medium text-calm-text">Later</span>
 
-            <div className="flex items-center gap-3">
-              {!isExpanded && totalLaterItems > 0 && (
-                <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
-                  {totalLaterItems}
-                </span>
-              )}
-              <svg
-                className={`w-5 h-5 text-calm-muted transition-transform ${
-                  isExpanded ? 'transform rotate-180' : ''
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </button>
+              <div className="flex items-center gap-3">
+                {!isExpanded && totalLaterItems > 0 && (
+                  <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
+                    {totalLaterItems}
+                  </span>
+                )}
+                <svg
+                  className={`w-5 h-5 text-calm-muted transition-transform ${
+                    isExpanded ? 'transform rotate-180' : ''
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
 
-          {isExpanded && (
-            <DroppableZone id="later" className="space-y-3 pl-0">
-              <SortableContext items={none.map(item => item.id)} strategy={verticalListSortingStrategy}>
-                {none.map((item) => (
-                  <div key={item.id} className="group">
-                    <SortableItem
-                      id={item.id}
-                      type="focus-later"
-                      sourceZone="later"
-                      item={item}
-                    >
-                      <LaterItemCard
+            {isExpanded && (
+              <SortableContext items={allLaterItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3 pl-0">
+                  {none.map((item) => (
+                    <div key={item.id} className="group">
+                      <SortableItem
+                        id={item.id}
+                        type="focus-later"
+                        sourceZone="later"
                         item={item}
-                        onEdit={() => setEditingItem(item)}
-                        onMoveToToday={() => moveToToday(item.id)}
-                        onComplete={() => completeItem(item.id)}
-                        onDelete={() => deleteItem(item.id)}
-                        onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
-                        onCheckOnceLater={() => handleCheckOnceLater(item.id)}
-                      />
-                    </SortableItem>
-                  </div>
-                ))}
+                      >
+                        <LaterItemCard
+                          item={item}
+                          onEdit={() => setEditingItem(item)}
+                          onMoveToToday={() => moveToToday(item.id)}
+                          onComplete={() => completeItem(item.id)}
+                          onDelete={() => deleteItem(item.id)}
+                          onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                          onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                        />
+                      </SortableItem>
+                    </div>
+                  ))}
+                </div>
               </SortableContext>
-            </DroppableZone>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
 
-      {/* Check Once Picker */}
-      {checkOnceItemId && (
-        <CheckOncePicker
-          onConfirm={handleCheckOnceConfirm}
-          onCancel={() => setCheckOnceItemId(null)}
-        />
-      )}
+        {/* Check Once Picker */}
+        {checkOnceItemId && (
+          <CheckOncePicker
+            onConfirm={handleCheckOnceConfirm}
+            onCancel={() => setCheckOnceItemId(null)}
+          />
+        )}
 
-      {/* Edit Modal */}
-      {editingItem && (
-        <EditLaterItemModal
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
-        />
-      )}
-    </section>
+        {/* Edit Modal */}
+        {editingItem && (
+          <EditLaterItemModal
+            item={editingItem}
+            onClose={() => setEditingItem(null)}
+          />
+        )}
+      </section>
+    </DroppableZone>
   );
 }
