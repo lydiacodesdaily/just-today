@@ -24,6 +24,7 @@ interface FocusStore {
   addFromBrainDump: (item: BrainDumpItem, location: 'today' | 'later') => void;
   moveToLater: (itemId: string, reminderTiming?: ReminderTiming, customDate?: Date) => void;
   moveToToday: (itemId: string) => void;
+  updateTodayItem: (itemId: string, title: string, duration: FocusDuration) => void;
   updateLaterItem: (itemId: string, title: string, duration: FocusDuration, timeBucket?: TimeBucket) => void;
   completeItem: (itemId: string) => void;
   deleteItem: (itemId: string) => void;
@@ -158,6 +159,21 @@ export const useFocusStore = create<FocusStore>()(
             todayItems: [...state.todayItems, updatedItem],
           };
         });
+      },
+
+      // Update Today item
+      updateTodayItem: (itemId, title, duration) => {
+        set((state) => ({
+          todayItems: state.todayItems.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  title,
+                  estimatedDuration: duration,
+                }
+              : item
+          ),
+        }));
       },
 
       // Update Later item

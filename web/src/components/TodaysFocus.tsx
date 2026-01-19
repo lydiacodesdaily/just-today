@@ -16,6 +16,7 @@ import { TodayOptionalItem } from '@/src/models/EnergyMenuItem';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 import { CheckOncePicker } from '@/src/components/CheckOncePicker';
+import { EditTodayItemModal } from '@/src/components/EditTodayItemModal';
 import { SortableItem, DroppableZone } from './dnd';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
@@ -38,10 +39,11 @@ interface FocusItemCardProps {
   onMoveToLater: () => void;
   onDelete: () => void;
   onStart: () => void;
+  onEdit: () => void;
   onCheckOnceLater: () => void;
 }
 
-function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onCheckOnceLater }: FocusItemCardProps) {
+function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onEdit, onCheckOnceLater }: FocusItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -89,6 +91,15 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onC
 
           {showMenu && (
             <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+              <button
+                onClick={() => {
+                  onEdit();
+                  setShowMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+              >
+                Edit...
+              </button>
               <button
                 onClick={() => {
                   onStart();
@@ -265,6 +276,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
   const [selectedDuration, setSelectedDuration] = useState<FocusDuration>('~15 min');
   const [srAnnouncement, setSrAnnouncement] = useState('');
   const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
 
   const addModalRef = useFocusTrap<HTMLDivElement>(showAddModal);
 
@@ -425,6 +437,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
                     onMoveToLater={() => moveToLater(item.id)}
                     onDelete={() => deleteItem(item.id)}
                     onStart={() => handleStartFocus(item)}
+                    onEdit={() => setEditingItem(item)}
                     onCheckOnceLater={() => handleCheckOnceLater(item.id)}
                   />
                 </SortableItem>
@@ -554,6 +567,14 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
         <CheckOncePicker
           onConfirm={handleCheckOnceConfirm}
           onCancel={() => setCheckOnceItemId(null)}
+        />
+      )}
+
+      {/* Edit Today Item Modal */}
+      {editingItem && (
+        <EditTodayItemModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
         />
       )}
 

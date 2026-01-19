@@ -19,7 +19,7 @@ interface BrainDumpProps {
 }
 
 export function BrainDump({ initialExpanded = false, arrivalMode = false }: BrainDumpProps) {
-  const { items, addItem, deleteItem, keepItem } = useBrainDumpStore();
+  const { items, addItem, updateItem, deleteItem, keepItem } = useBrainDumpStore();
   const { addToLater, setCheckOnce } = useFocusStore();
 
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
@@ -27,6 +27,8 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
   const [inputText, setInputText] = useState('');
   const [showMenuForId, setShowMenuForId] = useState<string | null>(null);
   const [checkOnceItemData, setCheckOnceItemData] = useState<{ id: string; text: string } | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
 
   const unsortedItems = items.filter((item) => item.status === 'unsorted');
@@ -89,6 +91,25 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
   const handleDeleteItem = (itemId: string) => {
     deleteItem(itemId);
     setShowMenuForId(null);
+  };
+
+  const handleStartEdit = (itemId: string, itemText: string) => {
+    setEditingItemId(itemId);
+    setEditingText(itemText);
+    setShowMenuForId(null);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingItemId && editingText.trim()) {
+      updateItem(editingItemId, editingText.trim());
+    }
+    setEditingItemId(null);
+    setEditingText('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItemId(null);
+    setEditingText('');
   };
 
   return (
@@ -160,68 +181,109 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
             <DroppableZone id="braindump" className="space-y-2">
               {visibleItems.map((item) => (
                 <div key={item.id} className="group">
-                  <DraggableItem
-                    id={item.id}
-                    type="braindump"
-                    sourceZone="braindump"
-                    item={item}
-                  >
-                    <div className="bg-calm-surface border border-calm-border rounded-lg rounded-l-none border-l-0 p-3 hover:border-calm-text/30 transition-colors">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm text-calm-text flex-1">{item.text}</p>
-
-                        <div className="relative" ref={showMenuForId === item.id ? menuRef : null}>
-                          <button
-                            onClick={() =>
-                              setShowMenuForId(showMenuForId === item.id ? null : item.id)
-                            }
-                            className="p-1 hover:bg-calm-border/50 rounded transition-colors"
-                            aria-label="Options"
-                          >
-                            <svg
-                              className="w-4 h-4 text-calm-muted"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                              />
-                            </svg>
-                          </button>
-
-                          {showMenuForId === item.id && (
-                            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
-                              <button
-                                onClick={() => handleKeepItem(item.id, item.text)}
-                                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
-                              >
-                                Keep (Move to Later)
-                              </button>
-                              <button
-                                onClick={() => handleCheckOnceLater(item.id, item.text)}
-                                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
-                              >
-                                <div>Check once later...</div>
-                                <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
-                                  Keep and resurface once
-                                </div>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteItem(item.id)}
-                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                  {editingItemId === item.id ? (
+                    // Inline editing UI
+                    <div className="bg-calm-surface border border-calm-primary rounded-lg p-3">
+                      <textarea
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                            e.preventDefault();
+                            handleSaveEdit();
+                          } else if (e.key === 'Escape') {
+                            handleCancelEdit();
+                          }
+                        }}
+                        className="w-full min-h-[60px] bg-transparent border-none focus:outline-none text-sm text-calm-text placeholder-calm-muted resize-none"
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2 mt-2">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-3 py-1.5 text-sm text-calm-muted hover:text-calm-text transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveEdit}
+                          disabled={!editingText.trim()}
+                          className="px-3 py-1.5 text-sm bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                        >
+                          Save
+                        </button>
                       </div>
                     </div>
-                  </DraggableItem>
+                  ) : (
+                    <DraggableItem
+                      id={item.id}
+                      type="braindump"
+                      sourceZone="braindump"
+                      item={item}
+                    >
+                      <div className="bg-calm-surface border border-calm-border rounded-lg rounded-l-none border-l-0 p-3 hover:border-calm-text/30 transition-colors">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm text-calm-text flex-1">{item.text}</p>
+
+                          <div className="relative" ref={showMenuForId === item.id ? menuRef : null}>
+                            <button
+                              onClick={() =>
+                                setShowMenuForId(showMenuForId === item.id ? null : item.id)
+                              }
+                              className="p-1 hover:bg-calm-border/50 rounded transition-colors"
+                              aria-label="Options"
+                            >
+                              <svg
+                                className="w-4 h-4 text-calm-muted"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                                />
+                              </svg>
+                            </button>
+
+                            {showMenuForId === item.id && (
+                              <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+                                <button
+                                  onClick={() => handleStartEdit(item.id, item.text)}
+                                  className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleKeepItem(item.id, item.text)}
+                                  className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                                >
+                                  Keep (Move to Later)
+                                </button>
+                                <button
+                                  onClick={() => handleCheckOnceLater(item.id, item.text)}
+                                  className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
+                                >
+                                  <div>Check once later...</div>
+                                  <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
+                                    Keep and resurface once
+                                  </div>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteItem(item.id)}
+                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </DraggableItem>
+                  )}
                 </div>
               ))}
 
