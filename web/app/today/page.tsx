@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useRef, useMemo } from 'react';
-import { EnergyPicker } from '@/src/components/EnergyPicker';
+import { EnergyIndicator } from '@/src/components/EnergyIndicator';
 import { EnergyMenu } from '@/src/components/EnergyMenu';
 import { TodaysFocus, TodaysFocusRef } from '@/src/components/TodaysFocus';
 import { RoutinesList } from '@/src/components/RoutineCard';
 import { LaterList } from '@/src/components/LaterList';
 import { BrainDump } from '@/src/components/BrainDump';
 import { KeyboardShortcutsModal } from '@/src/components/KeyboardShortcutsModal';
-import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { DndProvider } from '@/src/components/dnd';
 import { useEnergyStore } from '@/src/stores/energyStore';
 import { useFocusStore } from '@/src/stores/focusStore';
@@ -16,11 +15,10 @@ import { useAutoCheck } from '@/src/hooks/useAutoCheck';
 import { useGlobalKeyboardShortcuts, KeyboardShortcut } from '@/src/hooks/useGlobalKeyboardShortcuts';
 
 export default function TodayPage() {
-  const { currentMode, setMode } = useEnergyStore();
+  const currentMode = useEnergyStore((state) => state.currentMode);
   const { todayItems } = useFocusStore();
   const [showMoreSections, setShowMoreSections] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
-  const [energyAnnouncement, setEnergyAnnouncement] = useState('');
   const todaysFocusRef = useRef<TodaysFocusRef>(null);
 
   // Detect Arrival vs Action state
@@ -64,17 +62,6 @@ export default function TodayPage() {
 
   useGlobalKeyboardShortcuts(shortcuts);
 
-  // Handle energy mode change with screen reader announcement
-  const handleEnergyModeChange = (mode: typeof currentMode) => {
-    setMode(mode);
-    const modeNames = {
-      low: 'Low Energy mode',
-      steady: 'Steady Energy mode',
-      flow: 'Flow Energy mode',
-    };
-    setEnergyAnnouncement(`Switched to ${modeNames[mode]}`);
-  };
-
   return (
     <div className="min-h-screen bg-calm-bg">
       {/* Main container */}
@@ -86,22 +73,21 @@ export default function TodayPage() {
               <h1 className="text-3xl font-bold text-calm-text mb-2">Today</h1>
               <p className="text-calm-muted">Focus on what matters, one thing at a time</p>
             </div>
-            <button
-              onClick={() => setShowMoreSections(!showMoreSections)}
-              className="px-3 py-2 text-sm text-calm-muted hover:text-calm-text transition-colors"
-            >
-              {showMoreSections ? 'Simplify View' : 'Show More'}
-            </button>
+            <div className="flex items-center gap-3">
+              <EnergyIndicator />
+              <button
+                onClick={() => setShowMoreSections(!showMoreSections)}
+                className="px-3 py-2 text-sm text-calm-muted hover:text-calm-text transition-colors"
+              >
+                {showMoreSections ? 'Simplify View' : 'Show More'}
+              </button>
+            </div>
           </div>
         </header>
 
         {/* Main content */}
         <DndProvider>
           <div className="space-y-8">
-            {/* 1. Energy Picker - always visible */}
-            <section>
-              <EnergyPicker selectedMode={currentMode} onSelect={handleEnergyModeChange} />
-            </section>
 
             {/* Arrival State: Brain Dump prioritized, Focus secondary */}
             {isArrivalState ? (
@@ -201,8 +187,7 @@ export default function TodayPage() {
         <div className="h-24 md:h-0"></div>
       </div>
 
-      {/* Accessibility features */}
-      <AriaLiveRegion message={energyAnnouncement} politeness="polite" />
+      {/* Keyboard shortcuts modal */}
       <KeyboardShortcutsModal
         isOpen={showShortcutsModal}
         onClose={() => setShowShortcutsModal(false)}

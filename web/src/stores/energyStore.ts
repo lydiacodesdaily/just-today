@@ -1,6 +1,10 @@
 /**
  * energyStore.ts
  * Zustand store for managing Energy Mode selection
+ *
+ * On web, energy is a simple preference that persists.
+ * Users can change it anytime via the header indicator.
+ * No daily gate - web users expect direct access to content.
  */
 
 import { create } from 'zustand';
@@ -18,7 +22,7 @@ interface EnergyStore {
 export const useEnergyStore = create<EnergyStore>()(
   persist(
     (set) => ({
-      // Initial state
+      // Initial state - default to steady
       currentMode: 'steady',
 
       // Set energy mode
