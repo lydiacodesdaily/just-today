@@ -1,25 +1,25 @@
 /**
  * index.tsx
- * Home/Today screen - select energy and start routines.
+ * Home/Today screen - shows energy indicator and starts routines.
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { EnergyMode, RoutineTemplate } from '../../src/models/RoutineTemplate';
+import { RoutineTemplate } from '../../src/models/RoutineTemplate';
 import { loadTemplates } from '../../src/persistence/templateStore';
 import { createRunFromTemplate, createRunFromFocusItem, canResumeAbandonedRun, resumeAbandonedRun } from '../../src/engine/runEngine';
 import { useRun } from '../../src/context/RunContext';
 import { useFocus } from '../../src/context/FocusContext';
+import { useEnergy } from '../../src/context/EnergyContext';
 import { useTheme } from '../../src/constants/theme';
-import { EnergyPicker } from '../../src/components/EnergyPicker';
+import { EnergyIndicator } from '../../src/components/EnergyIndicator';
 import { RoutineCard } from '../../src/components/RoutineCard';
 import { EnergyMenuCollapsible } from '../../src/components/EnergyMenuCollapsible';
 import { TodaysFocus } from '../../src/components/TodaysFocus';
 import { LaterList } from '../../src/components/LaterList';
 import { BrainDump } from '../../src/components/BrainDump';
 import { AddFocusItemModal } from '../../src/components/AddFocusItemModal';
-import { getItem, setItem, KEYS } from '../../src/persistence/storage';
 import { FocusItem } from '../../src/models/FocusItem';
 
 export default function HomeScreen() {
@@ -27,24 +27,13 @@ export default function HomeScreen() {
   const router = useRouter();
   const { setCurrentRun, currentRun } = useRun();
   const { startItemFocus, addToToday, refreshItems } = useFocus();
-  const [energyMode, setEnergyMode] = useState<EnergyMode>('steady');
+  const { currentMode: energyMode } = useEnergy();
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
   const [isBrainDumpExpanded, setIsBrainDumpExpanded] = useState(false);
   const [isEnergyMenuExpanded, setIsEnergyMenuExpanded] = useState(false);
   const [isRoutinesExpanded, setIsRoutinesExpanded] = useState(false);
-
-  // Load energy mode on mount
-  useEffect(() => {
-    getItem<EnergyMode>(KEYS.CURRENT_ENERGY)
-      .then((mode) => {
-        if (mode) setEnergyMode(mode);
-      })
-      .catch((err) => {
-        console.error('Failed to load energy mode:', err);
-      });
-  }, []);
 
   // Prompt user to resume or discard saved run
   useEffect(() => {
@@ -85,15 +74,6 @@ export default function HomeScreen() {
       refreshItems();
     }, [refreshItems])
   );
-
-  // Persist energy mode changes
-  const handleEnergyChange = (mode: EnergyMode) => {
-    setEnergyMode(mode);
-    setItem(KEYS.CURRENT_ENERGY, mode);
-    // Auto-expand energy menu when energy changes (but keep it inline/collapsed)
-    setIsEnergyMenuExpanded(true);
-  };
-
 
   const handleStartRoutine = (template: RoutineTemplate) => {
     // Check if there's already a routine in progress
@@ -224,19 +204,19 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Gentle, supportive header */}
+        {/* Gentle, supportive header with energy indicator */}
         <View style={styles.headerSection}>
-          <Text style={[styles.header, { color: theme.colors.text }]}>
-            Just Today
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            One step at a time
-          </Text>
-        </View>
-
-        {/* 1. Energy picker (top, always visible) */}
-        <View style={styles.energySection}>
-          <EnergyPicker selectedMode={energyMode} onSelect={handleEnergyChange} />
+          <View style={styles.headerRow}>
+            <View style={styles.headerText}>
+              <Text style={[styles.header, { color: theme.colors.text }]}>
+                Just Today
+              </Text>
+              <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+                One step at a time
+              </Text>
+            </View>
+            <EnergyIndicator />
+          </View>
         </View>
 
         {/* 2. Optional Energy Menu (collapsed by default) */}
@@ -430,6 +410,14 @@ const styles = StyleSheet.create({
   headerSection: {
     paddingTop: 8,
     paddingBottom: 20,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerText: {
+    flex: 1,
     gap: 6,
   },
   energyMenuSection: {
@@ -469,9 +457,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '400',
     letterSpacing: 0.2,
-  },
-  energySection: {
-    marginBottom: 24,
   },
   optionalSection: {
     marginBottom: 24,

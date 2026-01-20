@@ -9,6 +9,7 @@ const KEYS = {
   TEMPLATES: '@just-today/templates',
   SETTINGS: '@just-today/settings',
   CURRENT_ENERGY: '@just-today/current-energy',
+  ENERGY_SELECTED_DATE: '@just-today/energy-selected-date',
   ACTIVE_RUN: '@just-today/active-run',
   ENERGY_MENU_ITEMS: '@just-today/energy-menu-items',
   TODAY_OPTIONAL_ITEMS: '@just-today/today-optional-items',
