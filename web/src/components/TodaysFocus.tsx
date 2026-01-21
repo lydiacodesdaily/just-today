@@ -17,8 +17,6 @@ import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 import { CheckOncePicker } from '@/src/components/CheckOncePicker';
 import { EditTodayItemModal } from '@/src/components/EditTodayItemModal';
-import { SortableItem, DroppableZone } from './dnd';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
@@ -33,7 +31,7 @@ const DURATION_OPTIONS: FocusDuration[] = [
   '~2 hours',
 ];
 
-interface FocusItemCardProps {
+interface TodayItemCardProps {
   item: FocusItem;
   onComplete: () => void;
   onMoveToLater: () => void;
@@ -43,7 +41,15 @@ interface FocusItemCardProps {
   onCheckOnceLater: () => void;
 }
 
-function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onEdit, onCheckOnceLater }: FocusItemCardProps) {
+function TodayItemCard({
+  item,
+  onComplete,
+  onMoveToLater,
+  onDelete,
+  onStart,
+  onEdit,
+  onCheckOnceLater,
+}: TodayItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +67,7 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onE
   }, [showMenu]);
 
   return (
-    <div className="bg-calm-surface border border-calm-border rounded-lg rounded-l-none border-l-0 p-4 hover:border-calm-text/30 transition-colors">
+    <div className="bg-calm-surface border border-calm-border rounded-lg p-4 transition-colors hover:border-calm-text/30">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-medium text-calm-text mb-1">{item.title}</h3>
@@ -107,7 +113,7 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onE
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
               >
-                Start
+                Start Timer
               </button>
               <button
                 onClick={() => {
@@ -149,7 +155,7 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onE
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors group"
               >
-                <div>Delete</div>
+                <div>Remove</div>
                 <div className="text-xs text-red-600/60 mt-0.5 group-hover:text-red-600/80 transition-colors">
                   Sometimes letting go is the right choice
                 </div>
@@ -158,6 +164,7 @@ function FocusItemCard({ item, onComplete, onMoveToLater, onDelete, onStart, onE
           )}
         </div>
       </div>
+
     </div>
   );
 }
@@ -230,7 +237,7 @@ function OptionalItemCard({ item, onComplete, onRemove, onStart }: OptionalItemC
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
               >
-                Start
+                Start Timer
               </button>
               <button
                 onClick={() => {
@@ -263,9 +270,18 @@ export interface TodaysFocusRef {
   markCurrentTaskDone: () => void;
 }
 
-export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
-  const { todayItems, addToToday, completeItem, moveToLater, deleteItem, setCheckOnce, rolloverCount, dismissRollover, completionCelebrationMessage } =
-    useFocusStore();
+export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFocus(props, ref) {
+  const {
+    todayItems,
+    addToToday,
+    completeItem,
+    moveToLater,
+    deleteItem,
+    setCheckOnce,
+    rolloverCount,
+    dismissRollover,
+    completionCelebrationMessage,
+  } = useFocusStore();
   const { todayOptionalItems, completeOptionalItem, removeFromToday } = useEnergyMenuStore();
   const { setCurrentRun } = useRunStore();
   const router = useRouter();
@@ -280,10 +296,11 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
 
   const addModalRef = useFocusTrap<HTMLDivElement>(showAddModal);
 
-  const incompleteItems = todayItems.filter((item) => !item.completedAt);
+  // All incomplete today items
+  const incompleteTodayItems = todayItems.filter((item) => !item.completedAt);
   const incompleteOptionalItems = todayOptionalItems.filter((item) => !item.completedAt);
-  const allIncompleteItems = [...incompleteItems, ...incompleteOptionalItems];
-  const visibleItems = showAll ? incompleteItems : incompleteItems.slice(0, VISIBLE_ITEMS_DEFAULT);
+  const visibleTodayItems = showAll ? incompleteTodayItems : incompleteTodayItems.slice(0, VISIBLE_ITEMS_DEFAULT);
+  const hasItems = incompleteTodayItems.length > 0 || incompleteOptionalItems.length > 0;
 
   // Expose methods for keyboard shortcuts
   useImperativeHandle(ref, () => ({
@@ -291,10 +308,10 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
       setShowAddModal(true);
     },
     markCurrentTaskDone: () => {
-      // Mark the first incomplete item as done
-      if (incompleteItems.length > 0) {
-        completeItem(incompleteItems[0].id);
-        setSrAnnouncement(`Task completed: ${incompleteItems[0].title}`);
+      // Mark the first item as done
+      if (incompleteTodayItems.length > 0) {
+        completeItem(incompleteTodayItems[0].id);
+        setSrAnnouncement(`Task completed: ${incompleteTodayItems[0].title}`);
       } else if (incompleteOptionalItems.length > 0) {
         completeOptionalItem(incompleteOptionalItems[0].id);
         setSrAnnouncement(`Task completed: ${incompleteOptionalItems[0].title}`);
@@ -356,7 +373,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
           onClick={() => setShowAddModal(true)}
           className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
         >
-          + Add
+          + Add to Today
         </button>
       </div>
 
@@ -403,49 +420,23 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
         </div>
       )}
 
-      {/* Items list */}
-      {allIncompleteItems.length === 0 ? (
-        <DroppableZone id="today">
-          <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
-            <p className="text-calm-text mb-2">Ready when you are</p>
-            <p className="text-sm text-calm-muted mb-6">
-              Add your first task, or try an item from your Energy Menu
-            </p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
-            >
-              Add your first item
-            </button>
-          </div>
-        </DroppableZone>
-      ) : (
-        <DroppableZone id="today" className="space-y-3">
-          {/* Regular focus items - sortable */}
-          <SortableContext items={visibleItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
-            {visibleItems.map((item) => (
-              <div key={item.id} className="group">
-                <SortableItem
-                  id={item.id}
-                  type="focus-today"
-                  sourceZone="today"
-                  item={item}
-                >
-                  <FocusItemCard
-                    item={item}
-                    onComplete={() => completeItem(item.id)}
-                    onMoveToLater={() => moveToLater(item.id)}
-                    onDelete={() => deleteItem(item.id)}
-                    onStart={() => handleStartFocus(item)}
-                    onEdit={() => setEditingItem(item)}
-                    onCheckOnceLater={() => handleCheckOnceLater(item.id)}
-                  />
-                </SortableItem>
-              </div>
-            ))}
-          </SortableContext>
+      {/* Today's Items */}
+      {hasItems && (
+        <div className="space-y-3">
+          {visibleTodayItems.map((item) => (
+            <TodayItemCard
+              key={item.id}
+              item={item}
+              onComplete={() => completeItem(item.id)}
+              onMoveToLater={() => moveToLater(item.id)}
+              onDelete={() => deleteItem(item.id)}
+              onStart={() => handleStartFocus(item)}
+              onEdit={() => setEditingItem(item)}
+              onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+            />
+          ))}
 
-          {/* Optional items from Energy Menu - not draggable */}
+          {/* Optional items from Energy Menu */}
           {incompleteOptionalItems.map((item) => (
             <OptionalItemCard
               key={item.id}
@@ -456,16 +447,16 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
             />
           ))}
 
-          {incompleteItems.length > VISIBLE_ITEMS_DEFAULT && !showAll && (
+          {incompleteTodayItems.length > VISIBLE_ITEMS_DEFAULT && !showAll && (
             <button
               onClick={() => setShowAll(true)}
               className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
             >
-              Show {incompleteItems.length - VISIBLE_ITEMS_DEFAULT} more
+              Show {incompleteTodayItems.length - VISIBLE_ITEMS_DEFAULT} more
             </button>
           )}
 
-          {showAll && incompleteItems.length > VISIBLE_ITEMS_DEFAULT && (
+          {showAll && incompleteTodayItems.length > VISIBLE_ITEMS_DEFAULT && (
             <button
               onClick={() => setShowAll(false)}
               className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
@@ -473,7 +464,23 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
               Show less
             </button>
           )}
-        </DroppableZone>
+        </div>
+      )}
+
+      {/* Empty state when no items at all */}
+      {!hasItems && (
+        <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
+          <p className="text-calm-text mb-2">Ready when you are</p>
+          <p className="text-sm text-calm-muted mb-6">
+            Add your first task, or try an item from your Energy Menu
+          </p>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
+          >
+            Add your first item
+          </button>
+        </div>
       )}
 
       {/* Add item modal */}
@@ -583,5 +590,3 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, {}>((props, ref) => {
     </section>
   );
 });
-
-TodaysFocus.displayName = 'TodaysFocus';
