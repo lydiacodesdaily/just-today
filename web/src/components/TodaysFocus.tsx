@@ -17,8 +17,7 @@ import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 import { CheckOncePicker } from '@/src/components/CheckOncePicker';
 import { EditTodayItemModal } from '@/src/components/EditTodayItemModal';
-
-const VISIBLE_ITEMS_DEFAULT = 3;
+import { SectionLabel } from '@/src/components/SectionLabel';
 
 const DURATION_OPTIONS: FocusDuration[] = [
   '~5 min',
@@ -286,7 +285,6 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
   const { setCurrentRun } = useRunStore();
   const router = useRouter();
 
-  const [showAll, setShowAll] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [selectedDuration, setSelectedDuration] = useState<FocusDuration>('~15 min');
@@ -296,10 +294,9 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
 
   const addModalRef = useFocusTrap<HTMLDivElement>(showAddModal);
 
-  // All incomplete today items
+  // All incomplete today items - show all items (no Show More pattern)
   const incompleteTodayItems = todayItems.filter((item) => !item.completedAt);
   const incompleteOptionalItems = todayOptionalItems.filter((item) => !item.completedAt);
-  const visibleTodayItems = showAll ? incompleteTodayItems : incompleteTodayItems.slice(0, VISIBLE_ITEMS_DEFAULT);
   const hasItems = incompleteTodayItems.length > 0 || incompleteOptionalItems.length > 0;
 
   // Expose methods for keyboard shortcuts
@@ -368,12 +365,12 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
     <section className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-calm-text">Today&apos;s Focus</h2>
+        <SectionLabel>Today&apos;s Focus</SectionLabel>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
+          className="px-3 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-xs"
         >
-          + Add to Today
+          + Add
         </button>
       </div>
 
@@ -423,7 +420,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
       {/* Today's Items */}
       {hasItems && (
         <div className="space-y-3">
-          {visibleTodayItems.map((item) => (
+          {incompleteTodayItems.map((item) => (
             <TodayItemCard
               key={item.id}
               item={item}
@@ -446,24 +443,6 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
               onStart={() => handleStartOptional(item)}
             />
           ))}
-
-          {incompleteTodayItems.length > VISIBLE_ITEMS_DEFAULT && !showAll && (
-            <button
-              onClick={() => setShowAll(true)}
-              className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
-            >
-              Show {incompleteTodayItems.length - VISIBLE_ITEMS_DEFAULT} more
-            </button>
-          )}
-
-          {showAll && incompleteTodayItems.length > VISIBLE_ITEMS_DEFAULT && (
-            <button
-              onClick={() => setShowAll(false)}
-              className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
-            >
-              Show less
-            </button>
-          )}
         </div>
       )}
 

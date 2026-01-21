@@ -9,6 +9,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { EnergyLevel } from '@/src/models/EnergyMenuItem';
 import { useEnergyMenuStore } from '@/src/stores/energyMenuStore';
+import { SectionLabel } from './SectionLabel';
 
 interface EnergyMenuProps {
   energyLevel: EnergyLevel;
@@ -42,18 +43,13 @@ export function EnergyMenu({ energyLevel }: EnergyMenuProps) {
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
+        className="w-full flex items-center justify-between p-3 hover:bg-calm-surface/50 rounded-lg transition-colors"
         aria-expanded={isExpanded}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-lg">💡</span>
-          <span className="text-lg font-medium text-calm-text">
-            Optional ideas ({getLevelLabel()})
-          </span>
-        </div>
+        <SectionLabel>Optional ({getLevelLabel()})</SectionLabel>
 
         <svg
-          className={`w-5 h-5 text-calm-muted transition-transform ${
+          className={`w-3 h-3 text-calm-muted transition-transform ${
             isExpanded ? 'transform rotate-180' : ''
           }`}
           fill="none"

@@ -12,6 +12,7 @@ import { deriveTasksForEnergyMode, useRoutineStore } from '@/src/stores/routineS
 import { useRunStore } from '@/src/stores/runStore';
 import { createRunFromTemplate, canResumeAbandonedRun, resumeAbandonedRun } from '@/src/engine/runEngine';
 import { RoutineCreationModal } from './RoutineCreationModal';
+import { SectionLabel } from './SectionLabel';
 
 interface RoutineCardProps {
   routine: RoutineTemplate;
@@ -121,14 +122,10 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
   const { currentRun, setCurrentRun } = useRunStore();
   const router = useRouter();
 
-  const VISIBLE_ROUTINES_LIMIT = 2;
-  const [showAll, setShowAll] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<RoutineTemplate | null>(null);
   const [deletingRoutine, setDeletingRoutine] = useState<RoutineTemplate | null>(null);
   const [resumeDialogRoutine, setResumeDialogRoutine] = useState<RoutineTemplate | null>(null);
-
-  const visibleRoutines = showAll ? templates : templates.slice(0, VISIBLE_ROUTINES_LIMIT);
 
   const handleStartRoutine = (routine: RoutineTemplate) => {
     // Check if there's an abandoned run from today for the same routine
@@ -177,24 +174,11 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
     }
   };
 
-  const getTitle = () => {
-    switch (energyMode) {
-      case 'low':
-        return 'Your Essential Routines';
-      case 'steady':
-        return 'Your Routines';
-      case 'flow':
-        return 'Your Full Routines';
-      default:
-        return 'Your Routines';
-    }
-  };
-
   if (templates.length === 0) {
     return (
       <>
         <section className="space-y-4">
-          <h2 className="text-2xl font-semibold text-calm-text">{getTitle()}</h2>
+          <SectionLabel>Routines</SectionLabel>
           <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
             <p className="text-calm-muted mb-4">No routines created yet</p>
             <button
@@ -217,17 +201,17 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
     <>
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-calm-text">{getTitle()}</h2>
+          <SectionLabel>Routines</SectionLabel>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
+            className="px-3 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-xs"
           >
             New
           </button>
         </div>
 
         <div className="space-y-3">
-          {visibleRoutines.map((routine) => (
+          {templates.map((routine) => (
             <RoutineCard
               key={routine.id}
               routine={routine}
@@ -237,24 +221,6 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
               onDelete={() => handleDeleteRoutine(routine)}
             />
           ))}
-
-          {templates.length > VISIBLE_ROUTINES_LIMIT && !showAll && (
-            <button
-              onClick={() => setShowAll(true)}
-              className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
-            >
-              View all routines
-            </button>
-          )}
-
-          {showAll && templates.length > VISIBLE_ROUTINES_LIMIT && (
-            <button
-              onClick={() => setShowAll(false)}
-              className="w-full py-3 text-sm text-calm-muted hover:text-calm-text transition-colors"
-            >
-              Show less
-            </button>
-          )}
         </div>
       </section>
 

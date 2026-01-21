@@ -11,8 +11,7 @@ import { useFocusStore } from '@/src/stores/focusStore';
 import { CheckOncePicker } from './CheckOncePicker';
 import { TimeBucketPicker } from './TimeBucketPicker';
 import { TimeBucket } from '@/src/models/FocusItem';
-
-const VISIBLE_ITEMS_DEFAULT = 3;
+import { SectionLabel } from './SectionLabel';
 
 interface BrainDumpProps {
   initialExpanded?: boolean;
@@ -24,7 +23,6 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
   const { addToToday, addToLater, setCheckOnce, setItemTimeBucket } = useFocusStore();
 
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
-  const [showAllItems, setShowAllItems] = useState(false);
   const [inputText, setInputText] = useState('');
   const [showMenuForId, setShowMenuForId] = useState<string | null>(null);
   const [checkOnceItemData, setCheckOnceItemData] = useState<{ id: string; text: string } | null>(null);
@@ -34,8 +32,6 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
   const menuRef = useRef<HTMLDivElement>(null);
 
   const unsortedItems = items.filter((item) => item.status === 'unsorted');
-  const visibleItems = showAllItems ? unsortedItems : unsortedItems.slice(0, VISIBLE_ITEMS_DEFAULT);
-  const remainingCount = Math.max(0, unsortedItems.length - VISIBLE_ITEMS_DEFAULT);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -143,24 +139,22 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
+        className="w-full flex items-center justify-between p-3 hover:bg-calm-surface/50 rounded-lg transition-colors"
         aria-expanded={isExpanded}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-medium text-calm-text">Brain Dump</span>
-        </div>
+        <SectionLabel>Brain Dump</SectionLabel>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {!isExpanded && unsortedItems.length === 0 && (
-            <span className="text-sm text-calm-muted">Tap to capture thoughts</span>
+            <span className="text-[11px] text-calm-muted">Tap to capture</span>
           )}
           {!isExpanded && unsortedItems.length > 0 && (
-            <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
+            <span className="text-[11px] text-calm-muted">
               {unsortedItems.length}
             </span>
           )}
           <svg
-            className={`w-5 h-5 text-calm-muted transition-transform ${
+            className={`w-3 h-3 text-calm-muted transition-transform ${
               isExpanded ? 'transform rotate-180' : ''
             }`}
             fill="none"
@@ -204,7 +198,7 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
           {/* Items list */}
           {unsortedItems.length > 0 && (
             <div className="space-y-2">
-              {visibleItems.map((item) => (
+              {unsortedItems.map((item) => (
                 <div key={item.id}>
                   {editingItemId === item.id ? (
                     // Inline editing UI
@@ -313,23 +307,6 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
                   )}
                 </div>
               ))}
-
-              {remainingCount > 0 && !showAllItems && (
-                <button
-                  onClick={() => setShowAllItems(true)}
-                  className="w-full text-sm text-calm-muted text-center py-2 hover:text-calm-text transition-colors"
-                >
-                  +{remainingCount} more thought{remainingCount === 1 ? '' : 's'}
-                </button>
-              )}
-              {showAllItems && unsortedItems.length > VISIBLE_ITEMS_DEFAULT && (
-                <button
-                  onClick={() => setShowAllItems(false)}
-                  className="w-full text-sm text-calm-muted text-center py-2 hover:text-calm-text transition-colors"
-                >
-                  Show less
-                </button>
-              )}
             </div>
           )}
 

@@ -11,6 +11,7 @@ import { useFocusStore } from '@/src/stores/focusStore';
 import { EditLaterItemModal } from './EditLaterItemModal';
 import { CheckOncePicker } from './CheckOncePicker';
 import { useCheckOnce } from '@/src/hooks/useCheckOnce';
+import { SectionLabel } from './SectionLabel';
 
 interface LaterItemCardProps {
   item: FocusItem;
@@ -252,22 +253,22 @@ export function LaterList() {
         <>
           <button
             onClick={() => setIsCheckOnExpanded(!isCheckOnExpanded)}
-            className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
+            className="w-full flex items-center justify-between p-3 hover:bg-calm-surface/50 rounded-lg transition-colors"
             aria-expanded={isCheckOnExpanded}
           >
-            <span className="text-lg font-medium text-calm-text">Check on</span>
+            <SectionLabel>Check on</SectionLabel>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {!isCheckOnExpanded && due.length > 0 && (
-                <span className="w-2 h-2 bg-calm-text/50 rounded-full" title="Items ready to check" />
+                <span className="w-1.5 h-1.5 bg-calm-muted rounded-full" title="Items ready to check" />
               )}
               {!isCheckOnExpanded && (scheduled.length + due.length) > 0 && (
-                <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
+                <span className="text-[11px] text-calm-muted">
                   {scheduled.length + due.length}
                 </span>
               )}
               <svg
-                className={`w-5 h-5 text-calm-muted transition-transform ${
+                className={`w-3 h-3 text-calm-muted transition-transform ${
                   isCheckOnExpanded ? 'transform rotate-180' : ''
                 }`}
                 fill="none"
@@ -324,19 +325,19 @@ export function LaterList() {
         <>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-between p-4 bg-calm-surface border border-calm-border rounded-lg hover:border-calm-text/30 transition-colors"
+            className="w-full flex items-center justify-between p-3 hover:bg-calm-surface/50 rounded-lg transition-colors"
             aria-expanded={isExpanded}
           >
-            <span className="text-lg font-medium text-calm-text">Later</span>
+            <SectionLabel>Later</SectionLabel>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {!isExpanded && totalLaterItems > 0 && (
-                <span className="px-2 py-0.5 bg-calm-border text-calm-text text-sm rounded-full">
+                <span className="text-[11px] text-calm-muted">
                   {totalLaterItems}
                 </span>
               )}
               <svg
-                className={`w-5 h-5 text-calm-muted transition-transform ${
+                className={`w-3 h-3 text-calm-muted transition-transform ${
                   isExpanded ? 'transform rotate-180' : ''
                 }`}
                 fill="none"
