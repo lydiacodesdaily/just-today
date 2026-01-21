@@ -30,7 +30,7 @@ interface RunStore {
   startCurrentRun: () => void;
   pauseCurrentRun: () => void;
   resumeCurrentRun: () => void;
-  endCurrentRun: () => void;
+  endCurrentRun: () => Promise<void>;
   advanceTask: () => Promise<void>;
   skipCurrentTask: (taskId: string) => Promise<void>;
   extendCurrentTask: (taskId: string, deltaMs: number) => void;
@@ -84,7 +84,7 @@ export const useRunStore = create<RunStore>()(
       },
 
       // End the current run
-      endCurrentRun: () => {
+      endCurrentRun: async () => {
         const { currentRun } = get();
         if (currentRun) {
           const updatedRun = endRun(currentRun);
@@ -109,7 +109,7 @@ export const useRunStore = create<RunStore>()(
           const previousStatus = currentRun.status;
           const updatedRun = await advanceToNextTask(currentRun);
 
-          // If run just completed, count it in snapshot
+          // If run just completed, count it in snapshot and add to CompletedToday
           if (previousStatus !== 'completed' && updatedRun.status === 'completed') {
             // Mark source FocusItem or OptionalItem as completed
             if (updatedRun.sourceFocusItemId) {
@@ -131,6 +131,12 @@ export const useRunStore = create<RunStore>()(
             completedTasks.forEach(() => {
               useSnapshotStore.getState().incrementTodayCounter('routineRunsCompleted');
             });
+
+            // Add routine completion to CompletedToday (only for actual routines, not single focus items)
+            if (!updatedRun.sourceFocusItemId && !updatedRun.sourceOptionalItemId) {
+              const { useFocusStore } = await import('./focusStore');
+              useFocusStore.getState().addRoutineCompletion(updatedRun.templateId, updatedRun.templateName);
+            }
           }
 
           set({ currentRun: updatedRun });

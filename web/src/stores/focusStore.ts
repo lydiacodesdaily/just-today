@@ -8,7 +8,11 @@ import { persist } from 'zustand/middleware';
 import { FocusItem, FocusDuration, ReminderTiming, TimeBucket, calculateReminderDate } from '@/src/models/FocusItem';
 import { useSnapshotStore } from './snapshotStore';
 import type { BrainDumpItem } from '@/src/models/BrainDumpItem';
-import { brainDumpToFocusItem } from '@/src/lib/dnd/conversions';
+import {
+  CompletedTodayEntry,
+  createCompletedTaskEntry,
+  createCompletedRoutineEntry,
+} from '@/src/models/CompletedTodayEntry';
 
 interface FocusStore {
   // State
@@ -17,6 +21,10 @@ interface FocusStore {
   rolloverCount: number;
   lastCheckDate: string; // ISO date string
   completionCelebrationMessage: string | null;
+
+  // Completed Today state - evidence of daily work
+  completedToday: CompletedTodayEntry[];
+  completedTodayDate: string; // YYYY-MM-DD for day reset
 
   // Actions
   addToToday: (title: string, duration: FocusDuration) => void;
@@ -37,8 +45,10 @@ interface FocusStore {
   endFocus: (itemId: string) => void;
   dismissRollover: () => void;
   checkAndRollover: () => void;
-  reorderTodayItems: (activeId: string, overId: string) => void;
-  reorderLaterItems: (activeId: string, overId: string) => void;
+
+  // Completed Today actions
+  undoComplete: (entryId: string) => void;
+  addRoutineCompletion: (routineTemplateId: string, routineName: string) => void;
 }
 
 const getTodayDateString = (): string => {
@@ -73,6 +83,10 @@ export const useFocusStore = create<FocusStore>()(
       lastCheckDate: getTodayDateString(),
       completionCelebrationMessage: null,
 
+      // Completed Today state
+      completedToday: [],
+      completedTodayDate: getTodayDateString(),
+
       // Add to Today
       addToToday: (title, duration) => {
         const item = createFocusItem(title, duration, 'today');
@@ -99,9 +113,9 @@ export const useFocusStore = create<FocusStore>()(
         }));
       },
 
-      // Add from Brain Dump (drag-drop conversion)
+      // Add from Brain Dump (convert to focus item)
       addFromBrainDump: (brainDumpItem, location) => {
-        const focusItem = brainDumpToFocusItem(brainDumpItem, location);
+        const focusItem = createFocusItem(brainDumpItem.text, '~15 min', location);
         set((state) => ({
           todayItems: location === 'today' ? [...state.todayItems, focusItem] : state.todayItems,
           laterItems: location === 'later' ? [...state.laterItems, focusItem] : state.laterItems,
@@ -194,35 +208,35 @@ export const useFocusStore = create<FocusStore>()(
 
       // Complete item
       completeItem: (itemId) => {
-        const now = new Date().toISOString();
-
         set((state) => {
           // Check if item exists and is being completed (not already completed)
           const todayItem = state.todayItems.find((i) => i.id === itemId);
           const laterItem = state.laterItems.find((i) => i.id === itemId);
           const item = todayItem || laterItem;
 
-          // Only increment snapshot if item exists and wasn't already completed
-          if (item && !item.completedAt) {
-            useSnapshotStore.getState().incrementTodayCounter('focusItemsCompleted');
+          if (!item || item.completedAt) return state;
 
-            // Celebrate if item had rollover count
-            if (item.rolloverCount && item.rolloverCount > 0) {
-              set({ completionCelebrationMessage: "You got there in your own time ✓" });
-              // Clear message after 4 seconds
+          // Track in snapshot
+          useSnapshotStore.getState().incrementTodayCounter('focusItemsCompleted');
+
+          // Celebrate if item had rollover count
+          if (item.rolloverCount && item.rolloverCount > 0) {
+            setTimeout(() => {
+              set({ completionCelebrationMessage: "You got there in your own time" });
               setTimeout(() => {
                 set({ completionCelebrationMessage: null });
               }, 4000);
-            }
+            }, 0);
           }
 
+          // Create completed today entry
+          const completedEntry = createCompletedTaskEntry(item.id, item.title);
+
+          // Remove from today/later and add to completedToday
           return {
-            todayItems: state.todayItems.map((item) =>
-              item.id === itemId ? { ...item, completedAt: now } : item
-            ),
-            laterItems: state.laterItems.map((item) =>
-              item.id === itemId ? { ...item, completedAt: now } : item
-            ),
+            todayItems: state.todayItems.filter((i) => i.id !== itemId),
+            laterItems: state.laterItems.filter((i) => i.id !== itemId),
+            completedToday: [...state.completedToday, completedEntry],
           };
         });
       },
@@ -361,7 +375,7 @@ export const useFocusStore = create<FocusStore>()(
       // Check for new day and rollover items
       checkAndRollover: () => {
         const currentDate = getTodayDateString();
-        const { lastCheckDate, todayItems } = get();
+        const { lastCheckDate, todayItems, completedTodayDate } = get();
 
         if (currentDate !== lastCheckDate) {
           // New day detected - rollover incomplete items to Later
@@ -383,56 +397,52 @@ export const useFocusStore = create<FocusStore>()(
                 laterItems: [...state.laterItems, ...rolledItems],
                 rolloverCount: incompleteItems.length,
                 lastCheckDate: currentDate,
+                // Reset CompletedToday on new day
+                completedToday: [],
+                completedTodayDate: currentDate,
               };
             });
           } else {
-            set({ lastCheckDate: currentDate });
+            set({
+              lastCheckDate: currentDate,
+              // Reset CompletedToday on new day
+              completedToday: [],
+              completedTodayDate: currentDate,
+            });
           }
+        }
+
+        // Also check if completedTodayDate is stale (separate from rollover)
+        if (completedTodayDate !== currentDate) {
+          set({
+            completedToday: [],
+            completedTodayDate: currentDate,
+          });
         }
       },
 
-      // Reorder items within Today section
-      reorderTodayItems: (activeId, overId) => {
+      // Undo a completed task (restore to Today)
+      undoComplete: (entryId) => {
         set((state) => {
-          const oldIndex = state.todayItems.findIndex((item) => item.id === activeId);
-          const newIndex = state.todayItems.findIndex((item) => item.id === overId);
+          const entry = state.completedToday.find((e) => e.id === entryId);
+          if (!entry || entry.type !== 'task' || !entry.sourceItemId) return state;
 
-          if (oldIndex === -1 || newIndex === -1) return state;
+          // Create a new focus item from the completed entry
+          const restoredItem = createFocusItem(entry.title, '~15 min', 'today');
 
-          const newItems = [...state.todayItems];
-          const [movedItem] = newItems.splice(oldIndex, 1);
-          newItems.splice(newIndex, 0, movedItem);
-
-          // Update order property for all items
-          const orderedItems = newItems.map((item, index) => ({
-            ...item,
-            order: index,
-          }));
-
-          return { todayItems: orderedItems };
+          return {
+            completedToday: state.completedToday.filter((e) => e.id !== entryId),
+            todayItems: [...state.todayItems, restoredItem],
+          };
         });
       },
 
-      // Reorder items within Later section
-      reorderLaterItems: (activeId, overId) => {
-        set((state) => {
-          const oldIndex = state.laterItems.findIndex((item) => item.id === activeId);
-          const newIndex = state.laterItems.findIndex((item) => item.id === overId);
-
-          if (oldIndex === -1 || newIndex === -1) return state;
-
-          const newItems = [...state.laterItems];
-          const [movedItem] = newItems.splice(oldIndex, 1);
-          newItems.splice(newIndex, 0, movedItem);
-
-          // Update order property for all items
-          const orderedItems = newItems.map((item, index) => ({
-            ...item,
-            order: index,
-          }));
-
-          return { laterItems: orderedItems };
-        });
+      // Add routine completion to Completed Today
+      addRoutineCompletion: (routineTemplateId, routineName) => {
+        const entry = createCompletedRoutineEntry(routineTemplateId, routineName);
+        set((state) => ({
+          completedToday: [...state.completedToday, entry],
+        }));
       },
     }),
     {

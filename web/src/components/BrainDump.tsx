@@ -9,7 +9,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useBrainDumpStore } from '@/src/stores/brainDumpStore';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { CheckOncePicker } from './CheckOncePicker';
-import { DraggableItem, DroppableZone } from './dnd';
+import { TimeBucketPicker } from './TimeBucketPicker';
+import { TimeBucket } from '@/src/models/FocusItem';
 
 const VISIBLE_ITEMS_DEFAULT = 3;
 
@@ -20,13 +21,14 @@ interface BrainDumpProps {
 
 export function BrainDump({ initialExpanded = false, arrivalMode = false }: BrainDumpProps) {
   const { items, addItem, updateItem, deleteItem, keepItem } = useBrainDumpStore();
-  const { addToLater, setCheckOnce } = useFocusStore();
+  const { addToToday, addToLater, setCheckOnce, setItemTimeBucket } = useFocusStore();
 
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [showAllItems, setShowAllItems] = useState(false);
   const [inputText, setInputText] = useState('');
   const [showMenuForId, setShowMenuForId] = useState<string | null>(null);
   const [checkOnceItemData, setCheckOnceItemData] = useState<{ id: string; text: string } | null>(null);
+  const [thinkLaterItemData, setThinkLaterItemData] = useState<{ id: string; text: string } | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
@@ -55,12 +57,38 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
     }
   };
 
-  const handleKeepItem = (itemId: string, itemText: string) => {
+  const handleDoToday = (itemId: string, itemText: string) => {
     // Mark as kept in brain dump
     keepItem(itemId);
-    // Add to Later with default 15-30min duration
-    addToLater(itemText, '~15 min');
+    // Add to Today with default 15min duration
+    addToToday(itemText, '~15 min');
     setShowMenuForId(null);
+  };
+
+  const handleThinkLater = (itemId: string, itemText: string) => {
+    // Show time bucket picker
+    setThinkLaterItemData({ id: itemId, text: itemText });
+    setShowMenuForId(null);
+  };
+
+  const handleThinkLaterConfirm = (timeBucket?: TimeBucket) => {
+    if (thinkLaterItemData) {
+      // Mark as kept in brain dump
+      keepItem(thinkLaterItemData.id);
+      // Add to Later with optional time bucket
+      addToLater(thinkLaterItemData.text, '~15 min');
+      // If time bucket was selected, set it on the newly added item
+      if (timeBucket && timeBucket !== 'NONE') {
+        setTimeout(() => {
+          const laterItems = useFocusStore.getState().laterItems;
+          const newItem = laterItems.find(item => item.title === thinkLaterItemData.text && !item.timeBucket);
+          if (newItem) {
+            setItemTimeBucket(newItem.id, timeBucket);
+          }
+        }, 0);
+      }
+      setThinkLaterItemData(null);
+    }
   };
 
   const handleCheckOnceLater = (itemId: string, itemText: string) => {
@@ -74,9 +102,7 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
       keepItem(checkOnceItemData.id);
       // Add to Later with check once date
       addToLater(checkOnceItemData.text, '~15 min');
-      // Get the newly added item ID (it will be the last one in laterItems after adding)
-      // We need to find it and set the check once date
-      // For now, we'll use a timeout to ensure the item is added first
+      // Get the newly added item ID and set the check once date
       setTimeout(() => {
         const laterItems = useFocusStore.getState().laterItems;
         const newItem = laterItems.find(item => item.title === checkOnceItemData.text && !item.checkOnceDate);
@@ -121,7 +147,6 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
         aria-expanded={isExpanded}
       >
         <div className="flex items-center gap-2">
-          <span className="text-lg">🧠</span>
           <span className="text-lg font-medium text-calm-text">Brain Dump</span>
         </div>
 
@@ -178,9 +203,9 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
 
           {/* Items list */}
           {unsortedItems.length > 0 && (
-            <DroppableZone id="braindump" className="space-y-2">
+            <div className="space-y-2">
               {visibleItems.map((item) => (
-                <div key={item.id} className="group">
+                <div key={item.id}>
                   {editingItemId === item.id ? (
                     // Inline editing UI
                     <div className="bg-calm-surface border border-calm-primary rounded-lg p-3">
@@ -215,74 +240,76 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
                       </div>
                     </div>
                   ) : (
-                    <DraggableItem
-                      id={item.id}
-                      type="braindump"
-                      sourceZone="braindump"
-                      item={item}
-                    >
-                      <div className="bg-calm-surface border border-calm-border rounded-lg rounded-l-none border-l-0 p-3 hover:border-calm-text/30 transition-colors">
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="text-sm text-calm-text flex-1">{item.text}</p>
+                    <div className="bg-calm-surface border border-calm-border rounded-lg p-3 hover:border-calm-text/30 transition-colors">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-sm text-calm-text flex-1">{item.text}</p>
 
-                          <div className="relative" ref={showMenuForId === item.id ? menuRef : null}>
-                            <button
-                              onClick={() =>
-                                setShowMenuForId(showMenuForId === item.id ? null : item.id)
-                              }
-                              className="p-1 hover:bg-calm-border/50 rounded transition-colors"
-                              aria-label="Options"
+                        <div className="relative" ref={showMenuForId === item.id ? menuRef : null}>
+                          <button
+                            onClick={() =>
+                              setShowMenuForId(showMenuForId === item.id ? null : item.id)
+                            }
+                            className="p-1 hover:bg-calm-border/50 rounded transition-colors"
+                            aria-label="Options"
+                          >
+                            <svg
+                              className="w-4 h-4 text-calm-muted"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
                             >
-                              <svg
-                                className="w-4 h-4 text-calm-muted"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                                />
-                              </svg>
-                            </button>
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                              />
+                            </svg>
+                          </button>
 
-                            {showMenuForId === item.id && (
-                              <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
-                                <button
-                                  onClick={() => handleStartEdit(item.id, item.text)}
-                                  className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleKeepItem(item.id, item.text)}
-                                  className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
-                                >
-                                  Keep (Move to Later)
-                                </button>
-                                <button
-                                  onClick={() => handleCheckOnceLater(item.id, item.text)}
-                                  className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
-                                >
-                                  <div>Check once later...</div>
-                                  <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
-                                    Keep and resurface once
-                                  </div>
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteItem(item.id)}
-                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                          {showMenuForId === item.id && (
+                            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+                              <button
+                                onClick={() => handleDoToday(item.id, item.text)}
+                                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors font-medium"
+                              >
+                                Do Today
+                              </button>
+                              <button
+                                onClick={() => handleThinkLater(item.id, item.text)}
+                                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
+                              >
+                                <div>Think Later</div>
+                                <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
+                                  Move to Later with optional time bucket
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => handleStartEdit(item.id, item.text)}
+                                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleCheckOnceLater(item.id, item.text)}
+                                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
+                              >
+                                <div>Check once later...</div>
+                                <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
+                                  Keep and resurface once
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </DraggableItem>
+                    </div>
                   )}
                 </div>
               ))}
@@ -303,15 +330,13 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
                   Show less
                 </button>
               )}
-            </DroppableZone>
+            </div>
           )}
 
           {unsortedItems.length === 0 && (
-            <DroppableZone id="braindump">
-              <p className="text-sm text-calm-muted text-center py-4">
-                No thoughts captured yet
-              </p>
-            </DroppableZone>
+            <p className="text-sm text-calm-muted text-center py-4">
+              No thoughts captured yet
+            </p>
           )}
         </div>
       )}
@@ -321,6 +346,14 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
         <CheckOncePicker
           onConfirm={handleCheckOnceConfirm}
           onCancel={() => setCheckOnceItemData(null)}
+        />
+      )}
+
+      {/* Time Bucket Picker for Think Later */}
+      {thinkLaterItemData && (
+        <TimeBucketPicker
+          onConfirm={handleThinkLaterConfirm}
+          onCancel={() => setThinkLaterItemData(null)}
         />
       )}
     </section>
