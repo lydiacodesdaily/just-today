@@ -1,12 +1,10 @@
 /**
  * LaterList.tsx
  * Later section component - collapsible list for deferred items
- * Now with drag-and-drop reordering and edit modal
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform, Modal } from 'react-native';
-import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
@@ -24,7 +22,7 @@ interface LaterListProps {
 
 export function LaterList({ onStartFocus }: LaterListProps) {
   const theme = useTheme();
-  const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder, setItemTimeBucket, addToLater, reorderLaterItems, setCheckOnce } = useFocus();
+  const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder, setItemTimeBucket, addToLater, setCheckOnce } = useFocus();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -298,76 +296,51 @@ export function LaterList({ onStartFocus }: LaterListProps) {
     }
   };
 
-  const handleDragEnd = ({ data }: { data: FocusItem[] }) => {
-    reorderLaterItems(data);
-  };
-
-  const renderItem = ({ item, drag, isActive }: RenderItemParams<FocusItem>) => {
+  const renderItem = (item: FocusItem) => {
     return (
-      <ScaleDecorator>
-        <View style={[styles.itemRow, isActive && styles.itemRowActive]}>
-          {/* Drag Handle */}
-          <TouchableOpacity
-            onLongPress={drag}
-            delayLongPress={100}
-            style={[styles.dragHandle, { backgroundColor: theme.colors.border }]}
-          >
-            <View style={styles.dragDots}>
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-            </View>
-          </TouchableOpacity>
-
-          {/* Item Content */}
-          <TouchableOpacity
-            style={[styles.item, { backgroundColor: theme.colors.surface }]}
-            onPress={() => handleItemPress(item)}
-            activeOpacity={0.7}
-            disabled={isActive}
-          >
-            <View style={styles.itemContent}>
-              <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-                {item.title}
+      <TouchableOpacity
+        key={item.id}
+        style={[styles.item, { backgroundColor: theme.colors.surface }]}
+        onPress={() => handleItemPress(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.itemContent}>
+          <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+            {item.title}
+          </Text>
+          <View style={styles.itemMeta}>
+            {item.estimatedDuration && (
+              <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
+                {item.estimatedDuration}
               </Text>
-              <View style={styles.itemMeta}>
-                {item.estimatedDuration && (
-                  <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
-                    {item.estimatedDuration}
-                  </Text>
-                )}
-                {item.timeBucket && item.timeBucket !== 'NONE' && (
-                  <Text style={[styles.itemTimeBucket, { color: theme.colors.textSecondary }]}>
-                    • {formatTimeBucket(item.timeBucket)}
-                  </Text>
-                )}
-                {item.reminderDate && (
-                  <Text style={[styles.itemReminder, { color: theme.colors.textSecondary }]}>
-                    • Remind {formatReminderDate(item.reminderDate)}
-                  </Text>
-                )}
-                {item.checkOnceDate && (
-                  <Text style={[styles.itemCheckOnce, { color: theme.colors.primary }]}>
-                    • {formatCheckOnceDate(item.checkOnceDate)}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <TouchableOpacity
-              style={[styles.moveButton, { borderColor: theme.colors.primary }]}
-              onPress={() => moveItemToToday(item.id)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.moveButtonText, { color: theme.colors.primary }]}>
-                ↩ Today
+            )}
+            {item.timeBucket && item.timeBucket !== 'NONE' && (
+              <Text style={[styles.itemTimeBucket, { color: theme.colors.textSecondary }]}>
+                • {formatTimeBucket(item.timeBucket)}
               </Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
+            )}
+            {item.reminderDate && (
+              <Text style={[styles.itemReminder, { color: theme.colors.textSecondary }]}>
+                • Remind {formatReminderDate(item.reminderDate)}
+              </Text>
+            )}
+            {item.checkOnceDate && (
+              <Text style={[styles.itemCheckOnce, { color: theme.colors.primary }]}>
+                • {formatCheckOnceDate(item.checkOnceDate)}
+              </Text>
+            )}
+          </View>
         </View>
-      </ScaleDecorator>
+        <TouchableOpacity
+          style={[styles.moveButton, { borderColor: theme.colors.primary }]}
+          onPress={() => moveItemToToday(item.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.moveButtonText, { color: theme.colors.primary }]}>
+            ↩ Today
+          </Text>
+        </TouchableOpacity>
+      </TouchableOpacity>
     );
   };
 
@@ -451,15 +424,10 @@ export function LaterList({ onStartFocus }: LaterListProps) {
                 Not for today. No rush.
               </Text>
 
-              {/* Items List with Drag and Drop */}
-              <DraggableFlatList
-                data={laterItems}
-                onDragEnd={handleDragEnd}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                scrollEnabled={false}
-                containerStyle={styles.listContainer}
-              />
+              {/* Items List */}
+              <View style={styles.listContainer}>
+                {laterItems.map(renderItem)}
+              </View>
             </View>
           )}
         </>
@@ -626,39 +594,9 @@ const styles = StyleSheet.create({
   listContainer: {
     gap: 10,
   },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    marginBottom: 10,
-  },
-  itemRowActive: {
-    opacity: 0.9,
-    transform: [{ scale: 1.02 }],
-  },
-  dragHandle: {
-    width: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
-  },
-  dragDots: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: 10,
-    gap: 3,
-    justifyContent: 'center',
-  },
-  dragDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-  },
   item: {
-    flex: 1,
     padding: 16,
-    borderTopRightRadius: 12,
-    borderBottomRightRadius: 12,
+    borderRadius: 12,
     gap: 12,
   },
   itemContent: {

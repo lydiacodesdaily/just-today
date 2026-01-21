@@ -1,12 +1,10 @@
 /**
  * TodaysFocus.tsx
  * Today's Focus section component - displays items for today only
- * Now with drag-and-drop reordering
  */
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
-import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
 import { FocusItem, formatCheckOnceDate } from '../models/FocusItem';
@@ -23,7 +21,7 @@ interface TodaysFocusProps {
 
 export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
   const theme = useTheme();
-  const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage, addToToday, reorderTodayItems, setCheckOnce } = useFocus();
+  const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage, addToToday, setCheckOnce } = useFocus();
   const [showExamples, setShowExamples] = useState(false);
   const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
@@ -130,62 +128,37 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
     }
   };
 
-  const handleDragEnd = ({ data }: { data: FocusItem[] }) => {
-    reorderTodayItems(data);
-  };
-
-  const renderItem = ({ item, drag, isActive }: RenderItemParams<FocusItem>) => {
+  const renderItem = (item: FocusItem) => {
     return (
-      <ScaleDecorator>
-        <View style={[styles.itemRow, isActive && styles.itemRowActive]}>
-          {/* Drag Handle */}
-          <TouchableOpacity
-            onLongPress={drag}
-            delayLongPress={100}
-            style={[styles.dragHandle, { backgroundColor: theme.colors.border }]}
-          >
-            <View style={styles.dragDots}>
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-              <View style={[styles.dragDot, { backgroundColor: theme.colors.textTertiary }]} />
-            </View>
-          </TouchableOpacity>
-
-          {/* Item Content */}
-          <TouchableOpacity
-            style={[styles.item, { backgroundColor: theme.colors.surface }]}
-            onPress={() => handleItemPress(item)}
-            activeOpacity={0.7}
-            disabled={isActive}
-          >
-            <View style={styles.itemContent}>
-              <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-                {item.title}
+      <TouchableOpacity
+        key={item.id}
+        style={[styles.item, { backgroundColor: theme.colors.surface }]}
+        onPress={() => handleItemPress(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.itemContent}>
+          <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+            {item.title}
+          </Text>
+          <View style={styles.itemMeta}>
+            {item.estimatedDuration && (
+              <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
+                {item.estimatedDuration}
               </Text>
-              <View style={styles.itemMeta}>
-                {item.estimatedDuration && (
-                  <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
-                    {item.estimatedDuration}
-                  </Text>
-                )}
-                {item.checkOnceDate && (
-                  <Text style={[styles.checkOnceDate, { color: theme.colors.primary }]}>
-                    • {formatCheckOnceDate(item.checkOnceDate)}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View style={styles.itemActions}>
-              <Text style={[styles.itemActionHint, { color: theme.colors.textSecondary }]}>
-                Tap for options
+            )}
+            {item.checkOnceDate && (
+              <Text style={[styles.checkOnceDate, { color: theme.colors.primary }]}>
+                • {formatCheckOnceDate(item.checkOnceDate)}
               </Text>
-            </View>
-          </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </ScaleDecorator>
+        <View style={styles.itemActions}>
+          <Text style={[styles.itemActionHint, { color: theme.colors.textSecondary }]}>
+            Tap for options
+          </Text>
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -235,15 +208,8 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
         </View>
       ) : (
         <View style={styles.itemsList}>
-          {/* Items List with Drag and Drop - Phase 1: Show all items */}
-          <DraggableFlatList
-            data={todayItems}
-            onDragEnd={handleDragEnd}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            scrollEnabled={false}
-            containerStyle={styles.listContainer}
-          />
+          {/* Items List - Phase 1: Show all items */}
+          {todayItems.map(renderItem)}
 
           {/* Add Another Button */}
           <TouchableOpacity
@@ -325,41 +291,9 @@ const styles = StyleSheet.create({
   itemsList: {
     gap: 10,
   },
-  listContainer: {
-    gap: 10,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  itemRowActive: {
-    opacity: 0.9,
-    transform: [{ scale: 1.02 }],
-  },
-  dragHandle: {
-    width: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
-  },
-  dragDots: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: 10,
-    gap: 3,
-    justifyContent: 'center',
-  },
-  dragDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-  },
   item: {
-    flex: 1,
     padding: 16,
-    borderTopRightRadius: 12,
-    borderBottomRightRadius: 12,
+    borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
