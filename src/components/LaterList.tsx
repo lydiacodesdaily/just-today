@@ -16,6 +16,7 @@ import { shouldShowLaterExamples } from '../persistence/onboardingStore';
 import { CoachMark } from './CoachMark';
 import { EditLaterItemModal } from './EditLaterItemModal';
 import { CheckOncePicker } from './CheckOncePicker';
+import { SectionLabel } from './SectionLabel';
 
 interface LaterListProps {
   onStartFocus: (item: FocusItem) => void;
@@ -382,9 +383,7 @@ export function LaterList({ onStartFocus }: LaterListProps) {
       {laterItems.length === 0 ? (
         <View style={styles.emptyContainer}>
           <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              Later
-            </Text>
+            <SectionLabel>Later</SectionLabel>
           </View>
 
           <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
@@ -428,21 +427,19 @@ export function LaterList({ onStartFocus }: LaterListProps) {
         </View>
       ) : (
         <>
-          {/* Collapsed Header */}
+          {/* Collapsed Header - Phase 1: reduced prominence */}
           <TouchableOpacity
             style={styles.header}
             onPress={() => setIsExpanded(!isExpanded)}
             activeOpacity={0.7}
           >
             <View style={styles.headerContent}>
-              <Text style={[styles.title, { color: theme.colors.text }]}>
-                Later
-              </Text>
-              <Text style={[styles.count, { color: theme.colors.textSecondary }]}>
-                ({laterItems.length} {laterItems.length === 1 ? 'item' : 'items'})
+              <SectionLabel>Later</SectionLabel>
+              <Text style={[styles.count, { color: theme.colors.textTertiary }]}>
+                ({laterItems.length})
               </Text>
             </View>
-            <Text style={[styles.expandIcon, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.expandIcon, { color: theme.colors.textTertiary }]}>
               {isExpanded ? '▼' : '▶'}
             </Text>
           </TouchableOpacity>
@@ -609,18 +606,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
   count: {
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 11,
+    fontWeight: '500',
   },
   expandIcon: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
   },
   expandedContent: {
     gap: 12,

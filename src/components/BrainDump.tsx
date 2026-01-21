@@ -22,6 +22,7 @@ import { useFocus } from '../context/FocusContext';
 import { BrainDumpItem } from '../models/BrainDumpItem';
 import { shouldShowBrainDumpExample } from '../persistence/onboardingStore';
 import { CoachMark } from './CoachMark';
+import { SectionLabel } from './SectionLabel';
 
 interface BrainDumpProps {
   isExpanded: boolean;
@@ -134,18 +135,24 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
   // Display only the last 3 items
   const recentItems = items.slice(-3).reverse();
 
+  // Phase 1 UX redesign: Collapsed state with reduced prominence
   if (!isExpanded) {
     return (
       <TouchableOpacity
-        style={[styles.collapsedContainer, { backgroundColor: theme.colors.surface }]}
+        style={styles.collapsedContainer}
         onPress={onToggle}
         activeOpacity={0.7}
       >
-        <Text style={[styles.collapsedTitle, { color: theme.colors.text }]}>
-          🧠 Brain Dump
-        </Text>
-        <Text style={[styles.collapsedHint, { color: theme.colors.textSecondary }]}>
-          Tap to capture thoughts
+        <View style={styles.collapsedHeader}>
+          <SectionLabel>Brain Dump</SectionLabel>
+          {items.length > 0 && (
+            <Text style={[styles.collapsedCount, { color: theme.colors.textTertiary }]}>
+              ({items.length})
+            </Text>
+          )}
+        </View>
+        <Text style={[styles.collapsedHint, { color: theme.colors.textTertiary }]}>
+          {items.length === 0 ? 'Tap to capture thoughts' : 'Tap to expand'}
         </Text>
       </TouchableOpacity>
     );
@@ -160,12 +167,10 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
           message="Dump it messy. You can sort later — or not."
         />
 
-        {/* Section Header */}
+        {/* Section Header - Phase 1: 11px caps label */}
         <TouchableOpacity onPress={onToggle} activeOpacity={0.7}>
           <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              Brain Dump
-            </Text>
+            <SectionLabel>Brain Dump</SectionLabel>
           </View>
         </TouchableOpacity>
 
@@ -362,19 +367,23 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
 
 const styles = StyleSheet.create({
   collapsedContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingHorizontal: 4,
+    paddingVertical: 8,
     gap: 4,
   },
-  collapsedTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    letterSpacing: -0.3,
+  collapsedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  collapsedCount: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   collapsedHint: {
-    fontSize: 13,
+    fontSize: 12,
     letterSpacing: 0.1,
+    paddingLeft: 4,
   },
   container: {
     gap: 16,
@@ -382,16 +391,6 @@ const styles = StyleSheet.create({
   header: {
     gap: 4,
     paddingHorizontal: 4,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
-  helperText: {
-    fontSize: 13,
-    letterSpacing: 0.1,
-    lineHeight: 18,
   },
   emptyState: {
     padding: 32,

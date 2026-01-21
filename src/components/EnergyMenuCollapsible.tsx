@@ -5,10 +5,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../constants/theme';
 import { EnergyMenuItem, EnergyLevel } from '../models/EnergyMenuItem';
 import { getEnergyMenuItemsByLevel } from '../persistence/energyMenuStore';
+import { SectionLabel } from './SectionLabel';
 
 interface EnergyMenuCollapsibleProps {
   energyMode: EnergyLevel;
@@ -40,52 +41,36 @@ export function EnergyMenuCollapsible({
     return null;
   }
 
-  const energyLabels = {
-    low: { icon: '💤', label: 'Low energy' },
-    steady: { icon: '🌱', label: 'Steady' },
-    flow: { icon: '✨', label: 'Flow' },
-  };
-
-  const { icon, label } = energyLabels[energyMode];
+  // Energy labels kept for potential future use but not needed for Phase 1 simplified header
 
   return (
     <View style={styles.container}>
-      {/* Collapsed State (Default) */}
+      {/* Collapsed State (Default) - Phase 1: reduced prominence */}
       {!isExpanded ? (
         <TouchableOpacity
-          style={[styles.collapsedButton, { backgroundColor: theme.colors.surface }]}
+          style={styles.collapsedButton}
           onPress={onToggle}
           activeOpacity={0.7}
         >
           <View style={styles.collapsedContent}>
-            <Text style={styles.collapsedIcon}>{icon}</Text>
-            <View style={styles.collapsedText}>
-              <Text style={[styles.collapsedTitle, { color: theme.colors.text }]}>
-                Optional ideas ({label})
-              </Text>
-              <Text style={[styles.collapsedSubtitle, { color: theme.colors.textSecondary }]}>
-                Tap to see
-              </Text>
-            </View>
+            <SectionLabel>Optional Ideas</SectionLabel>
+            <Text style={[styles.collapsedHint, { color: theme.colors.textTertiary }]}>
+              Tap to see
+            </Text>
           </View>
-          <Text style={[styles.expandIcon, { color: theme.colors.textSecondary }]}>▶</Text>
+          <Text style={[styles.expandIcon, { color: theme.colors.textTertiary }]}>▶</Text>
         </TouchableOpacity>
       ) : (
         /* Expanded State */
         <View style={[styles.expandedContainer, { backgroundColor: theme.colors.surface }]}>
-          {/* Header */}
+          {/* Header - Phase 1: 11px caps label */}
           <TouchableOpacity
             style={styles.expandedHeader}
             onPress={onToggle}
             activeOpacity={0.7}
           >
-            <View style={styles.collapsedContent}>
-              <Text style={styles.collapsedIcon}>{icon}</Text>
-              <Text style={[styles.expandedTitle, { color: theme.colors.text }]}>
-                Optional ideas ({label})
-              </Text>
-            </View>
-            <Text style={[styles.expandIcon, { color: theme.colors.textSecondary }]}>▼</Text>
+            <SectionLabel>Optional Ideas</SectionLabel>
+            <Text style={[styles.expandIcon, { color: theme.colors.textTertiary }]}>▼</Text>
           </TouchableOpacity>
 
           {/* Items List */}
@@ -125,38 +110,26 @@ const styles = StyleSheet.create({
   container: {
     // Minimal container
   },
-  // Collapsed state
+  // Collapsed state - Phase 1: reduced prominence
   collapsedButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   collapsedContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
-  collapsedIcon: {
-    fontSize: 20,
-  },
-  collapsedText: {
-    gap: 2,
-  },
-  collapsedTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-  },
-  collapsedSubtitle: {
-    fontSize: 13,
+  collapsedHint: {
+    fontSize: 12,
     fontWeight: '400',
   },
   expandIcon: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   // Expanded state
   expandedContainer: {
@@ -170,11 +143,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 4,
-  },
-  expandedTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: -0.1,
   },
   itemsList: {
     gap: 8,

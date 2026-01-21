@@ -20,6 +20,7 @@ import { TodaysFocus } from '../../src/components/TodaysFocus';
 import { LaterList } from '../../src/components/LaterList';
 import { BrainDump } from '../../src/components/BrainDump';
 import { AddFocusItemModal } from '../../src/components/AddFocusItemModal';
+import { SectionLabel } from '../../src/components/SectionLabel';
 import { FocusItem } from '../../src/models/FocusItem';
 
 export default function HomeScreen() {
@@ -33,7 +34,6 @@ export default function HomeScreen() {
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
   const [isBrainDumpExpanded, setIsBrainDumpExpanded] = useState(false);
   const [isEnergyMenuExpanded, setIsEnergyMenuExpanded] = useState(false);
-  const [isRoutinesExpanded, setIsRoutinesExpanded] = useState(false);
 
   // Prompt user to resume or discard saved run
   useEffect(() => {
@@ -191,11 +191,7 @@ export default function HomeScreen() {
     await addToToday(title, duration);
   };
 
-  // Routines collapsible logic - show 1-2 routines by default
-  const VISIBLE_ROUTINES_LIMIT = 2;
-  const hasMoreRoutines = templates.length > VISIBLE_ROUTINES_LIMIT;
-  const visibleRoutines = isRoutinesExpanded ? templates : templates.slice(0, VISIBLE_ROUTINES_LIMIT);
-  const hiddenRoutinesCount = templates.length - VISIBLE_ROUTINES_LIMIT;
+  // Phase 1 UX redesign: Show all routines (no more "View all" anxiety)
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -240,21 +236,12 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* 4. Routines section */}
+        {/* 4. Routines section - Phase 1: 11px caps label */}
         <View style={styles.routinesSection}>
           <View style={styles.routinesHeader}>
-            <View>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                {energyMode === 'low' && 'Your Essential Routines'}
-                {energyMode === 'steady' && 'Your Routines'}
-                {energyMode === 'flow' && 'Your Full Routines'}
-              </Text>
-              <Text style={[styles.sectionSubtitle, { color: theme.colors.textSecondary }]}>
-                {energyMode === 'low' && 'Just the essentials'}
-                {energyMode === 'steady' && 'Your usual pace'}
-                {energyMode === 'flow' && 'Everything included'}
-              </Text>
-            </View>
+            <SectionLabel>
+              {energyMode === 'low' ? 'Essential Routines' : energyMode === 'flow' ? 'Full Routines' : 'Routines'}
+            </SectionLabel>
             <TouchableOpacity
               style={[
                 styles.createButton,
@@ -306,7 +293,7 @@ export default function HomeScreen() {
             </View>
           ) : (
             <View style={styles.routinesList}>
-              {visibleRoutines.map((template) => (
+              {templates.map((template) => (
                 <RoutineCard
                   key={template.id}
                   routine={template}
@@ -315,19 +302,6 @@ export default function HomeScreen() {
                   onEdit={() => handleEditRoutine(template)}
                 />
               ))}
-
-              {/* Expand/Collapse affordance */}
-              {hasMoreRoutines && (
-                <TouchableOpacity
-                  style={styles.viewAllButton}
-                  onPress={() => setIsRoutinesExpanded(!isRoutinesExpanded)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.viewAllText, { color: theme.colors.textSecondary }]}>
-                    {isRoutinesExpanded ? 'Show less' : 'View all routines'}
-                  </Text>
-                </TouchableOpacity>
-              )}
             </View>
           )}
         </View>
@@ -500,18 +474,9 @@ const styles = StyleSheet.create({
   routinesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 12,
     gap: 12,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
   },
   createButton: {
     paddingHorizontal: 16,
@@ -560,17 +525,6 @@ const styles = StyleSheet.create({
   },
   routinesList: {
     gap: 12,
-  },
-  viewAllButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  viewAllText: {
-    fontSize: 15,
-    fontWeight: '500',
-    letterSpacing: 0.1,
   },
   resumeSection: {
     marginTop: 24,

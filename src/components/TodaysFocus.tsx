@@ -14,6 +14,7 @@ import { shouldShowTodayExamples } from '../persistence/onboardingStore';
 import { CoachMark } from './CoachMark';
 import { CheckOncePicker } from './CheckOncePicker';
 import { EditTodayItemModal } from './EditTodayItemModal';
+import { SectionLabel } from './SectionLabel';
 
 interface TodaysFocusProps {
   onStartFocus: (item: FocusItem) => void;
@@ -23,7 +24,6 @@ interface TodaysFocusProps {
 export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
   const theme = useTheme();
   const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage, addToToday, reorderTodayItems, setCheckOnce } = useFocus();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
@@ -40,11 +40,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
     setShowExamples(false);
   };
 
-  // Show up to 3 items by default
-  const VISIBLE_ITEMS_LIMIT = 3;
-  const hasMoreItems = todayItems.length > VISIBLE_ITEMS_LIMIT;
-  const visibleItems = isExpanded ? todayItems : todayItems.slice(0, VISIBLE_ITEMS_LIMIT);
-  const hiddenCount = todayItems.length - VISIBLE_ITEMS_LIMIT;
+  // Phase 1 UX redesign: Show all items (no more "Show More" anxiety)
 
   // Show rollover message if items were moved from yesterday
   React.useEffect(() => {
@@ -135,13 +131,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
   };
 
   const handleDragEnd = ({ data }: { data: FocusItem[] }) => {
-    // If we're showing only a subset, we need to preserve items not shown
-    if (!isExpanded && hasMoreItems) {
-      const hiddenItems = todayItems.slice(VISIBLE_ITEMS_LIMIT);
-      reorderTodayItems([...data, ...hiddenItems]);
-    } else {
-      reorderTodayItems(data);
-    }
+    reorderTodayItems(data);
   };
 
   const renderItem = ({ item, drag, isActive }: RenderItemParams<FocusItem>) => {
@@ -207,11 +197,9 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
         message="Add 1–3 items. That's enough."
       />
 
-      {/* Section Header */}
+      {/* Section Header - Phase 1: 11px caps label + smaller title */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          Today's Focus
-        </Text>
+        <SectionLabel>Today's Focus</SectionLabel>
       </View>
 
       {/* Empty State */}
@@ -247,28 +235,15 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
         </View>
       ) : (
         <View style={styles.itemsList}>
-          {/* Items List with Drag and Drop */}
+          {/* Items List with Drag and Drop - Phase 1: Show all items */}
           <DraggableFlatList
-            data={visibleItems}
+            data={todayItems}
             onDragEnd={handleDragEnd}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
             scrollEnabled={false}
             containerStyle={styles.listContainer}
           />
-
-          {/* Expand/Collapse affordance */}
-          {hasMoreItems && (
-            <TouchableOpacity
-              style={styles.expandButton}
-              onPress={() => setIsExpanded(!isExpanded)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.expandText, { color: theme.colors.textSecondary }]}>
-                {isExpanded ? 'Show less' : `+ ${hiddenCount} more (optional)`}
-              </Text>
-            </TouchableOpacity>
-          )}
 
           {/* Add Another Button */}
           <TouchableOpacity
@@ -308,16 +283,6 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: 4,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
-  helperText: {
-    fontSize: 14,
-    fontWeight: '400',
-    letterSpacing: 0.1,
   },
   emptyState: {
     padding: 32,
@@ -439,16 +404,5 @@ const styles = StyleSheet.create({
   addAnotherText: {
     fontSize: 15,
     fontWeight: '600',
-  },
-  expandButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  expandText: {
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: 0.1,
   },
 });
