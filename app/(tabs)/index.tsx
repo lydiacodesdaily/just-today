@@ -22,16 +22,19 @@ import { BrainDump } from '../../src/components/BrainDump';
 import { AddFocusItemModal } from '../../src/components/AddFocusItemModal';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { FocusItem } from '../../src/models/FocusItem';
+import { CaptureScreen } from '../../src/components/CaptureScreen';
+import { RoutinePickerSheet } from '../../src/components/RoutinePickerSheet';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { setCurrentRun, currentRun } = useRun();
-  const { startItemFocus, addToToday, refreshItems } = useFocus();
+  const { todayItems, startItemFocus, addToToday, refreshItems } = useFocus();
   const { currentMode: energyMode } = useEnergy();
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
+  const [showRoutinePicker, setShowRoutinePicker] = useState(false);
   const [isBrainDumpExpanded, setIsBrainDumpExpanded] = useState(false);
   const [isEnergyMenuExpanded, setIsEnergyMenuExpanded] = useState(false);
 
@@ -192,6 +195,37 @@ export default function HomeScreen() {
   };
 
   // Phase 1 UX redesign: Show all routines (no more "View all" anxiety)
+
+  // Phase 2 UX redesign: Show CaptureScreen when no items committed for today
+  if (todayItems.length === 0 && !currentRun) {
+    return (
+      <>
+        <CaptureScreen
+          onPickItem={() => setShowAddFocusModal(true)}
+          onStartRoutine={() => setShowRoutinePicker(true)}
+        />
+        <AddFocusItemModal
+          visible={showAddFocusModal}
+          onClose={() => setShowAddFocusModal(false)}
+          onAdd={handleAddFocusItem}
+          defaultLocation="today"
+        />
+        <RoutinePickerSheet
+          visible={showRoutinePicker}
+          onClose={() => setShowRoutinePicker(false)}
+          routines={templates}
+          onStartRoutine={(routine) => {
+            setShowRoutinePicker(false);
+            handleStartRoutine(routine);
+          }}
+          onCreateRoutine={() => {
+            setShowRoutinePicker(false);
+            router.push('/routine/new');
+          }}
+        />
+      </>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
