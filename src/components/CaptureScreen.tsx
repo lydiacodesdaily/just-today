@@ -129,11 +129,6 @@ export function CaptureScreen({ onPickItem, onStartRoutine }: CaptureScreenProps
             value={inputText}
             onChangeText={setInputText}
             onSubmitEditing={handleAddCapture}
-            onBlur={() => {
-              if (inputText.trim()) {
-                handleAddCapture();
-              }
-            }}
             returnKeyType="done"
             multiline
             blurOnSubmit
