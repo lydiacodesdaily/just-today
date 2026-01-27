@@ -4,7 +4,7 @@
  * Shown when user has no committed items for today
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {
   ActionSheetIOS,
   Alert,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { useTheme } from '../constants/theme';
 import { useBrainDump } from '../context/BrainDumpContext';
@@ -33,14 +34,74 @@ export function CaptureScreen({ onPickItem, onStartRoutine, onViewToday }: Captu
   const { items, addItem, deleteItem } = useBrainDump();
   const { addFromBrainDump } = useFocus();
   const [inputText, setInputText] = useState('');
+  const [showPostCaptureToast, setShowPostCaptureToast] = useState(false);
+  const [justCapturedId, setJustCapturedId] = useState<string | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const highlightOpacity = useRef(new Animated.Value(0)).current;
 
   // Display only the last 3 items (most recent first)
   const recentItems = items.slice(-3).reverse();
 
+  // Toast animation handler
+  useEffect(() => {
+    if (showPostCaptureToast) {
+      // Fade in
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+
+      // Auto-hide after 3 seconds
+      const timer = setTimeout(() => {
+        Animated.timing(toastOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowPostCaptureToast(false);
+        });
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showPostCaptureToast, toastOpacity]);
+
+  // Highlight animation handler
+  useEffect(() => {
+    if (justCapturedId) {
+      // Pulse highlight
+      Animated.sequence([
+        Animated.timing(highlightOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(highlightOpacity, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setJustCapturedId(null);
+      });
+    }
+  }, [justCapturedId, highlightOpacity]);
+
   const handleAddCapture = async () => {
     if (!inputText.trim()) return;
-    await addItem(inputText.trim());
+    const newItem = await addItem(inputText.trim());
     setInputText('');
+
+    // Trigger post-capture feedback
+    setShowPostCaptureToast(true);
+    setJustCapturedId(newItem.id);
+
+    // Auto-scroll to show recent captures
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: 300, animated: true });
+    }, 100);
   };
 
   const handleCapturePress = (item: BrainDumpItem) => {
@@ -96,12 +157,56 @@ export function CaptureScreen({ onPickItem, onStartRoutine, onViewToday }: Captu
     await deleteItem(item.id);
   };
 
+  // Dynamic bottom prompt based on capture count
+  const getBottomPrompt = () => {
+    if (items.length === 0) {
+      return "Ready to do something?";
+    } else if (items.length <= 2) {
+      return `Nice! Got ${items.length} ${items.length === 1 ? 'idea' : 'ideas'} saved. Pick one to start?`;
+    } else {
+      return `You have ${items.length} ideas. Let's pick one to work on!`;
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* Post-capture confirmation toast */}
+      {showPostCaptureToast && (
+        <Animated.View
+          style={[
+            styles.toast,
+            {
+              backgroundColor: theme.colors.successSubtle,
+              borderColor: theme.colors.success,
+              opacity: toastOpacity,
+            },
+          ]}
+        >
+          <View style={styles.toastContent}>
+            <Text style={[styles.toastText, { color: theme.colors.text }]}>
+              Captured! You have {items.length} {items.length === 1 ? 'idea' : 'ideas'} saved
+            </Text>
+            <TouchableOpacity
+              style={styles.toastAction}
+              onPress={() => {
+                setShowPostCaptureToast(false);
+                onPickItem();
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.toastActionText, { color: theme.colors.success }]}>
+                Pick one now →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      )}
+
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -169,25 +274,45 @@ export function CaptureScreen({ onPickItem, onStartRoutine, onViewToday }: Captu
             <Text style={[styles.capturesHint, { color: theme.colors.textTertiary }]}>
               Items here disappear in 24 hours unless you move them.
             </Text>
-            {recentItems.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  styles.captureItem,
-                  { backgroundColor: theme.colors.surface },
-                ]}
-                onPress={() => handleCapturePress(item)}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[styles.captureText, { color: theme.colors.textSecondary }]}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
+            {recentItems.map((item) => {
+              const isJustCaptured = item.id === justCapturedId;
+              return (
+                <Animated.View
+                  key={item.id}
+                  style={[
+                    styles.captureItemWrapper,
+                    isJustCaptured && {
+                      opacity: highlightOpacity.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 1],
+                      }),
+                      backgroundColor: highlightOpacity.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['transparent', theme.colors.successSubtle],
+                      } as any),
+                      borderRadius: 10,
+                    },
+                  ]}
                 >
-                  {item.text}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <TouchableOpacity
+                    style={[
+                      styles.captureItem,
+                      { backgroundColor: theme.colors.surface },
+                    ]}
+                    onPress={() => handleCapturePress(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[styles.captureText, { color: theme.colors.textSecondary }]}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
+                      {item.text}
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            })}
             {items.length > 3 && (
               <Text style={[styles.moreHint, { color: theme.colors.textTertiary }]}>
                 +{items.length - 3} more
@@ -200,23 +325,44 @@ export function CaptureScreen({ onPickItem, onStartRoutine, onViewToday }: Captu
         <View style={styles.spacer} />
       </ScrollView>
 
-      {/* Bottom actions - de-emphasized */}
+      {/* Bottom actions - becomes more prominent after captures */}
       <View style={[styles.bottomSection, { borderTopColor: theme.colors.borderSubtle }]}>
-        <Text style={[styles.bottomPrompt, { color: theme.colors.textTertiary }]}>
-          Ready to do something?
+        <Text style={[styles.bottomPrompt, { color: items.length > 0 ? theme.colors.text : theme.colors.textTertiary }]}>
+          {getBottomPrompt()}
         </Text>
         <View style={styles.bottomActions}>
           <TouchableOpacity
-            style={styles.bottomButton}
+            style={[
+              styles.bottomButton,
+              items.length > 0 && [
+                styles.bottomButtonElevated,
+                {
+                  backgroundColor: theme.colors.primarySubtle,
+                  borderColor: theme.colors.primary,
+                },
+              ],
+            ]}
             onPress={onPickItem}
             activeOpacity={0.7}
           >
-            <Text style={[styles.bottomButtonText, { color: theme.colors.textSecondary }]}>
+            <Text style={[
+              styles.bottomButtonText,
+              { color: items.length > 0 ? theme.colors.primary : theme.colors.textSecondary },
+            ]}>
               Pick one thing
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.bottomButton}
+            style={[
+              styles.bottomButton,
+              items.length > 0 && [
+                styles.bottomButtonElevated,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.borderSubtle,
+                },
+              ],
+            ]}
             onPress={onStartRoutine}
             activeOpacity={0.7}
           >
@@ -241,6 +387,37 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 60,
+  },
+  toast: {
+    position: 'absolute',
+    top: 60,
+    left: 24,
+    right: 24,
+    zIndex: 1000,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  toastContent: {
+    gap: 8,
+  },
+  toastText: {
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 21,
+  },
+  toastAction: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+  },
+  toastActionText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   headerSection: {
     marginBottom: 32,
@@ -305,6 +482,9 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginBottom: 4,
   },
+  captureItemWrapper: {
+    marginBottom: 0,
+  },
   captureItem: {
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -342,6 +522,17 @@ const styles = StyleSheet.create({
   bottomButton: {
     paddingVertical: 8,
     paddingHorizontal: 4,
+  },
+  bottomButtonElevated: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   bottomButtonText: {
     fontSize: 14,
