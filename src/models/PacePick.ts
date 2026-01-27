@@ -1,33 +1,33 @@
 /**
- * EnergyMenuItem.ts
- * Defines Energy Menu items - reusable optional actions tagged by energy level.
+ * PacePick.ts
+ * Defines Pace Pick items - reusable optional actions tagged by pace.
  *
- * Energy Menu items are NOT routines and never become part of routine templates.
+ * Pace Pick items are NOT routines and never become part of routine templates.
  * They are optional actions that users can add to Today based on their current capacity.
  */
 
-export type EnergyLevel = 'low' | 'steady' | 'flow';
+export type PaceTag = 'low' | 'steady' | 'flow';
 export type EstimatedDuration = '~5 min' | '~10 min' | '~15 min' | '~25 min';
 
 /**
- * An Energy Menu item - a reusable action that can be added to Today
+ * A Pace Pick item - a reusable action that can be added to Today
  */
-export interface EnergyMenuItem {
+export interface PacePick {
   id: string;
   title: string;
-  energyLevel: EnergyLevel;
+  paceTag: PaceTag;
   estimatedDuration?: EstimatedDuration;
   createdAt: number;
   updatedAt: number;
 }
 
 /**
- * A Today Optional Item - an instance of an Energy Menu item added to Today
+ * A Today Optional Item - an instance of a Pace Pick added to Today
  * These expire daily and do not roll over.
  */
 export interface TodayOptionalItem {
   id: string; // unique ID for this instance
-  menuItemId: string; // references the EnergyMenuItem
+  menuItemId: string; // references the PacePick
   title: string;
   estimatedDuration?: EstimatedDuration;
   addedAt: number;

@@ -3,11 +3,11 @@
  * Core functions for managing routine run lifecycle.
  */
 
-import { RoutineTemplate, EnergyMode } from '../models/RoutineTemplate';
+import { RoutineTemplate, Pace } from '../models/RoutineTemplate';
 import { RoutineRun, RunTask, RunSubtask } from '../models/RoutineRun';
-import { TodayOptionalItem } from '../models/EnergyMenuItem';
+import { TodayOptionalItem } from '../models/PacePick';
 import { FocusItem, durationToMs } from '../models/FocusItem';
-import { deriveTasksForEnergyMode } from './energyDerivation';
+import { deriveTasksForPace } from './paceDerivation';
 import {
   getTaskCompletionMessage,
   getTaskSkipMessage,
@@ -21,14 +21,14 @@ import {
 import { speak } from '../lib/audio/tts';
 
 /**
- * Creates a new RoutineRun from a template and energy mode.
- * Tasks are filtered based on energy mode and converted to RunTask instances.
+ * Creates a new RoutineRun from a template and pace.
+ * Tasks are filtered based on pace and converted to RunTask instances.
  */
 export function createRunFromTemplate(
   template: RoutineTemplate,
-  energyMode: EnergyMode
+  pace: Pace
 ): RoutineRun {
-  const visibleTasks = deriveTasksForEnergyMode(template.tasks, energyMode);
+  const visibleTasks = deriveTasksForPace(template.tasks, pace);
 
   // Sort by order
   const sortedTasks = [...visibleTasks].sort((a, b) => a.order - b.order);
@@ -61,7 +61,7 @@ export function createRunFromTemplate(
     id: `run-${template.id}-${Date.now()}`,
     templateId: template.id,
     templateName: template.name,
-    energyMode,
+    pace,
     tasks: runTasks,
     status: 'notStarted',
     createdAt: Date.now(),
@@ -109,7 +109,7 @@ export function createRunFromOptionalItem(item: TodayOptionalItem): RoutineRun {
     id: `optional-run-${item.id}-${Date.now()}`,
     templateId: 'optional-item',
     templateName: `Optional: ${item.title}`,
-    energyMode: 'steady', // Default energy mode for optional items
+    pace: 'steady', // Default pace for optional items
     tasks: [runTask],
     status: 'notStarted',
     createdAt: Date.now(),
@@ -152,7 +152,7 @@ export function createRunFromFocusItem(item: FocusItem): RoutineRun {
     id: `focus-run-${item.id}-${Date.now()}`,
     templateId: 'focus-item',
     templateName: item.title,
-    energyMode: 'steady', // Default energy mode for focus items
+    pace: 'steady', // Default pace for focus items
     tasks: [runTask],
     status: 'notStarted',
     createdAt: Date.now(),

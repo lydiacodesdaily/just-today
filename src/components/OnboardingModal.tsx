@@ -35,12 +35,12 @@ const STEPS = [
   },
   {
     id: 'energy',
-    title: 'How Are You Feeling Today?',
-    content: 'Your energy changes day to day. Just Today adapts to how you\'re feeling right now.',
+    title: 'What Pace Feels Right Today?',
+    content: 'Your pace can change throughout the day. JustToday adapts with you.',
     energyModes: [
-      { name: 'Low Energy', description: 'Gentle pace' },
-      { name: 'Steady', description: 'Moderate' },
-      { name: 'Flow', description: 'Deep work' },
+      { name: 'Gentle', description: 'For days when you need gentleness' },
+      { name: 'Steady', description: 'Your usual pace' },
+      { name: 'Deep', description: 'When you have extra capacity' },
     ],
   },
   {
@@ -59,8 +59,8 @@ const STEPS = [
     title: 'Two More Tools for You',
     tools: [
       {
-        name: 'Energy Menu',
-        description: 'Quick optional activities that help you feel steadier: drink water, take deep breath',
+        name: 'Pace Picks',
+        description: 'Optional things that tend to feel good at each pace: drink water, take deep breath',
       },
       {
         name: 'Guides',

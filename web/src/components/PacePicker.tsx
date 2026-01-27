@@ -1,20 +1,21 @@
 /**
- * EnergyPicker.tsx
- * Component for selecting energy mode (Low/Steady/Flow)
+ * PacePicker.tsx
+ * Component for selecting pace (Gentle/Steady/Deep)
  */
 
 'use client';
 
 import { useState } from 'react';
-import { EnergyMode } from '@/src/models/RoutineTemplate';
+import { Pace } from '@/src/models/RoutineTemplate';
 
-interface EnergyPickerProps {
-  selectedMode: EnergyMode;
-  onSelect: (mode: EnergyMode) => void;
+interface PacePickerProps {
+  selectedPace: Pace;
+  onSelect: (pace: Pace) => void;
 }
 
-const ENERGY_MODES: Array<{
-  mode: EnergyMode;
+// Map internal storage keys to user-facing pace labels
+const PACE_OPTIONS: Array<{
+  pace: Pace;
   icon: string;
   label: string;
   supportText: string;
@@ -22,48 +23,48 @@ const ENERGY_MODES: Array<{
   examples: string[];
 }> = [
   {
-    mode: 'low',
+    pace: 'low',
     icon: '💤',
-    label: 'Low',
-    supportText: "It's okay to take it slow",
-    guidance: 'For rest days — gentle tasks only',
+    label: 'Gentle',
+    supportText: 'For days when you need gentleness',
+    guidance: 'Take it slow — gentle tasks only',
     examples: ['Reply to one email', '5-min tidy', 'Make a simple meal', 'Light stretching'],
   },
   {
-    mode: 'steady',
+    pace: 'steady',
     icon: '🌿',
     label: 'Steady',
-    supportText: 'One step at a time',
-    guidance: 'For regular energy — your daily essentials',
+    supportText: 'Your usual pace',
+    guidance: 'Your daily essentials — one step at a time',
     examples: ['Morning routine', 'Focused work session', 'Respond to messages', 'Plan tomorrow'],
   },
   {
-    mode: 'flow',
+    pace: 'flow',
     icon: '✨',
-    label: 'Flow',
-    supportText: 'Enjoy the momentum',
-    guidance: 'For peak energy — tackle bigger challenges',
+    label: 'Deep',
+    supportText: 'When you have extra capacity',
+    guidance: 'Tackle bigger challenges — enjoy the momentum',
     examples: ['Creative work', 'Complex problem-solving', 'Learn something new', 'Deep focus work'],
   },
 ];
 
-export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
-  const [showTooltip, setShowTooltip] = useState<EnergyMode | null>(null);
+export function PacePicker({ selectedPace, onSelect }: PacePickerProps) {
+  const [showTooltip, setShowTooltip] = useState<Pace | null>(null);
 
   return (
     <div className="w-full space-y-3">
       <div className="grid grid-cols-3 gap-3">
-        {ENERGY_MODES.map(({ mode, icon, label, supportText }) => {
-          const isSelected = selectedMode === mode;
+        {PACE_OPTIONS.map(({ pace, icon, label, supportText }) => {
+          const isSelected = selectedPace === pace;
 
           return (
-            <div key={mode} className="relative">
+            <div key={pace} className="relative">
               <button
-                onClick={() => onSelect(mode)}
+                onClick={() => onSelect(pace)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    onSelect(mode);
+                    onSelect(pace);
                   }
                 }}
                 className={`
@@ -73,15 +74,15 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
                   focus:outline-none focus:ring-2 focus:ring-offset-2
                   ${
                     isSelected
-                      ? mode === 'low'
+                      ? pace === 'low'
                         ? 'bg-calm-low/20 border-2 border-calm-low text-calm-text focus:ring-calm-low'
-                        : mode === 'steady'
+                        : pace === 'steady'
                         ? 'bg-calm-steady/20 border-2 border-calm-steady text-calm-text focus:ring-calm-steady'
                         : 'bg-calm-flow/20 border-2 border-calm-flow text-calm-text focus:ring-calm-flow'
                       : 'bg-calm-surface border border-calm-border text-calm-muted hover:border-calm-text/30 focus:ring-calm-text/30'
                   }
                 `}
-                aria-label={`${label} energy mode: ${supportText}`}
+                aria-label={`${label} pace: ${supportText}`}
                 aria-pressed={isSelected}
               >
                 {/* Icon */}
@@ -106,10 +107,10 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowTooltip(showTooltip === mode ? null : mode);
+                  setShowTooltip(showTooltip === pace ? null : pace);
                 }}
                 className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-xs text-calm-muted hover:text-calm-text rounded-full hover:bg-calm-bg/50 transition-colors"
-                aria-label={`Show examples for ${label} energy mode`}
+                aria-label={`Show examples for ${label} pace`}
               >
                 ?
               </button>
@@ -121,10 +122,10 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
       {/* Expanded guidance and examples */}
       {showTooltip && (
         <div className="bg-calm-surface border border-calm-border rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-          {ENERGY_MODES.filter((m) => m.mode === showTooltip).map(({ mode, label, guidance, examples }) => (
-            <div key={mode}>
+          {PACE_OPTIONS.filter((m) => m.pace === showTooltip).map(({ pace, label, guidance, examples }) => (
+            <div key={pace}>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-semibold text-calm-text">{label} Energy</h4>
+                <h4 className="text-sm font-semibold text-calm-text">{label} Pace</h4>
                 <button
                   onClick={() => setShowTooltip(null)}
                   className="text-calm-muted hover:text-calm-text transition-colors"

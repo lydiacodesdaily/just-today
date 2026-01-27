@@ -3,7 +3,7 @@
  * Data model for daily reflection snapshots
  */
 
-export type EnergyMode = 'low' | 'steady' | 'flow';
+export type Pace = 'low' | 'steady' | 'flow';
 
 /**
  * DailySnapshot - Captures the essence of a day's activity
@@ -25,8 +25,8 @@ export interface DailySnapshot {
   /** Total time spent in focus sessions (milliseconds) */
   totalFocusTimeMs: number;
 
-  /** Energy modes selected throughout the day */
-  energyModesSelected: EnergyMode[];
+  /** Paces selected throughout the day */
+  pacesSelected: Pace[];
 
   /** Number of items moved to Later (not judgmental, just informational) */
   itemsMovedToLater: number;
@@ -48,7 +48,7 @@ export function createEmptySnapshot(date: string): DailySnapshot {
     routineRunsCompleted: 0,
     tasksCompletedInRoutines: 0,
     totalFocusTimeMs: 0,
-    energyModesSelected: [],
+    pacesSelected: [],
     itemsMovedToLater: 0,
   };
 }

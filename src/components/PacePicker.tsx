@@ -1,23 +1,24 @@
 /**
- * EnergyPicker.tsx
- * Low / Steady / Flow selector with supportive, neurodivergent-friendly design.
+ * PacePicker.tsx
+ * Gentle / Steady / Deep pace selector with supportive, neurodivergent-friendly design.
  */
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { EnergyMode } from '../models/RoutineTemplate';
+import { Pace } from '../models/RoutineTemplate';
 import { useTheme } from '../constants/theme';
 
-interface EnergyPickerProps {
-  selectedMode: EnergyMode;
-  onSelect: (mode: EnergyMode) => void;
+interface PacePickerProps {
+  selectedPace: Pace;
+  onSelect: (pace: Pace) => void;
 }
 
-export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
+export function PacePicker({ selectedPace, onSelect }: PacePickerProps) {
   const theme = useTheme();
 
-  const modes: {
-    mode: EnergyMode;
+  // Map internal storage keys to user-facing pace labels
+  const paces: {
+    pace: Pace;
     icon: string;
     label: string;
     description: string;
@@ -26,16 +27,16 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
     bgColor: string;
   }[] = [
     {
-      mode: 'low',
+      pace: 'low',
       icon: '💤',
-      label: 'Low',
-      description: 'Just the essentials',
+      label: 'Gentle',
+      description: 'For days when you need gentleness',
       supportText: "It's okay to take it slow",
       color: theme.colors.energyCare,
       bgColor: theme.colors.energyCareSubtle,
     },
     {
-      mode: 'steady',
+      pace: 'steady',
       icon: '🌿',
       label: 'Steady',
       description: 'Your usual pace',
@@ -44,10 +45,10 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
       bgColor: theme.colors.energySteadySubtle,
     },
     {
-      mode: 'flow',
+      pace: 'flow',
       icon: '✨',
-      label: 'Flow',
-      description: 'Feeling good today',
+      label: 'Deep',
+      description: 'When you have extra capacity',
       supportText: 'Enjoy the momentum',
       color: theme.colors.energyFlow,
       bgColor: theme.colors.energyFlowSubtle,
@@ -63,11 +64,11 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
       </View>
 
       <View style={styles.buttons}>
-        {modes.map(({ mode, icon, label, description, supportText, color, bgColor }) => {
-          const isSelected = selectedMode === mode;
+        {paces.map(({ pace, icon, label, description, supportText, color, bgColor }) => {
+          const isSelected = selectedPace === pace;
           return (
             <TouchableOpacity
-              key={mode}
+              key={pace}
               style={[
                 styles.button,
                 {
@@ -76,13 +77,13 @@ export function EnergyPicker({ selectedMode, onSelect }: EnergyPickerProps) {
                   borderWidth: isSelected ? 2 : 1,
                 },
               ]}
-              onPress={() => onSelect(mode)}
+              onPress={() => onSelect(pace)}
               activeOpacity={0.7}
               accessible={true}
               accessibilityRole="button"
-              accessibilityLabel={`${label} energy mode: ${description}. ${supportText}`}
+              accessibilityLabel={`${label} pace: ${description}. ${supportText}`}
               accessibilityState={{ selected: isSelected }}
-              accessibilityHint={`Select ${label} energy mode to filter tasks`}
+              accessibilityHint={`Select ${label} pace`}
             >
               <Text style={styles.icon} accessible={false}>{icon}</Text>
               <Text

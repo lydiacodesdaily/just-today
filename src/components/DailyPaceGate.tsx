@@ -1,6 +1,6 @@
 /**
- * DailyEnergyGate.tsx
- * Full-screen entry view shown once per day for energy selection.
+ * DailyPaceGate.tsx
+ * Full-screen entry view shown once per day for pace selection.
  *
  * Designed to feel like a calm doorway into the day.
  * No pressure, no gamification, no guilt.
@@ -9,11 +9,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { useTheme } from '../constants/theme';
-import { useEnergy } from '../context/EnergyContext';
-import { EnergyMode } from '../models/RoutineTemplate';
+import { usePace } from '../context/PaceContext';
+import { Pace } from '../models/RoutineTemplate';
 
-const ENERGY_OPTIONS: Array<{
-  mode: EnergyMode;
+// Map internal storage keys to user-facing pace labels
+const PACE_OPTIONS: Array<{
+  mode: Pace;
   icon: string;
   label: string;
   description: string;
@@ -21,33 +22,33 @@ const ENERGY_OPTIONS: Array<{
   {
     mode: 'low',
     icon: '💤',
-    label: 'Low',
-    description: "It's okay to take it slow",
+    label: 'Gentle',
+    description: 'For days when you need gentleness',
   },
   {
     mode: 'steady',
     icon: '🌿',
     label: 'Steady',
-    description: 'One step at a time',
+    description: 'Your usual pace',
   },
   {
     mode: 'flow',
     icon: '✨',
-    label: 'Flow',
-    description: 'Enjoy the momentum',
+    label: 'Deep',
+    description: 'When you have extra capacity',
   },
 ];
 
-export function DailyEnergyGate() {
+export function DailyPaceGate() {
   const theme = useTheme();
-  const { setEnergyForToday, skipEnergySelection } = useEnergy();
+  const { setPaceForToday, skipPaceSelection } = usePace();
 
-  const handleSelectEnergy = async (mode: EnergyMode) => {
-    await setEnergyForToday(mode);
+  const handleSelectPace = async (mode: Pace) => {
+    await setPaceForToday(mode);
   };
 
   const handleSkip = async () => {
-    await skipEnergySelection();
+    await skipPaceSelection();
   };
 
   return (
@@ -60,13 +61,13 @@ export function DailyEnergyGate() {
           </Text>
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
             Before we begin, take a breath.{'\n'}
-            How's your energy right now?
+            What pace feels right today?
           </Text>
         </View>
 
-        {/* Energy Options */}
+        {/* Pace Options */}
         <View style={styles.options}>
-          {ENERGY_OPTIONS.map(({ mode, icon, label, description }) => (
+          {PACE_OPTIONS.map(({ mode, icon, label, description }) => (
             <TouchableOpacity
               key={mode}
               style={[
@@ -76,11 +77,11 @@ export function DailyEnergyGate() {
                   borderColor: theme.colors.borderSubtle,
                 },
               ]}
-              onPress={() => handleSelectEnergy(mode)}
+              onPress={() => handleSelectPace(mode)}
               activeOpacity={0.7}
               accessible={true}
               accessibilityRole="button"
-              accessibilityLabel={`Select ${label} energy: ${description}`}
+              accessibilityLabel={`Select ${label} pace: ${description}`}
             >
               <Text style={styles.optionIcon}>{icon}</Text>
               <View style={styles.optionText}>
@@ -102,7 +103,7 @@ export function DailyEnergyGate() {
           activeOpacity={0.7}
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel="Skip energy selection for now"
+          accessibilityLabel="Skip pace selection for now"
         >
           <Text style={[styles.skipText, { color: theme.colors.textSecondary }]}>
             I'll share later
@@ -112,6 +113,9 @@ export function DailyEnergyGate() {
     </SafeAreaView>
   );
 }
+
+// Alias for backwards compatibility
+export const DailyEnergyGate = DailyPaceGate;
 
 const styles = StyleSheet.create({
   container: {

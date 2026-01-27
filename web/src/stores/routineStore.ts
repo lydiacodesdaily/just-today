@@ -20,8 +20,8 @@ interface RoutineStore {
   deleteTask: (templateId: string, taskId: string) => void;
 }
 
-// Re-export the filtering function from energyDerivation.ts
-export { deriveTasksForEnergyMode } from '@/src/engine/energyDerivation';
+// Re-export the filtering function from paceDerivation.ts
+export { deriveTasksForPace } from '@/src/engine/paceDerivation';
 
 export const useRoutineStore = create<RoutineStore>()(
   persist(

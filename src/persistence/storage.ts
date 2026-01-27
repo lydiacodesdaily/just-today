@@ -8,10 +8,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const KEYS = {
   TEMPLATES: '@just-today/templates',
   SETTINGS: '@just-today/settings',
-  CURRENT_ENERGY: '@just-today/current-energy',
-  ENERGY_SELECTED_DATE: '@just-today/energy-selected-date',
+  CURRENT_PACE: '@just-today/current-pace',
+  PACE_SELECTED_DATE: '@just-today/pace-selected-date',
   ACTIVE_RUN: '@just-today/active-run',
-  ENERGY_MENU_ITEMS: '@just-today/energy-menu-items',
+  PACE_PICKS: '@just-today/pace-picks',
   TODAY_OPTIONAL_ITEMS: '@just-today/today-optional-items',
   TODAY_DATE: '@just-today/today-date',
   FOCUS_ITEMS: '@just-today/focus-items',

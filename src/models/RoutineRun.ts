@@ -3,7 +3,7 @@
  * Defines the runtime state of an active routine execution.
  */
 
-import { EnergyMode } from './RoutineTemplate';
+import { Pace } from './RoutineTemplate';
 
 export type RunTaskStatus = 'pending' | 'active' | 'completed' | 'skipped';
 
@@ -54,8 +54,8 @@ export interface RoutineRun {
   /** Reference to the template this run was created from */
   templateId: string;
   templateName: string;
-  /** Energy mode selected for this run */
-  energyMode: EnergyMode;
+  /** Pace selected for this run */
+  pace: Pace;
   /** All tasks in this run (derived from template based on energy mode) */
   tasks: RunTask[];
   /** Current run status */

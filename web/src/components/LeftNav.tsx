@@ -20,7 +20,7 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    name: 'Energy Menu',
+    name: 'Pace Picks',
     href: '/energy-menu',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

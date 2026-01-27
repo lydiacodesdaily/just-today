@@ -5,28 +5,28 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { RoutineTemplate, EnergyMode } from '../models/RoutineTemplate';
+import { RoutineTemplate, Pace } from '../models/RoutineTemplate';
 import { useTheme } from '../constants/theme';
-import { deriveTasksForEnergyMode } from '../engine/energyDerivation';
+import { deriveTasksForPace } from '../engine/paceDerivation';
 
 interface RoutineCardProps {
   routine: RoutineTemplate;
   onStart: () => void;
   onEdit: () => void;
-  energyMode?: EnergyMode; // Optional: if provided, shows task count for that mode
+  pace?: Pace; // Optional: if provided, shows task count for that pace
 }
 
-export function RoutineCard({ routine, onStart, onEdit, energyMode }: RoutineCardProps) {
+export function RoutineCard({ routine, onStart, onEdit, pace }: RoutineCardProps) {
   const theme = useTheme();
 
-  // Calculate filtered tasks based on energy mode
-  const filteredTasks = energyMode
-    ? deriveTasksForEnergyMode(routine.tasks, energyMode)
+  // Calculate filtered tasks based on pace
+  const filteredTasks = pace
+    ? deriveTasksForPace(routine.tasks, pace)
     : routine.tasks;
 
   const totalTasks = routine.tasks.length;
   const activeTasks = filteredTasks.length;
-  const isFiltered = energyMode && activeTasks < totalTasks;
+  const isFiltered = pace && activeTasks < totalTasks;
 
   // Calculate total duration for active tasks
   const totalMinutes = filteredTasks.reduce((sum, task) => sum + (task.durationMs / 60000), 0);
@@ -34,14 +34,14 @@ export function RoutineCard({ routine, onStart, onEdit, energyMode }: RoutineCar
     ? `~${Math.round(totalMinutes)} min`
     : `~${Math.round(totalMinutes / 60)}h ${Math.round(totalMinutes % 60)}m`;
 
-  // Task count text with energy filtering feedback
+  // Task count text with pace filtering feedback
   const taskCountText = isFiltered
     ? `${activeTasks} of ${totalTasks} task${totalTasks !== 1 ? 's' : ''}`
     : `${totalTasks} task${totalTasks !== 1 ? 's' : ''}`;
 
-  // Get energy mode name for display
-  const energyModeName = energyMode
-    ? energyMode.charAt(0).toUpperCase() + energyMode.slice(1)
+  // Get pace name for display
+  const paceName = pace
+    ? pace.charAt(0).toUpperCase() + pace.slice(1)
     : '';
 
   return (
@@ -67,7 +67,7 @@ export function RoutineCard({ routine, onStart, onEdit, energyMode }: RoutineCar
           {isFiltered && activeTasks === 0 && (
             <View style={styles.emptyStateContainer}>
               <Text style={[styles.emptyStateText, { color: theme.colors.textTertiary }]}>
-                💫 No tasks for {energyModeName} mode
+                💫 No tasks for {paceName} pace
               </Text>
               <Text style={[styles.emptyStateHint, { color: theme.colors.textTertiary }]}>
                 Tap to add tasks

@@ -15,11 +15,11 @@ export interface RoutineTask {
   name: string;
   /** Planned duration in milliseconds */
   durationMs: number;
-  /** If true, this task appears in Low energy mode */
+  /** If true, this task appears in Low pace */
   lowIncluded?: boolean;
-  /** If true, this task appears in Steady energy mode */
+  /** If true, this task appears in Steady pace */
   steadyIncluded?: boolean;
-  /** If true, this task appears in Flow energy mode */
+  /** If true, this task appears in Flow pace */
   flowIncluded?: boolean;
   /** @deprecated Use lowIncluded instead */
   lowSafe?: boolean;
@@ -43,4 +43,4 @@ export interface RoutineTemplate {
   updatedAt: number;
 }
 
-export type EnergyMode = 'low' | 'steady' | 'flow';
+export type Pace = 'low' | 'steady' | 'flow';

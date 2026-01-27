@@ -5,11 +5,11 @@ import { useSnapshotStore } from '@/src/stores/snapshotStore';
 import { DailySnapshot, formatFocusTime } from '@/src/models/DailySnapshot';
 import {
   getTodayReflectionMessage,
-  getEnergyModeMessage,
+  getPaceMessage,
   getLaterItemsMessage,
   getClosingMessage,
   getWeeklyReflectionMessage,
-  getEnergyModeEmoji,
+  getPaceEmoji,
 } from '@/src/utils/reflectionMessages';
 
 export default function ReflectionsPage() {
@@ -100,21 +100,21 @@ export default function ReflectionsPage() {
                     </div>
                   )}
 
-                  {todaySnapshot.energyModesSelected.length > 0 && (
+                  {todaySnapshot.pacesSelected.length > 0 && (
                     <div className="flex items-center gap-1.5">
-                      {todaySnapshot.energyModesSelected.map((mode, idx) => (
+                      {todaySnapshot.pacesSelected.map((pace, idx) => (
                         <span key={idx} className="text-base">
-                          {getEnergyModeEmoji(mode)}
+                          {getPaceEmoji(pace)}
                         </span>
                       ))}
                     </div>
                   )}
                 </div>
 
-                {/* Energy Mode Message */}
-                {todaySnapshot.energyModesSelected.length > 0 && (
+                {/* Pace Message */}
+                {todaySnapshot.pacesSelected.length > 0 && (
                   <p className="text-calm-text leading-relaxed">
-                    {getEnergyModeMessage(todaySnapshot.energyModesSelected)}
+                    {getPaceMessage(todaySnapshot.pacesSelected)}
                   </p>
                 )}
 

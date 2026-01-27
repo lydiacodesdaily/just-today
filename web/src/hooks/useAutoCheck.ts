@@ -8,18 +8,18 @@
 import { useEffect } from 'react';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { useBrainDumpStore } from '@/src/stores/brainDumpStore';
-import { useEnergyMenuStore } from '@/src/stores/energyMenuStore';
+import { usePacePicksStore } from '@/src/stores/pacePicksStore';
 
 /**
  * Hook that runs periodic checks for:
  * - Daily rollover (Today -> Later)
  * - Brain dump item expiration
- * - Energy menu daily reset
+ * - Pace picks daily reset
  */
 export function useAutoCheck() {
   const checkAndRollover = useFocusStore((state) => state.checkAndRollover);
   const cleanupExpired = useBrainDumpStore((state) => state.cleanupExpired);
-  const checkAndResetDaily = useEnergyMenuStore((state) => state.checkAndResetDaily);
+  const checkAndResetDaily = usePacePicksStore((state) => state.checkAndResetDaily);
 
   useEffect(() => {
     // Run checks immediately on mount

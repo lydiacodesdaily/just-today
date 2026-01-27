@@ -1,23 +1,23 @@
 /**
- * energyMenuStore.ts
- * Zustand store for managing Energy Menu items and Today Optional items
+ * pacePicksStore.ts
+ * Zustand store for managing Pace Pick items and Today Optional items
  */
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { EnergyMenuItem, TodayOptionalItem, EnergyLevel } from '@/src/models/EnergyMenuItem';
+import { PacePickItem, TodayOptionalItem, PaceTag } from '@/src/models/PacePick';
 
-interface EnergyMenuStore {
+interface PacePicksStore {
   // State
-  menuItems: EnergyMenuItem[];
+  menuItems: PacePickItem[];
   todayOptionalItems: TodayOptionalItem[];
   todayDate: string; // YYYY-MM-DD
 
   // Actions
-  addMenuItem: (title: string, energyLevel: EnergyLevel, duration?: string) => void;
-  updateMenuItem: (id: string, updates: Partial<EnergyMenuItem>) => void;
+  addMenuItem: (title: string, paceTag: PaceTag, duration?: string) => void;
+  updateMenuItem: (id: string, updates: Partial<PacePickItem>) => void;
   deleteMenuItem: (id: string) => void;
-  addToToday: (menuItem: EnergyMenuItem) => void;
+  addToToday: (menuItem: PacePickItem) => void;
   removeFromToday: (id: string) => void;
   completeOptionalItem: (id: string) => void;
   checkAndResetDaily: () => void;
@@ -27,7 +27,7 @@ const getTodayDateString = (): string => {
   return new Date().toISOString().split('T')[0];
 };
 
-export const useEnergyMenuStore = create<EnergyMenuStore>()(
+export const usePacePicksStore = create<PacePicksStore>()(
   persist(
     (set, get) => ({
       // Initial state
@@ -36,14 +36,14 @@ export const useEnergyMenuStore = create<EnergyMenuStore>()(
       todayDate: getTodayDateString(),
 
       // Add menu item
-      addMenuItem: (title, energyLevel, duration) => {
+      addMenuItem: (title, paceTag, duration) => {
         const now = Date.now();
         const id = `menu-${now}-${Math.random().toString(36).substr(2, 9)}`;
 
-        const item: EnergyMenuItem = {
+        const item: PacePickItem = {
           id,
           title,
-          energyLevel,
+          paceTag,
           estimatedDuration: duration as any,
           createdAt: now,
           updatedAt: now,
@@ -120,7 +120,10 @@ export const useEnergyMenuStore = create<EnergyMenuStore>()(
       },
     }),
     {
-      name: 'energy-menu-storage',
+      name: 'pace-picks-storage',
     }
   )
 );
+
+// Backwards compatibility alias
+export const useEnergyMenuStore = usePacePicksStore;

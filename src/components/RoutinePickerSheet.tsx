@@ -1,7 +1,7 @@
 /**
  * RoutinePickerSheet.tsx
  * Bottom sheet for quick routine selection
- * Shows energy-filtered routines with Start buttons
+ * Shows pace-filtered routines with Start buttons
  */
 
 import React from 'react';
@@ -14,7 +14,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useTheme } from '../constants/theme';
-import { useEnergy } from '../context/EnergyContext';
+import { usePace } from '../context/PaceContext';
 import { RoutineTemplate } from '../models/RoutineTemplate';
 
 interface RoutinePickerSheetProps {
@@ -33,20 +33,20 @@ export function RoutinePickerSheet({
   onCreateRoutine,
 }: RoutinePickerSheetProps) {
   const theme = useTheme();
-  const { currentMode: energyMode } = useEnergy();
+  const { currentPace } = usePace();
 
-  const energyLabel = energyMode === 'low' ? 'Care' : energyMode === 'flow' ? 'Flow' : 'Steady';
+  const paceLabel = currentPace === 'low' ? 'Gentle' : currentPace === 'flow' ? 'Deep' : 'Steady';
 
-  // Calculate visible tasks based on energy mode
+  // Calculate visible tasks based on pace
   const getVisibleTaskCount = (routine: RoutineTemplate): number => {
     return routine.tasks.filter((task) => {
-      if (energyMode === 'low') {
+      if (currentPace === 'low') {
         return task.lowIncluded !== false;
       }
-      if (energyMode === 'steady') {
+      if (currentPace === 'steady') {
         return task.steadyIncluded !== false;
       }
-      return task.flowIncluded !== false; // flow mode
+      return task.flowIncluded !== false; // flow pace
     }).length;
   };
 
@@ -83,7 +83,7 @@ export function RoutinePickerSheet({
               Your Routines
             </Text>
             <Text style={[styles.subtitle, { color: theme.colors.textTertiary }]}>
-              Filtered for {energyLabel} energy
+              Filtered for {paceLabel} pace
             </Text>
           </View>
 
@@ -105,8 +105,8 @@ export function RoutinePickerSheet({
                 const totalTasks = routine.tasks.length;
                 const estimatedMs = routine.tasks
                   .filter((task) => {
-                    if (energyMode === 'low') return task.lowIncluded !== false;
-                    if (energyMode === 'steady') return task.steadyIncluded !== false;
+                    if (currentPace === 'low') return task.lowIncluded !== false;
+                    if (currentPace === 'steady') return task.steadyIncluded !== false;
                     return task.flowIncluded !== false;
                   })
                   .reduce((sum, task) => sum + (task.durationMs || 0), 0);
@@ -203,7 +203,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   list: {
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 1,
   },
   listContent: {
     paddingHorizontal: 24,

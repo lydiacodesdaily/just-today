@@ -1,6 +1,6 @@
 /**
- * Energy Menu Setup
- * Manage Energy Menu items - optional actions you can add to Today based on energy level.
+ * Pace Picks Setup
+ * Manage Pace Picks - optional things that tend to feel good at each pace.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -17,23 +17,23 @@ import {
 import { router } from 'expo-router';
 import { useTheme } from '../../src/constants/theme';
 import {
-  EnergyMenuItem,
+  PacePick,
   EnergyLevel,
   EstimatedDuration,
-} from '../../src/models/EnergyMenuItem';
+} from '../../src/models/PacePick';
 import {
-  loadEnergyMenuItems,
-  createEnergyMenuItem,
-  updateEnergyMenuItem,
-  deleteEnergyMenuItem,
-} from '../../src/persistence/energyMenuStore';
+  loadPacePicks,
+  createPacePick,
+  updatePacePick,
+  deletePacePick,
+} from '../../src/persistence/pacePicksStore';
 
 const DURATION_OPTIONS: EstimatedDuration[] = ['~5 min', '~10 min', '~15 min', '~25 min'];
 
-export default function EnergyMenuSetup() {
+export default function PacePicksSetup() {
   const theme = useTheme();
-  const [items, setItems] = useState<EnergyMenuItem[]>([]);
-  const [editingItem, setEditingItem] = useState<EnergyMenuItem | null>(null);
+  const [items, setItems] = useState<PacePick[]>([]);
+  const [editingItem, setEditingItem] = useState<PacePick | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newItemLevel, setNewItemLevel] = useState<EnergyLevel>('low');
 
@@ -42,7 +42,7 @@ export default function EnergyMenuSetup() {
   }, []);
 
   const loadItems = async () => {
-    const loaded = await loadEnergyMenuItems();
+    const loaded = await loadPacePicks();
     setItems(loaded);
   };
 
@@ -52,22 +52,22 @@ export default function EnergyMenuSetup() {
     setShowAddModal(true);
   };
 
-  const handleEditItem = (item: EnergyMenuItem) => {
+  const handleEditItem = (item: PacePick) => {
     setEditingItem(item);
     setShowAddModal(true);
   };
 
-  const handleDeleteItem = (item: EnergyMenuItem) => {
+  const handleDeleteItem = (item: PacePick) => {
     Alert.alert(
       'Remove item?',
-      `Remove "${item.title}" from your Energy Menu?`,
+      `Remove "${item.title}" from your Pace Picks?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
-            await deleteEnergyMenuItem(item.id);
+            await deletePacePick(item.id);
             await loadItems();
           },
         },
@@ -79,24 +79,28 @@ export default function EnergyMenuSetup() {
     return items.filter(item => item.energyLevel === level).slice(0, 5);
   };
 
-  const energyLevels: { level: EnergyLevel; icon: string; label: string; description: string }[] = [
+  // Map internal storage keys to user-facing pace labels
+  const paceLevels: { level: EnergyLevel; icon: string; label: string; description: string; emptyText: string }[] = [
     {
       level: 'low',
       icon: '💤',
-      label: 'Low Energy',
+      label: 'Gentle',
       description: 'For days when you need gentleness',
+      emptyText: 'No picks yet. Add something gentle.',
     },
     {
       level: 'steady',
-      icon: '🌱',
+      icon: '🌿',
       label: 'Steady',
       description: 'Your usual pace',
+      emptyText: 'No picks yet. Add something steady.',
     },
     {
       level: 'flow',
-      icon: '🔥',
-      label: 'Flow',
+      icon: '✨',
+      label: 'Deep',
       description: 'When you have extra capacity',
+      emptyText: 'No picks yet. Add something deep.',
     },
   ];
 
@@ -107,14 +111,14 @@ export default function EnergyMenuSetup() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={[styles.backText, { color: theme.colors.primary }]}>← Back</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Energy Menu</Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Pace Picks</Text>
         <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-          Optional actions you can choose from
+          Optional things that tend to feel good at each pace
         </Text>
       </View>
 
       <ScrollView style={styles.scrollView}>
-        {energyLevels.map(({ level, icon, label, description }) => {
+        {paceLevels.map(({ level, icon, label, description, emptyText }) => {
           const levelItems = getItemsByLevel(level);
           return (
             <View key={level} style={styles.section}>
@@ -141,7 +145,7 @@ export default function EnergyMenuSetup() {
               {levelItems.length === 0 ? (
                 <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
                   <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                    No items yet. Add something gentle.
+                    {emptyText}
                   </Text>
                 </View>
               ) : (
@@ -184,9 +188,9 @@ export default function EnergyMenuSetup() {
           defaultLevel={newItemLevel}
           onSave={async (title, duration) => {
             if (editingItem) {
-              await updateEnergyMenuItem(editingItem.id, { title, estimatedDuration: duration });
+              await updatePacePick(editingItem.id, { title, estimatedDuration: duration });
             } else {
-              await createEnergyMenuItem({
+              await createPacePick({
                 title,
                 energyLevel: newItemLevel,
                 estimatedDuration: duration,
@@ -203,7 +207,7 @@ export default function EnergyMenuSetup() {
 }
 
 interface ItemFormModalProps {
-  item: EnergyMenuItem | null;
+  item: PacePick | null;
   defaultLevel: EnergyLevel;
   onSave: (title: string, duration: EstimatedDuration | undefined) => void;
   onCancel: () => void;

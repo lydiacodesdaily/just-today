@@ -1,6 +1,6 @@
 /**
- * EnergyIndicator.tsx
- * A small, subtle pill showing current energy level with option to change.
+ * PaceIndicator.tsx
+ * A small, subtle pill showing current pace with option to change.
  *
  * Designed to be compact and non-intrusive - not competing with Today's Focus.
  */
@@ -8,13 +8,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useEnergyStore } from '@/src/stores/energyStore';
-import { EnergyMode } from '@/src/models/RoutineTemplate';
+import { usePaceStore } from '@/src/stores/paceStore';
+import { Pace } from '@/src/models/RoutineTemplate';
 
-const ENERGY_CONFIG: Record<EnergyMode, { icon: string; label: string; color: string }> = {
+// Map internal storage keys to user-facing pace labels
+const PACE_CONFIG: Record<Pace, { icon: string; label: string; color: string }> = {
   low: {
     icon: '💤',
-    label: 'Low',
+    label: 'Gentle',
     color: 'bg-calm-low/20 text-calm-low border-calm-low/30',
   },
   steady: {
@@ -24,19 +25,19 @@ const ENERGY_CONFIG: Record<EnergyMode, { icon: string; label: string; color: st
   },
   flow: {
     icon: '✨',
-    label: 'Flow',
+    label: 'Deep',
     color: 'bg-calm-flow/20 text-calm-flow border-calm-flow/30',
   },
 };
 
-const ALL_MODES: EnergyMode[] = ['low', 'steady', 'flow'];
+const ALL_PACES: Pace[] = ['low', 'steady', 'flow'];
 
-export function EnergyIndicator() {
-  const { currentMode, setMode } = useEnergyStore();
+export function PaceIndicator() {
+  const { currentPace, setPace } = usePaceStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const config = ENERGY_CONFIG[currentMode];
+  const config = PACE_CONFIG[currentPace];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -66,8 +67,8 @@ export function EnergyIndicator() {
     }
   }, [isOpen]);
 
-  const handleSelect = (mode: EnergyMode) => {
-    setMode(mode);
+  const handleSelect = (pace: Pace) => {
+    setPace(pace);
     setIsOpen(false);
   };
 
@@ -85,7 +86,7 @@ export function EnergyIndicator() {
         `}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        aria-label={`Current energy: ${config.label}. Click to change.`}
+        aria-label={`Today's pace: ${config.label}. Click to change.`}
       >
         <span>{config.icon}</span>
         <span>{config.label}</span>
@@ -97,16 +98,16 @@ export function EnergyIndicator() {
         <div
           className="absolute top-full left-0 mt-2 bg-calm-surface border border-calm-border rounded-lg shadow-lg py-1 min-w-[140px] z-50 animate-in fade-in slide-in-from-top-2 duration-150"
           role="listbox"
-          aria-label="Select energy level"
+          aria-label="Select pace"
         >
-          {ALL_MODES.map((mode) => {
-            const modeConfig = ENERGY_CONFIG[mode];
-            const isSelected = mode === currentMode;
+          {ALL_PACES.map((pace) => {
+            const paceConfig = PACE_CONFIG[pace];
+            const isSelected = pace === currentPace;
 
             return (
               <button
-                key={mode}
-                onClick={() => handleSelect(mode)}
+                key={pace}
+                onClick={() => handleSelect(pace)}
                 className={`
                   w-full flex items-center gap-2 px-3 py-2 text-left
                   text-sm transition-colors
@@ -115,8 +116,8 @@ export function EnergyIndicator() {
                 role="option"
                 aria-selected={isSelected}
               >
-                <span>{modeConfig.icon}</span>
-                <span className="text-calm-text">{modeConfig.label}</span>
+                <span>{paceConfig.icon}</span>
+                <span className="text-calm-text">{paceConfig.label}</span>
                 {isSelected && (
                   <span className="ml-auto text-calm-muted">✓</span>
                 )}

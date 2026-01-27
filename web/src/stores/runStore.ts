@@ -60,8 +60,8 @@ export const useRunStore = create<RunStore>()(
         if (currentRun) {
           const updatedRun = startRun(currentRun);
 
-          // Track energy mode selection in snapshot
-          useSnapshotStore.getState().addEnergyMode(updatedRun.energyMode);
+          // Track pace selection in snapshot
+          useSnapshotStore.getState().addPace(updatedRun.pace);
 
           set({ currentRun: updatedRun });
         }

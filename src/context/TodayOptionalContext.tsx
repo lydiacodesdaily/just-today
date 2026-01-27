@@ -5,7 +5,7 @@
  */
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { TodayOptionalItem, EnergyMenuItem } from '../models/EnergyMenuItem';
+import { TodayOptionalItem, PacePick } from '../models/PacePick';
 import {
   loadTodayOptionalItems,
   addOptionalItemToToday,
@@ -16,7 +16,7 @@ import {
 
 interface TodayOptionalContextValue {
   todayItems: TodayOptionalItem[];
-  addItemToToday: (menuItem: EnergyMenuItem) => Promise<void>;
+  addItemToToday: (menuItem: PacePick) => Promise<void>;
   removeItemFromToday: (id: string) => Promise<void>;
   completeItem: (id: string) => Promise<void>;
   refreshItems: () => Promise<void>;
@@ -49,7 +49,7 @@ export function TodayOptionalProvider({ children }: { children: React.ReactNode 
     setIsLoaded(true);
   };
 
-  const addItemToToday = useCallback(async (menuItem: EnergyMenuItem) => {
+  const addItemToToday = useCallback(async (menuItem: PacePick) => {
     const newItem = await addOptionalItemToToday(menuItem);
     setTodayItems(prev => [...prev, newItem]);
   }, []);

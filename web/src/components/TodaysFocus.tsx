@@ -10,9 +10,9 @@ import { useRouter } from 'next/navigation';
 import { FocusItem, FocusDuration } from '@/src/models/FocusItem';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { useRunStore } from '@/src/stores/runStore';
-import { useEnergyMenuStore } from '@/src/stores/energyMenuStore';
+import { usePacePicksStore } from '@/src/stores/pacePicksStore';
 import { createRunFromFocusItem } from '@/src/engine/runEngine';
-import { TodayOptionalItem } from '@/src/models/EnergyMenuItem';
+import { TodayOptionalItem } from '@/src/models/PacePick';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 import { CheckOncePicker } from '@/src/components/CheckOncePicker';
@@ -281,7 +281,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
     dismissRollover,
     completionCelebrationMessage,
   } = useFocusStore();
-  const { todayOptionalItems, completeOptionalItem, removeFromToday } = useEnergyMenuStore();
+  const { todayOptionalItems, completeOptionalItem, removeFromToday } = usePacePicksStore();
   const { setCurrentRun } = useRunStore();
   const router = useRouter();
 
@@ -433,7 +433,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
             />
           ))}
 
-          {/* Optional items from Energy Menu */}
+          {/* Optional items from Pace Picks */}
           {incompleteOptionalItems.map((item) => (
             <OptionalItemCard
               key={item.id}
@@ -451,7 +451,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
         <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
           <p className="text-calm-text mb-2">Ready when you are</p>
           <p className="text-sm text-calm-muted mb-6">
-            Add your first task, or try an item from your Energy Menu
+            Add your first task, or try an item from your Pace Picks
           </p>
           <button
             onClick={() => setShowAddModal(true)}

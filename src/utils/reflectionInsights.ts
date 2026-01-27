@@ -3,10 +3,10 @@
  * Generate encouraging, pattern-based insights from daily snapshots
  */
 
-import { DailySnapshot, EnergyMode } from '../models/DailySnapshot';
+import { DailySnapshot, Pace } from '../models/DailySnapshot';
 
 export interface WeeklyInsight {
-  type: 'productivity-time' | 'energy-preference' | 'streak' | 'consistency';
+  type: 'productivity-time' | 'pace-preference' | 'streak' | 'consistency';
   icon: string;
   title: string;
   message: string;
@@ -25,9 +25,9 @@ interface TimeOfDayMetrics {
 }
 
 /**
- * Energy mode effectiveness metrics
+ * Pace effectiveness metrics
  */
-interface EnergyModeMetrics {
+interface PaceMetrics {
   low: { count: number; tasksCompleted: number };
   steady: { count: number; tasksCompleted: number };
   flow: { count: number; tasksCompleted: number };
@@ -50,21 +50,21 @@ function calculateTimeOfDayMetrics(snapshots: DailySnapshot[]): TimeOfDayMetrics
 }
 
 /**
- * Calculate energy mode usage and effectiveness
+ * Calculate pace usage and effectiveness
  */
-function calculateEnergyModeMetrics(snapshots: DailySnapshot[]): EnergyModeMetrics {
-  const metrics: EnergyModeMetrics = {
+function calculatePaceMetrics(snapshots: DailySnapshot[]): PaceMetrics {
+  const metrics: PaceMetrics = {
     low: { count: 0, tasksCompleted: 0 },
     steady: { count: 0, tasksCompleted: 0 },
     flow: { count: 0, tasksCompleted: 0 },
   };
 
   snapshots.forEach(snapshot => {
-    snapshot.energyModesSelected.forEach(mode => {
-      metrics[mode].count++;
-      // Approximate tasks per mode (simplified)
-      metrics[mode].tasksCompleted += Math.floor(
-        snapshot.focusItemsCompleted / snapshot.energyModesSelected.length
+    snapshot.pacesSelected.forEach(pace => {
+      metrics[pace].count++;
+      // Approximate tasks per pace (simplified)
+      metrics[pace].tasksCompleted += Math.floor(
+        snapshot.focusItemsCompleted / snapshot.pacesSelected.length
       );
     });
   });
@@ -73,22 +73,22 @@ function calculateEnergyModeMetrics(snapshots: DailySnapshot[]): EnergyModeMetri
 }
 
 /**
- * Get most common energy mode
+ * Get most common pace
  */
-function getMostCommonEnergyMode(snapshots: DailySnapshot[]): EnergyMode | null {
-  const modeCounts = { low: 0, steady: 0, flow: 0 };
+function getMostCommonPace(snapshots: DailySnapshot[]): Pace | null {
+  const paceCounts = { low: 0, steady: 0, flow: 0 };
 
   snapshots.forEach(snapshot => {
-    snapshot.energyModesSelected.forEach(mode => {
-      modeCounts[mode]++;
+    snapshot.pacesSelected.forEach(pace => {
+      paceCounts[pace]++;
     });
   });
 
-  const maxCount = Math.max(modeCounts.low, modeCounts.steady, modeCounts.flow);
+  const maxCount = Math.max(paceCounts.low, paceCounts.steady, paceCounts.flow);
   if (maxCount === 0) return null;
 
-  if (modeCounts.low === maxCount) return 'low';
-  if (modeCounts.steady === maxCount) return 'steady';
+  if (paceCounts.low === maxCount) return 'low';
+  if (paceCounts.steady === maxCount) return 'steady';
   return 'flow';
 }
 
@@ -131,8 +131,8 @@ export function generateWeeklyInsights(snapshots: DailySnapshot[]): WeeklyInsigh
 
   const totalDays = snapshots.length;
   const activeDayCount = activeDays.length;
-  const energyMetrics = calculateEnergyModeMetrics(snapshots);
-  const mostCommonMode = getMostCommonEnergyMode(snapshots);
+  const paceMetrics = calculatePaceMetrics(snapshots);
+  const mostCommonPace = getMostCommonPace(snapshots);
   const streak = calculateStreak(snapshots);
 
   // Insight 1: Streak / Consistency
@@ -164,23 +164,23 @@ export function generateWeeklyInsights(snapshots: DailySnapshot[]): WeeklyInsigh
     }
   }
 
-  // Insight 2: Energy Mode Preference
-  if (mostCommonMode) {
-    const modeCount = energyMetrics[mostCommonMode].count;
-    const percentage = Math.round((modeCount / totalDays) * 100);
+  // Insight 2: Pace Preference
+  if (mostCommonPace) {
+    const paceCount = paceMetrics[mostCommonPace].count;
+    const percentage = Math.round((paceCount / totalDays) * 100);
 
     if (percentage >= 60) {
-      const modeNames = {
-        low: 'Low Energy',
+      const paceNames = {
+        low: 'Low',
         steady: 'Steady',
         flow: 'Flow',
       };
 
       insights.push({
-        type: 'energy-preference',
+        type: 'pace-preference',
         icon: '🌊',
-        title: 'Energy Mode Preference',
-        message: `You chose ${modeNames[mostCommonMode]} mode ${modeCount} out of ${totalDays} days this week.`,
+        title: 'Pace Preference',
+        message: `You chose ${paceNames[mostCommonPace]} ${paceCount} out of ${totalDays} days this week.`,
         tone: 'neutral',
       });
     }

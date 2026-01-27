@@ -7,8 +7,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { RoutineTemplate, EnergyMode } from '@/src/models/RoutineTemplate';
-import { deriveTasksForEnergyMode, useRoutineStore } from '@/src/stores/routineStore';
+import { RoutineTemplate, Pace } from '@/src/models/RoutineTemplate';
+import { deriveTasksForPace, useRoutineStore } from '@/src/stores/routineStore';
 import { useRunStore } from '@/src/stores/runStore';
 import { createRunFromTemplate, canResumeAbandonedRun, resumeAbandonedRun } from '@/src/engine/runEngine';
 import { RoutineCreationModal } from './RoutineCreationModal';
@@ -16,7 +16,7 @@ import { SectionLabel } from './SectionLabel';
 
 interface RoutineCardProps {
   routine: RoutineTemplate;
-  energyMode: EnergyMode;
+  pace: Pace;
   onStart: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -32,12 +32,12 @@ function formatDuration(ms: number): string {
   return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 }
 
-export function RoutineCard({ routine, energyMode, onStart, onEdit, onDelete }: RoutineCardProps) {
-  const filteredTasks = deriveTasksForEnergyMode(routine.tasks, energyMode);
+export function RoutineCard({ routine, pace, onStart, onEdit, onDelete }: RoutineCardProps) {
+  const filteredTasks = deriveTasksForPace(routine.tasks, pace);
   const totalDuration = filteredTasks.reduce((sum, task) => sum + task.durationMs, 0);
 
-  // Get energy mode name for display
-  const energyModeName = energyMode.charAt(0).toUpperCase() + energyMode.slice(1);
+  // Get pace name for display
+  const paceName = pace.charAt(0).toUpperCase() + pace.slice(1);
   const hasNoTasks = filteredTasks.length === 0;
   const isFiltered = filteredTasks.length < routine.tasks.length;
 
@@ -90,7 +90,7 @@ export function RoutineCard({ routine, energyMode, onStart, onEdit, onDelete }: 
         {isFiltered && hasNoTasks && (
           <div className="mt-3 pt-3 border-t border-calm-border/50">
             <p className="text-sm text-calm-muted leading-relaxed">
-              💫 No tasks for {energyModeName} mode
+              No tasks for {paceName} pace
             </p>
             <p className="text-xs text-calm-muted/75 italic mt-1">
               Tap edit to add tasks
@@ -113,10 +113,10 @@ export function RoutineCard({ routine, energyMode, onStart, onEdit, onDelete }: 
 }
 
 interface RoutinesListProps {
-  energyMode: EnergyMode;
+  pace: Pace;
 }
 
-export function RoutinesList({ energyMode }: RoutinesListProps) {
+export function RoutinesList({ pace }: RoutinesListProps) {
   const templates = useRoutineStore((state) => state.templates);
   const deleteTemplate = useRoutineStore((state) => state.deleteTemplate);
   const { currentRun, setCurrentRun } = useRunStore();
@@ -135,7 +135,7 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
     }
 
     // Create a new run from the template
-    const run = createRunFromTemplate(routine, energyMode);
+    const run = createRunFromTemplate(routine, pace);
     setCurrentRun(run);
     // Navigate to run page
     router.push('/run');
@@ -152,7 +152,7 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
 
   const handleStartFresh = () => {
     if (resumeDialogRoutine) {
-      const run = createRunFromTemplate(resumeDialogRoutine, energyMode);
+      const run = createRunFromTemplate(resumeDialogRoutine, pace);
       setCurrentRun(run);
       setResumeDialogRoutine(null);
       router.push('/run');
@@ -215,7 +215,7 @@ export function RoutinesList({ energyMode }: RoutinesListProps) {
             <RoutineCard
               key={routine.id}
               routine={routine}
-              energyMode={energyMode}
+              pace={pace}
               onStart={() => handleStartRoutine(routine)}
               onEdit={() => handleEditRoutine(routine)}
               onDelete={() => handleDeleteRoutine(routine)}

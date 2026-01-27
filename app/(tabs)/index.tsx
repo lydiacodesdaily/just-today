@@ -1,6 +1,6 @@
 /**
  * index.tsx
- * Home/Today screen - shows energy indicator and starts routines.
+ * Home/Today screen - shows pace indicator and starts routines.
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -11,11 +11,11 @@ import { loadTemplates } from '../../src/persistence/templateStore';
 import { createRunFromTemplate, createRunFromFocusItem, canResumeAbandonedRun, resumeAbandonedRun } from '../../src/engine/runEngine';
 import { useRun } from '../../src/context/RunContext';
 import { useFocus } from '../../src/context/FocusContext';
-import { useEnergy } from '../../src/context/EnergyContext';
+import { usePace } from '../../src/context/PaceContext';
 import { useTheme } from '../../src/constants/theme';
-import { EnergyIndicator } from '../../src/components/EnergyIndicator';
+import { PaceIndicator } from '../../src/components/PaceIndicator';
 import { RoutineCard } from '../../src/components/RoutineCard';
-import { EnergyMenuCollapsible } from '../../src/components/EnergyMenuCollapsible';
+import { PacePicksCollapsible } from '../../src/components/PacePicksCollapsible';
 import { TodaysFocus } from '../../src/components/TodaysFocus';
 import { LaterList } from '../../src/components/LaterList';
 import { BrainDump } from '../../src/components/BrainDump';
@@ -30,7 +30,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { setCurrentRun, currentRun } = useRun();
   const { todayItems, startItemFocus, addToToday, refreshItems } = useFocus();
-  const { currentMode: energyMode } = useEnergy();
+  const { currentMode: energyMode } = usePace();
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
@@ -62,6 +62,13 @@ export default function HomeScreen() {
       );
     }
   }, [currentRun, hasShownResumePrompt, router, setCurrentRun]);
+
+  // Load templates on mount
+  useEffect(() => {
+    loadTemplates()
+      .then(setTemplates)
+      .catch(() => setTemplates([]));
+  }, []);
 
   // Reload templates whenever the screen comes into focus
   useFocusEffect(
@@ -234,7 +241,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Gentle, supportive header with energy indicator */}
+        {/* Gentle, supportive header with pace indicator */}
         <View style={styles.headerSection}>
           <View style={styles.headerRow}>
             <View style={styles.headerText}>
@@ -245,13 +252,13 @@ export default function HomeScreen() {
                 One step at a time
               </Text>
             </View>
-            <EnergyIndicator />
+            <PaceIndicator />
           </View>
         </View>
 
-        {/* 2. Optional Energy Menu (collapsed by default) */}
-        <View style={styles.energyMenuSection}>
-          <EnergyMenuCollapsible
+        {/* 2. Optional Pace Picks (collapsed by default) */}
+        <View style={styles.pacePicksSection}>
+          <PacePicksCollapsible
             energyMode={energyMode}
             isExpanded={isEnergyMenuExpanded}
             onToggle={() => setIsEnergyMenuExpanded(!isEnergyMenuExpanded)}
@@ -428,7 +435,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 6,
   },
-  energyMenuSection: {
+  pacePicksSection: {
     marginBottom: 20,
   },
   focusSection: {

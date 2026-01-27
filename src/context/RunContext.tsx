@@ -19,7 +19,7 @@ import {
   toggleAutoAdvance,
 } from '../engine/runEngine';
 import { saveRunState, loadRunState, clearRunState } from '../persistence/runStateStore';
-import { incrementTodayCounter, addEnergyMode, addCompletedTasks } from '../persistence/snapshotStore';
+import { incrementTodayCounter, addPace, addCompletedTasks } from '../persistence/snapshotStore';
 
 interface RunContextValue {
   currentRun: RoutineRun | null;
@@ -63,9 +63,9 @@ export function RunProvider({ children }: { children: React.ReactNode }) {
     if (currentRun) {
       saveRunState(currentRun);
 
-      // Track energy mode when run starts
+      // Track pace when run starts
       if (currentRun.status === 'running' && currentRun.startedAt) {
-        addEnergyMode(currentRun.energyMode);
+        addPace(currentRun.pace);
       }
 
       // Track completion when run is completed

@@ -1,46 +1,46 @@
 /**
- * EnergyMenuSheet.tsx
- * Gentle prompt card to add items from Energy Menu to Today.
+ * PacePicksSheet.tsx
+ * Gentle prompt card to add items from Pace Picks to Today.
  * Only shows when conditions are met (has items, hasn't dismissed recently, etc.)
  */
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../constants/theme';
-import { EnergyMenuItem, EnergyLevel } from '../models/EnergyMenuItem';
-import { getEnergyMenuItemsByLevel } from '../persistence/energyMenuStore';
+import { PacePick, EnergyLevel } from '../models/PacePick';
+import { getPacePicksByLevel } from '../persistence/pacePicksStore';
 import { useFocus } from '../context/FocusContext';
 import { FocusDuration } from '../models/FocusItem';
 
-interface EnergyMenuSheetProps {
-  currentEnergyLevel: EnergyLevel;
+interface PacePicksSheetProps {
+  currentPaceLevel: EnergyLevel;
   onDismiss?: () => void;
 }
 
-export function EnergyMenuSheet({ currentEnergyLevel, onDismiss }: EnergyMenuSheetProps) {
+export function PacePicksSheet({ currentPaceLevel, onDismiss }: PacePicksSheetProps) {
   const theme = useTheme();
   const { addToToday } = useFocus();
-  const [menuItems, setMenuItems] = useState<EnergyMenuItem[]>([]);
+  const [menuItems, setMenuItems] = useState<PacePick[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     loadMenuItems();
-  }, [currentEnergyLevel]);
+  }, [currentPaceLevel]);
 
   const loadMenuItems = async () => {
-    const items = await getEnergyMenuItemsByLevel(currentEnergyLevel);
+    const items = await getPacePicksByLevel(currentPaceLevel);
     setMenuItems(items.slice(0, 5)); // Max 5 items
     setIsVisible(items.length > 0);
   };
 
-  const handleAddItem = async (item: EnergyMenuItem) => {
+  const handleAddItem = async (item: PacePick) => {
     // Convert EstimatedDuration to FocusDuration
     const duration = (item.estimatedDuration || '~15 min') as FocusDuration;
 
     // Add to Today's Focus
     await addToToday(item.title, duration);
 
-    // Close Energy Menu sheet immediately
+    // Close Pace Picks sheet immediately
     setIsVisible(false);
     onDismiss?.();
   };
@@ -54,13 +54,14 @@ export function EnergyMenuSheet({ currentEnergyLevel, onDismiss }: EnergyMenuShe
     return null;
   }
 
-  const energyLabels = {
-    low: { icon: '💤', label: 'Low Energy' },
-    steady: { icon: '🌱', label: 'Steady' },
-    flow: { icon: '🔥', label: 'Flow' },
+  // Map internal storage keys to user-facing pace labels
+  const paceLabels = {
+    low: { icon: '💤', label: 'Gentle' },
+    steady: { icon: '🌿', label: 'Steady' },
+    flow: { icon: '✨', label: 'Deep' },
   };
 
-  const { icon, label } = energyLabels[currentEnergyLevel];
+  const { icon, label } = paceLabels[currentPaceLevel];
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
@@ -69,10 +70,10 @@ export function EnergyMenuSheet({ currentEnergyLevel, onDismiss }: EnergyMenuShe
           <Text style={styles.icon}>{icon}</Text>
           <View>
             <Text style={[styles.title, { color: theme.colors.text }]}>
-              Want to add something from your Energy Menu?
+              Want to add something from your Pace Picks?
             </Text>
             <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-              {label} tasks you can add to Today's Focus
+              {label} pace picks you can add to Today
             </Text>
           </View>
         </View>

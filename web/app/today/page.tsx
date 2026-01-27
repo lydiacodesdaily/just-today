@@ -1,21 +1,21 @@
 'use client';
 
 import { useState, useRef, useMemo } from 'react';
-import { EnergyIndicator } from '@/src/components/EnergyIndicator';
-import { EnergyMenu } from '@/src/components/EnergyMenu';
+import { PaceIndicator } from '@/src/components/PaceIndicator';
+import { PacePicks } from '@/src/components/PacePicks';
 import { TodaysFocus, TodaysFocusRef } from '@/src/components/TodaysFocus';
 import { RoutinesList } from '@/src/components/RoutineCard';
 import { LaterList } from '@/src/components/LaterList';
 import { BrainDump } from '@/src/components/BrainDump';
 import { CompletedToday } from '@/src/components/CompletedToday';
 import { KeyboardShortcutsModal } from '@/src/components/KeyboardShortcutsModal';
-import { useEnergyStore } from '@/src/stores/energyStore';
+import { usePaceStore } from '@/src/stores/paceStore';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { useAutoCheck } from '@/src/hooks/useAutoCheck';
 import { useGlobalKeyboardShortcuts, KeyboardShortcut } from '@/src/hooks/useGlobalKeyboardShortcuts';
 
 export default function TodayPage() {
-  const currentMode = useEnergyStore((state) => state.currentMode);
+  const currentPace = usePaceStore((state) => state.currentPace);
   const { todayItems, completedToday } = useFocusStore();
   const [showMoreSections, setShowMoreSections] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
@@ -74,7 +74,7 @@ export default function TodayPage() {
               <p className="text-calm-muted">Focus on what matters, one thing at a time</p>
             </div>
             <div className="flex items-center gap-3">
-              <EnergyIndicator />
+              <PaceIndicator />
               <button
                 onClick={() => setShowMoreSections(!showMoreSections)}
                 className="px-3 py-2 text-sm text-calm-muted hover:text-calm-text transition-colors"
@@ -100,11 +100,11 @@ export default function TodayPage() {
               {/* Show More sections - collapsed by default */}
               {showMoreSections && (
                 <>
-                  {/* Optional Energy Menu */}
-                  <EnergyMenu energyLevel={currentMode} />
+                  {/* Optional Pace Picks */}
+                  <PacePicks paceTag={currentPace} />
 
                   {/* Routines Section */}
-                  <RoutinesList energyMode={currentMode} />
+                  <RoutinesList pace={currentPace} />
 
                   {/* Later & Ideas Divider */}
                   <div className="relative">
@@ -145,11 +145,11 @@ export default function TodayPage() {
               {/* Show More sections - collapsed by default */}
               {showMoreSections && (
                 <>
-                  {/* Optional Energy Menu */}
-                  <EnergyMenu energyLevel={currentMode} />
+                  {/* Optional Pace Picks */}
+                  <PacePicks paceTag={currentPace} />
 
                   {/* Routines Section */}
-                  <RoutinesList energyMode={currentMode} />
+                  <RoutinesList pace={currentPace} />
 
                   {/* Later & Ideas Divider */}
                   <div className="relative">

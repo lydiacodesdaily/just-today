@@ -8,7 +8,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SettingsProvider } from '../src/context/SettingsContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
-import { EnergyProvider, useEnergy } from '../src/context/EnergyContext';
+import { PaceProvider, usePace } from '../src/context/PaceContext';
 import { RunProvider } from '../src/context/RunContext';
 import { TodayOptionalProvider } from '../src/context/TodayOptionalContext';
 import { FocusProvider } from '../src/context/FocusContext';
@@ -16,7 +16,7 @@ import { BrainDumpProvider } from '../src/context/BrainDumpContext';
 import { GuidesProvider } from '../src/context/GuidesContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
-import { DailyEnergyGate } from '../src/components/DailyEnergyGate';
+import { DailyPaceGate } from '../src/components/DailyPaceGate';
 
 function AppStack() {
   const theme = useTheme();
@@ -54,9 +54,9 @@ function AppStack() {
         }}
       />
       <Stack.Screen
-        name="energy-menu/setup"
+        name="pace-picks/setup"
         options={{
-          title: 'Energy Menu',
+          title: 'Pace Picks',
           headerShown: false,
         }}
       />
@@ -64,10 +64,10 @@ function AppStack() {
   );
 }
 
-/** Shows energy gate on first open of day, then the main app */
+/** Shows pace gate on first open of day, then the main app */
 function RootStack() {
   const theme = useTheme();
-  const { hasSelectedForToday, isLoading } = useEnergy();
+  const { hasSelectedForToday, isLoading } = usePace();
 
   // Show loading state while checking energy selection
   if (isLoading) {
@@ -78,9 +78,9 @@ function RootStack() {
     );
   }
 
-  // Show energy gate if user hasn't selected energy today
+  // Show pace gate if user hasn't selected pace today
   if (!hasSelectedForToday) {
-    return <DailyEnergyGate />;
+    return <DailyPaceGate />;
   }
 
   // Show main app
@@ -93,7 +93,7 @@ export default function RootLayout() {
       <ErrorBoundary>
         <SettingsProvider>
           <ThemeProvider>
-            <EnergyProvider>
+            <PaceProvider>
               <RunProvider>
                 <TodayOptionalProvider>
                   <FocusProvider>
@@ -105,7 +105,7 @@ export default function RootLayout() {
                   </FocusProvider>
                 </TodayOptionalProvider>
               </RunProvider>
-            </EnergyProvider>
+            </PaceProvider>
           </ThemeProvider>
         </SettingsProvider>
       </ErrorBoundary>

@@ -1,44 +1,48 @@
 /**
- * /energy-menu page
- * Full Energy Menu management with 3-column layout for all energy levels
+ * /pace-picks page
+ * Full Pace Picks management with 3-column layout for all paces
  */
 
 'use client';
 
 import { useState } from 'react';
-import { useEnergyMenuStore } from '@/src/stores/energyMenuStore';
-import { EnergyLevel, EnergyMenuItem } from '@/src/models/EnergyMenuItem';
-import { EnergyMenuItemModal } from '@/src/components/EnergyMenuItemModal';
+import { usePacePicksStore } from '@/src/stores/pacePicksStore';
+import { PaceTag, PacePickItem } from '@/src/models/PacePick';
+import { PacePickModal } from '@/src/components/PacePickModal';
 import { ConfirmDialog } from '@/src/components/Dialog';
 
-const ENERGY_LEVEL_CONFIG: Record<
-  EnergyLevel,
-  { label: string; icon: string; description: string; color: string }
+// Map internal storage keys to user-facing pace labels
+const PACE_CONFIG: Record<
+  PaceTag,
+  { label: string; icon: string; description: string; emptyText: string; color: string }
 > = {
   low: {
-    label: 'Low',
+    label: 'Gentle',
     icon: '💤',
-    description: 'Just the essentials',
+    description: 'For days when you need gentleness',
+    emptyText: 'No picks yet. Add something gentle.',
     color: 'text-blue-600',
   },
   steady: {
     label: 'Steady',
-    icon: '🌱',
+    icon: '🌿',
     description: 'Your usual pace',
+    emptyText: 'No picks yet. Add something steady.',
     color: 'text-green-600',
   },
   flow: {
-    label: 'Flow',
-    icon: '🔥',
-    description: 'Feeling good today',
+    label: 'Deep',
+    icon: '✨',
+    description: 'When you have extra capacity',
+    emptyText: 'No picks yet. Add something deep.',
     color: 'text-orange-600',
   },
 };
 
-export default function EnergyMenuPage() {
-  const { menuItems, deleteMenuItem } = useEnergyMenuStore();
+export default function PacePicksPage() {
+  const { menuItems, deleteMenuItem } = usePacePicksStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<EnergyMenuItem | null>(null);
+  const [editingItem, setEditingItem] = useState<PacePickItem | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const handleCreateNew = () => {
@@ -46,7 +50,7 @@ export default function EnergyMenuPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (item: EnergyMenuItem) => {
+  const handleEdit = (item: PacePickItem) => {
     setEditingItem(item);
     setIsModalOpen(true);
   };
@@ -61,8 +65,8 @@ export default function EnergyMenuPage() {
     }
   };
 
-  const getItemsForLevel = (level: EnergyLevel) => {
-    return menuItems.filter((item) => item.energyLevel === level);
+  const getItemsForPace = (pace: PaceTag) => {
+    return menuItems.filter((item) => item.paceTag === pace);
   };
 
   return (
@@ -70,26 +74,26 @@ export default function EnergyMenuPage() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-calm-text mb-2">Energy Menu</h1>
+          <h1 className="text-3xl font-semibold text-calm-text mb-2">Pace Picks</h1>
           <p className="text-calm-muted mb-6">
-            Build your menu of optional activities — things you might do when energy allows. Add them to Today when you&apos;re ready.
+            Optional things that tend to feel good at each pace
           </p>
           <button
             onClick={handleCreateNew}
             className="px-4 py-2 bg-calm-text text-calm-bg rounded-lg hover:bg-calm-text/90 transition-colors font-medium"
           >
-            + Create New Item
+            + Create New Pick
           </button>
         </div>
 
         {/* 3-Column Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {(['low', 'steady', 'flow'] as EnergyLevel[]).map((level) => {
-            const config = ENERGY_LEVEL_CONFIG[level];
-            const items = getItemsForLevel(level);
+          {(['low', 'steady', 'flow'] as PaceTag[]).map((pace) => {
+            const config = PACE_CONFIG[pace];
+            const items = getItemsForPace(pace);
 
             return (
-              <div key={level} className="flex flex-col">
+              <div key={pace} className="flex flex-col">
                 {/* Column Header */}
                 <div className="bg-calm-surface border border-calm-border rounded-lg p-4 mb-4">
                   <div className="flex items-center gap-2 mb-1">
@@ -108,9 +112,8 @@ export default function EnergyMenuPage() {
                 <div className="space-y-3 flex-1">
                   {items.length === 0 ? (
                     <div className="bg-calm-surface/50 border border-dashed border-calm-border rounded-lg p-6 text-center">
-                      <p className="text-sm text-calm-text mb-1">No items yet</p>
-                      <p className="text-xs text-calm-muted">
-                        Add optional activities that match this energy level
+                      <p className="text-sm text-calm-muted italic">
+                        {config.emptyText}
                       </p>
                     </div>
                   ) : (
@@ -157,7 +160,7 @@ export default function EnergyMenuPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <EnergyMenuItemModal
+        <PacePickModal
           item={editingItem}
           onClose={() => setIsModalOpen(false)}
         />
@@ -168,8 +171,8 @@ export default function EnergyMenuPage() {
         isOpen={!!deleteConfirm}
         onClose={() => setDeleteConfirm(null)}
         onConfirm={confirmDelete}
-        title="Delete Item?"
-        message="This Energy Menu item will be removed. You can always recreate it later."
+        title="Delete Pick?"
+        message="This Pace Pick will be removed. You can always recreate it later."
         confirmLabel="Delete"
         cancelLabel="Keep It"
         variant="danger"

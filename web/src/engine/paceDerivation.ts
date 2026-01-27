@@ -1,13 +1,13 @@
 /**
- * energyDerivation.ts
- * Derives which tasks are visible based on energy mode.
+ * paceDerivation.ts
+ * Derives which tasks are visible based on pace.
  */
 
-import { RoutineTask, EnergyMode } from '../models/RoutineTemplate';
+import { RoutineTask, Pace } from '../models/RoutineTemplate';
 
 /**
  * Migrates a task from old flags (lowSafe, flowExtra) to new flags (lowIncluded, steadyIncluded, flowIncluded).
- * If no tags are selected, defaults to Steady mode only.
+ * If no tags are selected, defaults to Steady only.
  */
 function migrateTaskFlags(task: RoutineTask): {
   lowIncluded: boolean;
@@ -33,44 +33,44 @@ function migrateTaskFlags(task: RoutineTask): {
   // - neither flag → appears in Steady, Flow
 
   if (hasLowSafe && hasFlowExtra) {
-    // All energy modes
+    // All paces
     return { lowIncluded: true, steadyIncluded: true, flowIncluded: true };
   } else if (hasLowSafe) {
-    // Low energy mode (also appears in Steady and Flow in old logic)
+    // Low pace (also appears in Steady and Flow in old logic)
     return { lowIncluded: true, steadyIncluded: true, flowIncluded: true };
   } else if (hasFlowExtra) {
-    // Flow mode only
+    // Flow only
     return { lowIncluded: false, steadyIncluded: false, flowIncluded: true };
   } else {
-    // Default: Steady mode only (new default behavior)
+    // Default: Steady only (new default behavior)
     return { lowIncluded: false, steadyIncluded: true, flowIncluded: false };
   }
 }
 
 /**
- * Filters tasks based on the selected energy mode.
+ * Filters tasks based on the selected pace.
  *
  * New logic:
  * - If no tags selected → appears in Steady only (new default)
- * - Low tag → add to Low mode
- * - Steady tag → add to Steady mode
- * - Flow tag → add to Flow mode
+ * - Low tag → add to Low pace
+ * - Steady tag → add to Steady pace
+ * - Flow tag → add to Flow pace
  * - Can combine them however you want
  */
-export function deriveTasksForEnergyMode(
+export function deriveTasksForPace(
   tasks: RoutineTask[],
-  energyMode: EnergyMode
+  pace: Pace
 ): RoutineTask[] {
   return tasks.filter((task) => {
     const { lowIncluded, steadyIncluded, flowIncluded } = migrateTaskFlags(task);
 
     // If no tags selected at all, default to Steady only
     if (!lowIncluded && !steadyIncluded && !flowIncluded) {
-      return energyMode === 'steady';
+      return pace === 'steady';
     }
 
-    // Otherwise, check if the current energy mode is included
-    switch (energyMode) {
+    // Otherwise, check if the current pace is included
+    switch (pace) {
       case 'low':
         return lowIncluded;
       case 'steady':

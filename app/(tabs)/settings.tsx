@@ -412,7 +412,7 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* Energy Menu Setup */}
+        {/* Pace Picks Setup */}
         <View style={styles.cardGroup}>
           <TouchableOpacity
             style={[styles.card, { backgroundColor: theme.colors.surface }]}
@@ -420,10 +420,10 @@ export default function SettingsScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
-              Energy Menu
+              Pace Picks
             </Text>
             <Text style={[styles.cardDescription, { color: theme.colors.textSecondary }]}>
-              Manage optional actions you can choose from based on your energy level
+              Optional things that tend to feel good at each pace
             </Text>
             <Text style={[styles.linkArrow, { color: theme.colors.primary }]}>
               →

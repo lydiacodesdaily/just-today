@@ -43,4 +43,4 @@ export interface RoutineTemplate {
   updatedAt: number;
 }
 
-export type EnergyMode = 'low' | 'steady' | 'flow';
+export type Pace = 'low' | 'steady' | 'flow';

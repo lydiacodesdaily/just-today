@@ -53,27 +53,27 @@ function getTodayRestMessage(): string {
 }
 
 /**
- * Get energy mode acknowledgment message
+ * Get pace acknowledgment message
  */
-export function getEnergyModeMessage(
-  energyModes: ('low' | 'steady' | 'flow')[]
+export function getPaceMessage(
+  paces: ('low' | 'steady' | 'flow')[]
 ): string | null {
-  if (energyModes.length === 0) return null;
+  if (paces.length === 0) return null;
 
-  // If multiple modes, acknowledge adaptability
-  if (energyModes.length > 1) {
+  // If multiple paces, acknowledge adaptability
+  if (paces.length > 1) {
     return "You listened to yourself today.";
   }
 
-  const mode = energyModes[0];
+  const pace = paces[0];
 
-  switch (mode) {
+  switch (pace) {
     case 'low':
-      return "You chose Low energy — that's taking care of yourself.";
+      return "You chose Low — that's taking care of yourself.";
     case 'steady':
-      return "Steady energy — one step at a time.";
+      return "Steady — one step at a time.";
     case 'flow':
-      return "Flow energy — you felt the momentum.";
+      return "Flow — you felt the momentum.";
     default:
       return null;
   }
@@ -137,10 +137,10 @@ export function getWeeklyReflectionMessage(
 }
 
 /**
- * Get energy mode emoji
+ * Get pace emoji
  */
-export function getEnergyModeEmoji(mode: 'low' | 'steady' | 'flow'): string {
-  switch (mode) {
+export function getPaceEmoji(pace: 'low' | 'steady' | 'flow'): string {
+  switch (pace) {
     case 'low':
       return '💤';
     case 'steady':

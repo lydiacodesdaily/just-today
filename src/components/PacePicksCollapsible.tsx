@@ -1,38 +1,38 @@
 /**
- * EnergyMenuCollapsible.tsx
- * Collapsed-by-default Energy Menu that expands inline.
+ * PacePicksCollapsible.tsx
+ * Collapsed-by-default Pace Picks that expands inline.
  * This is a choice, not a prompt.
  */
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../constants/theme';
-import { EnergyMenuItem, EnergyLevel } from '../models/EnergyMenuItem';
-import { getEnergyMenuItemsByLevel } from '../persistence/energyMenuStore';
+import { PacePick, EnergyLevel } from '../models/PacePick';
+import { getPacePicksByLevel } from '../persistence/pacePicksStore';
 import { SectionLabel } from './SectionLabel';
 
-interface EnergyMenuCollapsibleProps {
-  energyMode: EnergyLevel;
+interface PacePicksCollapsibleProps {
+  pace: EnergyLevel;
   isExpanded: boolean;
   onToggle: () => void;
-  onAddItem: (item: EnergyMenuItem) => void;
+  onAddItem: (item: PacePick) => void;
 }
 
-export function EnergyMenuCollapsible({
-  energyMode,
+export function PacePicksCollapsible({
+  pace,
   isExpanded,
   onToggle,
   onAddItem,
-}: EnergyMenuCollapsibleProps) {
+}: PacePicksCollapsibleProps) {
   const theme = useTheme();
-  const [menuItems, setMenuItems] = useState<EnergyMenuItem[]>([]);
+  const [menuItems, setMenuItems] = useState<PacePick[]>([]);
 
   useEffect(() => {
     loadMenuItems();
-  }, [energyMode]);
+  }, [pace]);
 
   const loadMenuItems = async () => {
-    const items = await getEnergyMenuItemsByLevel(energyMode);
+    const items = await getPacePicksByLevel(pace);
     setMenuItems(items);
   };
 
@@ -40,8 +40,6 @@ export function EnergyMenuCollapsible({
   if (menuItems.length === 0) {
     return null;
   }
-
-  // Energy labels kept for potential future use but not needed for Phase 1 simplified header
 
   return (
     <View style={styles.container}>

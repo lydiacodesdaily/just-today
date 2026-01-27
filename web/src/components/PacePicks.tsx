@@ -1,40 +1,41 @@
 /**
- * EnergyMenu.tsx
- * Collapsible component for displaying energy-specific optional items
+ * PacePicks.tsx
+ * Collapsible component for displaying pace-specific optional items (Pace Picks)
  */
 
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { EnergyLevel } from '@/src/models/EnergyMenuItem';
-import { useEnergyMenuStore } from '@/src/stores/energyMenuStore';
+import { PaceTag } from '@/src/models/PacePick';
+import { usePacePicksStore } from '@/src/stores/pacePicksStore';
 import { SectionLabel } from './SectionLabel';
 
-interface EnergyMenuProps {
-  energyLevel: EnergyLevel;
+interface PacePicksProps {
+  paceTag: PaceTag;
 }
 
-export function EnergyMenu({ energyLevel }: EnergyMenuProps) {
-  const { menuItems, addToToday } = useEnergyMenuStore();
+export function PacePicks({ paceTag }: PacePicksProps) {
+  const { menuItems, addToToday } = usePacePicksStore();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Filter menu items for current energy level
+  // Filter menu items for current pace
   const filteredItems = menuItems
-    .filter((item) => item.energyLevel === energyLevel)
+    .filter((item) => item.paceTag === paceTag)
     .slice(0, 5); // Show max 5 items
 
-  // Show placeholder if no items for this level
+  // Show placeholder if no items for this pace
   const hasNoItems = filteredItems.length === 0;
 
-  const getLevelLabel = () => {
-    switch (energyLevel) {
+  // Map internal storage keys to user-facing pace labels
+  const getPaceLabel = () => {
+    switch (paceTag) {
       case 'low':
-        return 'Low';
+        return 'Gentle';
       case 'steady':
         return 'Steady';
       case 'flow':
-        return 'Flow';
+        return 'Deep';
     }
   };
 
@@ -46,7 +47,7 @@ export function EnergyMenu({ energyLevel }: EnergyMenuProps) {
         className="w-full flex items-center justify-between p-3 hover:bg-calm-surface/50 rounded-lg transition-colors"
         aria-expanded={isExpanded}
       >
-        <SectionLabel>Optional ({getLevelLabel()})</SectionLabel>
+        <SectionLabel>Optional ({getPaceLabel()})</SectionLabel>
 
         <svg
           className={`w-3 h-3 text-calm-muted transition-transform ${
@@ -66,13 +67,13 @@ export function EnergyMenu({ energyLevel }: EnergyMenuProps) {
           {hasNoItems ? (
             <div className="bg-calm-surface/50 border border-dashed border-calm-border rounded-lg p-6 text-center">
               <p className="text-sm text-calm-muted mb-3">
-                No Energy Menu items for {getLevelLabel()} energy yet.
+                No Pace Picks for {getPaceLabel()} pace yet.
               </p>
               <Link
-                href="/energy-menu"
+                href="/pace-picks"
                 className="inline-block px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
               >
-                Create Energy Menu Items →
+                Create Pace Picks →
               </Link>
             </div>
           ) : (
@@ -103,10 +104,10 @@ export function EnergyMenu({ energyLevel }: EnergyMenuProps) {
 
               {/* Manage link */}
               <Link
-                href="/energy-menu"
+                href="/pace-picks"
                 className="block text-center text-sm text-calm-muted hover:text-calm-text transition-colors py-2"
               >
-                Manage Energy Menu →
+                Manage Pace Picks →
               </Link>
             </>
           )}

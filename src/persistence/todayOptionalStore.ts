@@ -5,7 +5,7 @@
  */
 
 import { getItem, setItem, KEYS } from './storage';
-import { TodayOptionalItem, EnergyMenuItem } from '../models/EnergyMenuItem';
+import { TodayOptionalItem, PacePick } from '../models/PacePick';
 
 /**
  * Get today's date string (YYYY-MM-DD) for comparison
@@ -50,9 +50,9 @@ async function saveTodayOptionalItems(items: TodayOptionalItem[]): Promise<void>
 }
 
 /**
- * Add an Energy Menu item to Today as an Optional item
+ * Add a Pace Pick to Today as an Optional item
  */
-export async function addOptionalItemToToday(menuItem: EnergyMenuItem): Promise<TodayOptionalItem> {
+export async function addOptionalItemToToday(menuItem: PacePick): Promise<TodayOptionalItem> {
   const items = await loadTodayOptionalItems();
 
   const newItem: TodayOptionalItem = {

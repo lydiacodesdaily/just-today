@@ -20,6 +20,20 @@ import {
   getEnergyModeEmoji,
 } from '../../src/utils/reflectionMessages';
 
+// Map internal storage keys to user-facing pace labels
+const getPaceLabel = (mode: string): string => {
+  switch (mode) {
+    case 'low':
+      return 'Gentle';
+    case 'steady':
+      return 'Steady';
+    case 'flow':
+      return 'Deep';
+    default:
+      return mode.charAt(0).toUpperCase() + mode.slice(1);
+  }
+};
+
 export default function ReflectionsScreen() {
   const theme = useTheme();
   const [todaySnapshot, setTodaySnapshot] = useState<DailySnapshot | null>(null);
@@ -121,7 +135,7 @@ export default function ReflectionsScreen() {
               </View>
             )}
 
-            {/* Energy modes */}
+            {/* Pace */}
             {todaySnapshot.energyModesSelected.length > 0 && (
               <View style={styles.activityItem}>
                 <Text style={[styles.activityIcon]}>
@@ -129,11 +143,8 @@ export default function ReflectionsScreen() {
                 </Text>
                 <Text style={[styles.activityText, { color: theme.colors.text }]}>
                   {todaySnapshot.energyModesSelected.length === 1
-                    ? `${
-                        todaySnapshot.energyModesSelected[0].charAt(0).toUpperCase() +
-                        todaySnapshot.energyModesSelected[0].slice(1)
-                      } energy`
-                    : `${todaySnapshot.energyModesSelected.length} energy modes`}
+                    ? `${getPaceLabel(todaySnapshot.energyModesSelected[0])} pace`
+                    : `${todaySnapshot.energyModesSelected.length} pace changes`}
                 </Text>
               </View>
             )}
@@ -159,7 +170,7 @@ export default function ReflectionsScreen() {
           </Text>
         )}
 
-        {/* Energy mode message */}
+        {/* Pace message */}
         {energyMessage && (
           <Text
             style={[

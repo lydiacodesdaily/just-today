@@ -1,12 +1,12 @@
 /**
- * energyDerivation.test.ts
- * Unit tests for energy mode task filtering.
+ * paceDerivation.test.ts
+ * Unit tests for pace task filtering.
  */
 
-import { deriveTasksForEnergyMode } from '../energyDerivation';
+import { deriveTasksForPace } from '../paceDerivation';
 import { RoutineTask } from '../../models/RoutineTemplate';
 
-describe('energyDerivation', () => {
+describe('paceDerivation', () => {
   const tasks: RoutineTask[] = [
     {
       id: '1',
@@ -46,33 +46,33 @@ describe('energyDerivation', () => {
     },
   ];
 
-  describe('deriveTasksForEnergyMode', () => {
+  describe('deriveTasksForPace', () => {
     it('low mode: only shows lowSafe tasks', () => {
-      const filtered = deriveTasksForEnergyMode(tasks, 'low');
+      const filtered = deriveTasksForPace(tasks, 'low');
       expect(filtered).toHaveLength(2);
       expect(filtered.map(t => t.id)).toEqual(['2', '4']);
     });
 
     it('steady mode: excludes flowExtra-only tasks', () => {
-      const filtered = deriveTasksForEnergyMode(tasks, 'steady');
+      const filtered = deriveTasksForPace(tasks, 'steady');
       expect(filtered).toHaveLength(3);
       expect(filtered.map(t => t.id)).toEqual(['1', '2', '4']);
       // Should NOT include task 3 (flowExtra without lowSafe)
     });
 
     it('steady mode: includes tasks that are both lowSafe and flowExtra', () => {
-      const filtered = deriveTasksForEnergyMode(tasks, 'steady');
+      const filtered = deriveTasksForPace(tasks, 'steady');
       expect(filtered.find(t => t.id === '4')).toBeDefined();
     });
 
     it('flow mode: shows all tasks', () => {
-      const filtered = deriveTasksForEnergyMode(tasks, 'flow');
+      const filtered = deriveTasksForPace(tasks, 'flow');
       expect(filtered).toHaveLength(4);
       expect(filtered.map(t => t.id)).toEqual(['1', '2', '3', '4']);
     });
 
     it('preserves task order', () => {
-      const filtered = deriveTasksForEnergyMode(tasks, 'flow');
+      const filtered = deriveTasksForPace(tasks, 'flow');
       const orders = filtered.map(t => t.order);
       expect(orders).toEqual([0, 1, 2, 3]);
     });
@@ -89,12 +89,12 @@ describe('energyDerivation', () => {
           autoAdvance: false,
         },
       ];
-      const filtered = deriveTasksForEnergyMode(noLowTasks, 'low');
+      const filtered = deriveTasksForPace(noLowTasks, 'low');
       expect(filtered).toHaveLength(0);
     });
 
     it('returns empty array for empty input', () => {
-      const filtered = deriveTasksForEnergyMode([], 'low');
+      const filtered = deriveTasksForPace([], 'low');
       expect(filtered).toHaveLength(0);
     });
   });

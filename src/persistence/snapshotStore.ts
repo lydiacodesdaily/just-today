@@ -98,18 +98,18 @@ export async function addFocusTime(durationMs: number): Promise<void> {
 }
 
 /**
- * Add energy mode to today's snapshot (if not already added)
+ * Add pace to today's snapshot (if not already added)
  */
-export async function addEnergyMode(energyMode: 'low' | 'steady' | 'flow'): Promise<void> {
+export async function addPace(pace: 'low' | 'steady' | 'flow'): Promise<void> {
   const today = new Date();
   const snapshot = await loadTodaySnapshot();
 
   // Only add if not already in the list
-  if (!snapshot.energyModesSelected.includes(energyMode)) {
+  if (!snapshot.pacesSelected.includes(pace)) {
     const now = new Date().toISOString();
 
     await updateSnapshot(today, {
-      energyModesSelected: [...snapshot.energyModesSelected, energyMode],
+      pacesSelected: [...snapshot.pacesSelected, pace],
       lastActivityAt: now,
       // Set first activity if not set
       firstActivityAt: snapshot.firstActivityAt || now,

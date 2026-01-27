@@ -10,7 +10,7 @@ import {
   createEmptySnapshot,
   formatDateKey,
   getWeekDates,
-  EnergyMode,
+  Pace,
 } from '@/src/models/DailySnapshot';
 
 interface SnapshotStore {
@@ -26,7 +26,7 @@ interface SnapshotStore {
     field: 'focusItemsCompleted' | 'routineRunsCompleted' | 'itemsMovedToLater'
   ) => void;
   addFocusTime: (durationMs: number) => void;
-  addEnergyMode: (energyMode: EnergyMode) => void;
+  addPace: (pace: Pace) => void;
   addCompletedTasks: (count: number) => void;
   updateActivityTimestamp: () => void;
   cleanupOldSnapshots: () => void;
@@ -148,8 +148,8 @@ export const useSnapshotStore = create<SnapshotStore>()(
         });
       },
 
-      // Add energy mode to today's snapshot (deduped)
-      addEnergyMode: (energyMode: EnergyMode) => {
+      // Add pace to today's snapshot (deduped)
+      addPace: (pace: Pace) => {
         const today = new Date();
         const dateKey = formatDateKey(today);
         const now = new Date().toISOString();
@@ -159,15 +159,15 @@ export const useSnapshotStore = create<SnapshotStore>()(
             state.snapshots[dateKey] || createEmptySnapshot(dateKey);
 
           // Only add if not already present
-          const energyModesSelected = existingSnapshot.energyModesSelected.includes(
-            energyMode
+          const pacesSelected = existingSnapshot.pacesSelected.includes(
+            pace
           )
-            ? existingSnapshot.energyModesSelected
-            : [...existingSnapshot.energyModesSelected, energyMode];
+            ? existingSnapshot.pacesSelected
+            : [...existingSnapshot.pacesSelected, pace];
 
           const updatedSnapshot: DailySnapshot = {
             ...existingSnapshot,
-            energyModesSelected,
+            pacesSelected,
             lastActivityAt: now,
           };
 

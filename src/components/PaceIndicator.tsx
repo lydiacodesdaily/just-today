@@ -1,6 +1,6 @@
 /**
- * EnergyIndicator.tsx
- * A small, subtle pill showing current energy level with option to change.
+ * PaceIndicator.tsx
+ * A small, subtle pill showing current pace with option to change.
  *
  * Designed to be compact and non-intrusive - not competing with Today's Focus.
  */
@@ -8,27 +8,28 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native';
 import { useTheme } from '../constants/theme';
-import { useEnergy } from '../context/EnergyContext';
-import { EnergyMode } from '../models/RoutineTemplate';
+import { usePace } from '../context/PaceContext';
+import { Pace } from '../models/RoutineTemplate';
 
-const ENERGY_CONFIG: Record<EnergyMode, { icon: string; label: string }> = {
-  low: { icon: '💤', label: 'Low' },
+// Map internal storage keys to user-facing pace labels
+const PACE_CONFIG: Record<Pace, { icon: string; label: string }> = {
+  low: { icon: '💤', label: 'Gentle' },
   steady: { icon: '🌿', label: 'Steady' },
-  flow: { icon: '✨', label: 'Flow' },
+  flow: { icon: '✨', label: 'Deep' },
 };
 
-const ALL_MODES: EnergyMode[] = ['low', 'steady', 'flow'];
+const ALL_PACES: Pace[] = ['low', 'steady', 'flow'];
 
-export function EnergyIndicator() {
+export function PaceIndicator() {
   const theme = useTheme();
-  const { currentMode, setEnergyForToday } = useEnergy();
+  const { currentPace, setPaceForToday } = usePace();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const config = ENERGY_CONFIG[currentMode];
+  const config = PACE_CONFIG[currentPace];
 
-  // Get energy-specific colors
-  const getEnergyColors = (mode: EnergyMode) => {
-    switch (mode) {
+  // Get pace-specific colors
+  const getPaceColors = (pace: Pace) => {
+    switch (pace) {
       case 'low':
         return { color: theme.colors.energyCare, bgColor: theme.colors.energyCareSubtle };
       case 'steady':
@@ -38,10 +39,10 @@ export function EnergyIndicator() {
     }
   };
 
-  const currentColors = getEnergyColors(currentMode);
+  const currentColors = getPaceColors(currentPace);
 
-  const handleSelect = async (mode: EnergyMode) => {
-    await setEnergyForToday(mode);
+  const handleSelect = async (pace: Pace) => {
+    await setPaceForToday(pace);
     setIsModalOpen(false);
   };
 
@@ -60,7 +61,7 @@ export function EnergyIndicator() {
         activeOpacity={0.7}
         accessible={true}
         accessibilityRole="button"
-        accessibilityLabel={`Current energy: ${config.label}. Tap to change.`}
+        accessibilityLabel={`Today's pace: ${config.label}. Tap to change.`}
       >
         <Text style={styles.pillIcon}>{config.icon}</Text>
         <Text style={[styles.pillLabel, { color: currentColors.color }]}>
@@ -92,33 +93,33 @@ export function EnergyIndicator() {
             ]}
           >
             <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-              Change Energy
+              Today's Pace
             </Text>
 
-            {ALL_MODES.map((mode) => {
-              const modeConfig = ENERGY_CONFIG[mode];
-              const modeColors = getEnergyColors(mode);
-              const isSelected = mode === currentMode;
+            {ALL_PACES.map((pace) => {
+              const paceConfig = PACE_CONFIG[pace];
+              const paceColors = getPaceColors(pace);
+              const isSelected = pace === currentPace;
 
               return (
                 <TouchableOpacity
-                  key={mode}
+                  key={pace}
                   style={[
                     styles.modalOption,
                     {
-                      backgroundColor: isSelected ? modeColors.bgColor : 'transparent',
-                      borderColor: isSelected ? modeColors.color : theme.colors.borderSubtle,
+                      backgroundColor: isSelected ? paceColors.bgColor : 'transparent',
+                      borderColor: isSelected ? paceColors.color : theme.colors.borderSubtle,
                     },
                   ]}
-                  onPress={() => handleSelect(mode)}
+                  onPress={() => handleSelect(pace)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.modalOptionIcon}>{modeConfig.icon}</Text>
+                  <Text style={styles.modalOptionIcon}>{paceConfig.icon}</Text>
                   <Text style={[styles.modalOptionLabel, { color: theme.colors.text }]}>
-                    {modeConfig.label}
+                    {paceConfig.label}
                   </Text>
                   {isSelected && (
-                    <Text style={[styles.modalOptionCheck, { color: modeColors.color }]}>
+                    <Text style={[styles.modalOptionCheck, { color: paceColors.color }]}>
                       ✓
                     </Text>
                   )}
