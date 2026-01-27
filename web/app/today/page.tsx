@@ -20,6 +20,7 @@ export default function TodayPage() {
   const [showMoreSections, setShowMoreSections] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const todaysFocusRef = useRef<TodaysFocusRef>(null);
+  const todaysFocusSectionRef = useRef<HTMLDivElement>(null);
 
   // Detect Arrival vs Action state
   // Arrival: First open of the day - no committed work yet
@@ -62,6 +63,14 @@ export default function TodayPage() {
 
   useGlobalKeyboardShortcuts(shortcuts);
 
+  // Handler to scroll to Today's Focus section
+  const handleViewToday = () => {
+    todaysFocusSectionRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
   return (
     <div className="min-h-screen bg-calm-bg">
       {/* Main container */}
@@ -92,10 +101,12 @@ export default function TodayPage() {
           {isArrivalState ? (
             <>
               {/* Brain Dump - expanded and prioritized */}
-              <BrainDump initialExpanded={true} arrivalMode={true} />
+              <BrainDump initialExpanded={true} arrivalMode={true} onViewToday={handleViewToday} />
 
               {/* Today's Focus - secondary */}
-              <TodaysFocus ref={todaysFocusRef} />
+              <div ref={todaysFocusSectionRef}>
+                <TodaysFocus ref={todaysFocusRef} />
+              </div>
 
               {/* Show More sections - collapsed by default */}
               {showMoreSections && (
@@ -137,7 +148,9 @@ export default function TodayPage() {
             <>
               {/* Action State: Today's Focus prioritized */}
               {/* Today's Focus - primary */}
-              <TodaysFocus ref={todaysFocusRef} />
+              <div ref={todaysFocusSectionRef}>
+                <TodaysFocus ref={todaysFocusRef} />
+              </div>
 
               {/* Completed Today - show evidence of work */}
               <CompletedToday />
@@ -165,7 +178,7 @@ export default function TodayPage() {
                   <LaterList />
 
                   {/* Brain Dump - collapsed but accessible */}
-                  <BrainDump initialExpanded={false} arrivalMode={false} />
+                  <BrainDump initialExpanded={false} arrivalMode={false} onViewToday={handleViewToday} />
                 </>
               )}
 

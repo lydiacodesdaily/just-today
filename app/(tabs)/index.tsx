@@ -37,6 +37,7 @@ export default function HomeScreen() {
   const [showRoutinePicker, setShowRoutinePicker] = useState(false);
   const [isBrainDumpExpanded, setIsBrainDumpExpanded] = useState(false);
   const [isEnergyMenuExpanded, setIsEnergyMenuExpanded] = useState(false);
+  const [forceShowTodayView, setForceShowTodayView] = useState(false);
 
   // Prompt user to resume or discard saved run
   useEffect(() => {
@@ -204,12 +205,13 @@ export default function HomeScreen() {
   // Phase 1 UX redesign: Show all routines (no more "View all" anxiety)
 
   // Phase 2 UX redesign: Show CaptureScreen when no items committed for today
-  if (todayItems.length === 0 && !currentRun) {
+  if (todayItems.length === 0 && !currentRun && !forceShowTodayView) {
     return (
       <>
         <CaptureScreen
           onPickItem={() => setShowAddFocusModal(true)}
           onStartRoutine={() => setShowRoutinePicker(true)}
+          onViewToday={() => setForceShowTodayView(true)}
         />
         <AddFocusItemModal
           visible={showAddFocusModal}

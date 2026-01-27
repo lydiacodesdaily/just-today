@@ -16,9 +16,10 @@ import { SectionLabel } from './SectionLabel';
 interface BrainDumpProps {
   initialExpanded?: boolean;
   arrivalMode?: boolean;
+  onViewToday?: () => void;
 }
 
-export function BrainDump({ initialExpanded = false, arrivalMode = false }: BrainDumpProps) {
+export function BrainDump({ initialExpanded = false, arrivalMode = false, onViewToday }: BrainDumpProps) {
   const { items, addItem, updateItem, deleteItem, keepItem } = useBrainDumpStore();
   const { addToToday, addToLater, setCheckOnce, setItemTimeBucket } = useFocusStore();
 
@@ -205,6 +206,20 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
           {/* Items list */}
           {unsortedItems.length > 0 && (
             <div className="space-y-2">
+              {/* Contextual action hint */}
+              {unsortedItems.length >= 2 && onViewToday && (
+                <div className="flex items-center justify-between bg-calm-surface/50 border border-calm-border/50 rounded-lg px-4 py-3 mb-2">
+                  <span className="text-sm text-calm-muted">
+                    Captured {unsortedItems.length} thoughts
+                  </span>
+                  <button
+                    onClick={onViewToday}
+                    className="text-sm text-calm-primary hover:text-calm-text transition-colors font-medium"
+                  >
+                    View Today's plan →
+                  </button>
+                </div>
+              )}
               {unsortedItems.map((item) => (
                 <div key={item.id}>
                   {editingItemId === item.id ? (

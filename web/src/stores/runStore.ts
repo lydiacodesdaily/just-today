@@ -117,8 +117,8 @@ export const useRunStore = create<RunStore>()(
               useFocusStore.getState().completeItem(updatedRun.sourceFocusItemId);
             }
             if (updatedRun.sourceOptionalItemId) {
-              const { useEnergyMenuStore } = await import('./energyMenuStore');
-              useEnergyMenuStore.getState().completeOptionalItem(updatedRun.sourceOptionalItemId);
+              const { usePacePicksStore } = await import('./pacePicksStore');
+              usePacePicksStore.getState().completeOptionalItem(updatedRun.sourceOptionalItemId);
             }
 
             // Count completed tasks (excluding focus items and optional items)
@@ -157,8 +157,8 @@ export const useRunStore = create<RunStore>()(
               useFocusStore.getState().completeItem(updatedRun.sourceFocusItemId);
             }
             if (updatedRun.sourceOptionalItemId) {
-              const { useEnergyMenuStore } = await import('./energyMenuStore');
-              useEnergyMenuStore.getState().completeOptionalItem(updatedRun.sourceOptionalItemId);
+              const { usePacePicksStore } = await import('./pacePicksStore');
+              usePacePicksStore.getState().completeOptionalItem(updatedRun.sourceOptionalItemId);
             }
           }
 

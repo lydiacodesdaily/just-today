@@ -25,9 +25,10 @@ import { BrainDumpItem } from '../models/BrainDumpItem';
 interface CaptureScreenProps {
   onPickItem: () => void;
   onStartRoutine: () => void;
+  onViewToday: () => void;
 }
 
-export function CaptureScreen({ onPickItem, onStartRoutine }: CaptureScreenProps) {
+export function CaptureScreen({ onPickItem, onStartRoutine, onViewToday }: CaptureScreenProps) {
   const theme = useTheme();
   const { items, addItem, deleteItem } = useBrainDump();
   const { addFromBrainDump } = useFocus();
@@ -111,6 +112,15 @@ export function CaptureScreen({ onPickItem, onStartRoutine }: CaptureScreenProps
           <Text style={[styles.title, { color: theme.colors.text }]}>
             What's on your mind?
           </Text>
+          <TouchableOpacity
+            style={styles.viewTodayLink}
+            onPress={onViewToday}
+            activeOpacity={0.6}
+          >
+            <Text style={[styles.viewTodayText, { color: theme.colors.textSecondary }]}>
+              View Today →
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Multi-line input area */}
@@ -240,6 +250,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: -0.3,
     lineHeight: 36,
+    marginBottom: 8,
+  },
+  viewTodayLink: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+  },
+  viewTodayText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   inputSection: {
     marginBottom: 24,

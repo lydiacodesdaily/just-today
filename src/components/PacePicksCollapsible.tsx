@@ -7,12 +7,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../constants/theme';
-import { PacePick, EnergyLevel } from '../models/PacePick';
-import { getPacePicksByLevel } from '../persistence/pacePicksStore';
+import { PacePick, PaceTag } from '../models/PacePick';
+import { getPacePicksByPace } from '../persistence/pacePicksStore';
 import { SectionLabel } from './SectionLabel';
 
 interface PacePicksCollapsibleProps {
-  pace: EnergyLevel;
+  pace: PaceTag;
   isExpanded: boolean;
   onToggle: () => void;
   onAddItem: (item: PacePick) => void;
@@ -32,7 +32,7 @@ export function PacePicksCollapsible({
   }, [pace]);
 
   const loadMenuItems = async () => {
-    const items = await getPacePicksByLevel(pace);
+    const items = await getPacePicksByPace(pace);
     setMenuItems(items);
   };
 
