@@ -9,16 +9,23 @@ import { LaterList } from '@/src/components/LaterList';
 import { BrainDump } from '@/src/components/BrainDump';
 import { CompletedToday } from '@/src/components/CompletedToday';
 import { KeyboardShortcutsModal } from '@/src/components/KeyboardShortcutsModal';
+import { PickOneThingModal } from '@/src/components/PickOneThingModal';
 import { usePaceStore } from '@/src/stores/paceStore';
 import { useFocusStore } from '@/src/stores/focusStore';
+import { usePacePicksStore } from '@/src/stores/pacePicksStore';
 import { useAutoCheck } from '@/src/hooks/useAutoCheck';
 import { useGlobalKeyboardShortcuts, KeyboardShortcut } from '@/src/hooks/useGlobalKeyboardShortcuts';
+import { FocusItem, isCheckOnceDue } from '@/src/models/FocusItem';
+import { PacePickItem } from '@/src/models/PacePick';
 
 export default function TodayPage() {
   const currentPace = usePaceStore((state) => state.currentPace);
-  const { todayItems, completedToday } = useFocusStore();
+  const { todayItems, laterItems, completedToday, moveToToday, addToToday, triggerCheckOnce } = useFocusStore();
+  const { menuItems } = usePacePicksStore();
   const [showMoreSections, setShowMoreSections] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [showPickOneThing, setShowPickOneThing] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const todaysFocusRef = useRef<TodaysFocusRef>(null);
   const todaysFocusSectionRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +78,40 @@ export default function TodayPage() {
     });
   };
 
+  // Handler for starting a Later item from Pick One Thing
+  const handleStartLaterItem = async (item: FocusItem, reason: string) => {
+    // Move item from Later to Today
+    await moveToToday(item.id);
+
+    // If it's a check-once item, trigger it to prevent re-showing
+    if (isCheckOnceDue(item)) {
+      await triggerCheckOnce(item.id);
+    }
+
+    // Close modal and scroll to Today's Focus
+    setShowPickOneThing(false);
+    handleViewToday();
+  };
+
+  // Handler for starting a Pace Pick from Pick One Thing
+  const handleStartPacePick = async (pacePick: PacePickItem) => {
+    // Add pace pick to Today
+    await addToToday(
+      pacePick.title,
+      pacePick.estimatedDuration || '~15 min'
+    );
+
+    // Close modal and scroll to Today's Focus
+    setShowPickOneThing(false);
+    handleViewToday();
+  };
+
+  // Handler to open Quick Add modal
+  const handleAddCustom = () => {
+    setShowQuickAdd(true);
+    todaysFocusRef.current?.openQuickAdd();
+  };
+
   return (
     <div className="min-h-screen bg-calm-bg">
       {/* Main container */}
@@ -101,7 +142,12 @@ export default function TodayPage() {
           {isArrivalState ? (
             <>
               {/* Brain Dump - expanded and prioritized */}
-              <BrainDump initialExpanded={true} arrivalMode={true} onViewToday={handleViewToday} />
+              <BrainDump
+                initialExpanded={true}
+                arrivalMode={true}
+                onViewToday={handleViewToday}
+                onPickItem={() => setShowPickOneThing(true)}
+              />
 
               {/* Today's Focus - secondary */}
               <div ref={todaysFocusSectionRef}>
@@ -200,6 +246,18 @@ export default function TodayPage() {
         {/* Footer spacing for mobile bottom nav - ensures tooltips and content aren't hidden */}
         <div className="h-24 md:h-0"></div>
       </div>
+
+      {/* Pick One Thing Modal */}
+      <PickOneThingModal
+        isOpen={showPickOneThing}
+        onClose={() => setShowPickOneThing(false)}
+        laterItems={laterItems}
+        pacePicks={menuItems}
+        currentPace={currentPace}
+        onStartLaterItem={handleStartLaterItem}
+        onStartPacePick={handleStartPacePick}
+        onAddCustom={handleAddCustom}
+      />
 
       {/* Keyboard shortcuts modal */}
       <KeyboardShortcutsModal

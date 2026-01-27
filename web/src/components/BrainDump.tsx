@@ -17,9 +17,10 @@ interface BrainDumpProps {
   initialExpanded?: boolean;
   arrivalMode?: boolean;
   onViewToday?: () => void;
+  onPickItem?: () => void;
 }
 
-export function BrainDump({ initialExpanded = false, arrivalMode = false, onViewToday }: BrainDumpProps) {
+export function BrainDump({ initialExpanded = false, arrivalMode = false, onViewToday, onPickItem }: BrainDumpProps) {
   const { items, addItem, updateItem, deleteItem, keepItem } = useBrainDumpStore();
   const { addToToday, addToLater, setCheckOnce, setItemTimeBucket } = useFocusStore();
 
@@ -207,17 +208,31 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false, onView
           {unsortedItems.length > 0 && (
             <div className="space-y-2">
               {/* Contextual action hint */}
-              {unsortedItems.length >= 2 && onViewToday && (
-                <div className="flex items-center justify-between bg-calm-surface/50 border border-calm-border/50 rounded-lg px-4 py-3 mb-2">
-                  <span className="text-sm text-calm-muted">
-                    Captured {unsortedItems.length} thoughts
-                  </span>
-                  <button
-                    onClick={onViewToday}
-                    className="text-sm text-calm-primary hover:text-calm-text transition-colors font-medium"
-                  >
-                    View Today's plan →
-                  </button>
+              {unsortedItems.length >= 2 && (onViewToday || onPickItem) && (
+                <div className="bg-calm-surface/50 border border-calm-border/50 rounded-lg px-4 py-3 mb-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-calm-muted">
+                      Captured {unsortedItems.length} thoughts
+                    </span>
+                    {onViewToday && (
+                      <button
+                        onClick={onViewToday}
+                        className="text-sm text-calm-primary hover:text-calm-text transition-colors font-medium"
+                      >
+                        View Today's plan →
+                      </button>
+                    )}
+                  </div>
+                  {onPickItem && arrivalMode && (
+                    <div className="pt-2 border-t border-calm-border/30">
+                      <button
+                        onClick={onPickItem}
+                        className="w-full text-sm text-calm-text hover:text-calm-primary transition-colors font-medium text-left"
+                      >
+                        Ready to do something? Pick one thing to focus on →
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
               {unsortedItems.map((item) => (

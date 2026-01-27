@@ -24,17 +24,24 @@ import { SectionLabel } from '../../src/components/SectionLabel';
 import { FocusItem } from '../../src/models/FocusItem';
 import { CaptureScreen } from '../../src/components/CaptureScreen';
 import { RoutinePickerSheet } from '../../src/components/RoutinePickerSheet';
+import { PickOneThingSheet } from '../../src/components/PickOneThingSheet';
+import { PacePick } from '../../src/models/PacePick';
+import { getPacePicksByPace } from '../../src/persistence/pacePicksStore';
+import { moveToToday, triggerCheckOnce } from '../../src/persistence/focusStore';
+import { isCheckOnceDue } from '../../src/models/FocusItem';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { setCurrentRun, currentRun } = useRun();
-  const { todayItems, startItemFocus, addToToday, refreshItems } = useFocus();
+  const { todayItems, laterItems, startItemFocus, addToToday, refreshItems } = useFocus();
   const { currentMode: energyMode } = usePace();
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
   const [showRoutinePicker, setShowRoutinePicker] = useState(false);
+  const [showPickOneThing, setShowPickOneThing] = useState(false);
+  const [pacePicks, setPacePicks] = useState<PacePick[]>([]);
   const [isBrainDumpExpanded, setIsBrainDumpExpanded] = useState(false);
   const [isEnergyMenuExpanded, setIsEnergyMenuExpanded] = useState(false);
   const [forceShowTodayView, setForceShowTodayView] = useState(false);
@@ -83,7 +90,15 @@ export default function HomeScreen() {
 
       // Refresh optional items as well
       refreshItems();
-    }, [refreshItems])
+
+      // Load pace picks filtered by current pace
+      getPacePicksByPace(energyMode)
+        .then(setPacePicks)
+        .catch((err) => {
+          console.error('Failed to load pace picks:', err);
+          setPacePicks([]);
+        });
+    }, [refreshItems, energyMode])
   );
 
   const handleStartRoutine = (template: RoutineTemplate) => {
@@ -202,6 +217,38 @@ export default function HomeScreen() {
     await addToToday(title, duration);
   };
 
+  const handleStartLaterItem = async (item: FocusItem, reason: string) => {
+    // Move item from Later to Today
+    await moveToToday(item.id);
+
+    // If it's a check-once item, trigger it to prevent re-showing
+    if (isCheckOnceDue(item)) {
+      await triggerCheckOnce(item.id);
+    }
+
+    // Refresh to get updated item
+    await refreshItems();
+
+    // Find the item in todayItems after refresh
+    const updatedItem = todayItems.find((i) => i.id === item.id) || item;
+
+    // Start the focus session
+    setShowPickOneThing(false);
+    handleStartFocusItem(updatedItem);
+  };
+
+  const handleStartPacePick = async (pacePick: PacePick) => {
+    // Add pace pick to Today
+    const newItem = await addToToday(
+      pacePick.title,
+      pacePick.estimatedDuration || '~15 min'
+    );
+
+    // Close modal and start the focus session
+    setShowPickOneThing(false);
+    handleStartFocusItem(newItem);
+  };
+
   // Phase 1 UX redesign: Show all routines (no more "View all" anxiety)
 
   // Phase 2 UX redesign: Show CaptureScreen when no items committed for today
@@ -209,9 +256,18 @@ export default function HomeScreen() {
     return (
       <>
         <CaptureScreen
-          onPickItem={() => setShowAddFocusModal(true)}
+          onPickItem={() => setShowPickOneThing(true)}
           onStartRoutine={() => setShowRoutinePicker(true)}
           onViewToday={() => setForceShowTodayView(true)}
+        />
+        <PickOneThingSheet
+          visible={showPickOneThing}
+          onClose={() => setShowPickOneThing(false)}
+          laterItems={laterItems}
+          pacePicks={pacePicks}
+          onStartLaterItem={handleStartLaterItem}
+          onStartPacePick={handleStartPacePick}
+          onAddCustom={() => setShowAddFocusModal(true)}
         />
         <AddFocusItemModal
           visible={showAddFocusModal}
