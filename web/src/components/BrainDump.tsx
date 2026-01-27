@@ -183,12 +183,19 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false }: Brai
               placeholder={arrivalMode ? "What's on your mind right now?" : "Dump anything on your mind..."}
               className="w-full min-h-[80px] bg-transparent border-none focus:outline-none text-calm-text placeholder-calm-muted resize-none"
             />
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-xs text-calm-muted">Items auto-expire in 24h</span>
+            <div className="flex justify-between items-start gap-3 mt-2">
+              <div className="flex-1 space-y-0.5">
+                <span className="text-xs text-calm-muted block">
+                  You don't have to decide what to do with this yet.
+                </span>
+                <span className="text-xs text-calm-muted block">
+                  Items auto-expire in 24h
+                </span>
+              </div>
               <button
                 onClick={handleAddItem}
                 disabled={!inputText.trim()}
-                className="px-4 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="px-4 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm flex-shrink-0"
               >
                 Add
               </button>

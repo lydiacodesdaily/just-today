@@ -128,17 +128,37 @@ export function CaptureScreen({ onPickItem, onStartRoutine }: CaptureScreenProps
             placeholderTextColor={theme.colors.textTertiary}
             value={inputText}
             onChangeText={setInputText}
-            onSubmitEditing={handleAddCapture}
-            returnKeyType="done"
+            returnKeyType="default"
             multiline
-            blurOnSubmit
             textAlignVertical="top"
           />
+
+          {/* Helper text and button */}
+          <View style={styles.inputFooter}>
+            <Text style={[styles.helperText, { color: theme.colors.textTertiary }]}>
+              You don't have to decide what to do with this yet.
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                { backgroundColor: theme.colors.primary },
+                !inputText.trim() && styles.saveButtonDisabled,
+              ]}
+              onPress={handleAddCapture}
+              disabled={!inputText.trim()}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.saveButtonText}>Save for now</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Recent captures list */}
         {recentItems.length > 0 && (
           <View style={styles.capturesSection}>
+            <Text style={[styles.capturesHint, { color: theme.colors.textTertiary }]}>
+              Items here disappear in 24 hours unless you move them.
+            </Text>
             {recentItems.map((item) => (
               <TouchableOpacity
                 key={item.id}
@@ -233,8 +253,38 @@ const styles = StyleSheet.create({
     minHeight: 120,
     lineHeight: 26,
   },
+  inputFooter: {
+    marginTop: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  helperText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  saveButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  saveButtonDisabled: {
+    opacity: 0.4,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   capturesSection: {
     gap: 10,
+  },
+  capturesHint: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 4,
   },
   captureItem: {
     paddingHorizontal: 16,
