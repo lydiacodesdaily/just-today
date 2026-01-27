@@ -13,11 +13,11 @@ import {
 } from '../../src/persistence/snapshotStore';
 import {
   getTodayReflectionMessage,
-  getEnergyModeMessage,
+  getPaceMessage,
   getLaterItemsMessage,
   getClosingMessage,
   getWeeklyReflectionMessage,
-  getEnergyModeEmoji,
+  getPaceEmoji,
 } from '../../src/utils/reflectionMessages';
 
 // Map internal storage keys to user-facing pace labels
@@ -75,7 +75,7 @@ export default function ReflectionsScreen() {
     todaySnapshot.routineRunsCompleted > 0 ||
     todaySnapshot.totalFocusTimeMs > 0;
 
-  const energyMessage = getEnergyModeMessage(todaySnapshot.energyModesSelected);
+  const paceMessage = getPaceMessage(todaySnapshot.pacesSelected);
   const laterMessage = getLaterItemsMessage(todaySnapshot.itemsMovedToLater);
 
   return (
@@ -136,15 +136,15 @@ export default function ReflectionsScreen() {
             )}
 
             {/* Pace */}
-            {todaySnapshot.energyModesSelected.length > 0 && (
+            {todaySnapshot.pacesSelected.length > 0 && (
               <View style={styles.activityItem}>
                 <Text style={[styles.activityIcon]}>
-                  {getEnergyModeEmoji(todaySnapshot.energyModesSelected[0])}
+                  {getPaceEmoji(todaySnapshot.pacesSelected[0])}
                 </Text>
                 <Text style={[styles.activityText, { color: theme.colors.text }]}>
-                  {todaySnapshot.energyModesSelected.length === 1
-                    ? `${getPaceLabel(todaySnapshot.energyModesSelected[0])} pace`
-                    : `${todaySnapshot.energyModesSelected.length} pace changes`}
+                  {todaySnapshot.pacesSelected.length === 1
+                    ? `${getPaceLabel(todaySnapshot.pacesSelected[0])} pace`
+                    : `${todaySnapshot.pacesSelected.length} pace changes`}
                 </Text>
               </View>
             )}
@@ -171,17 +171,17 @@ export default function ReflectionsScreen() {
         )}
 
         {/* Pace message */}
-        {energyMessage && (
+        {paceMessage && (
           <Text
             style={[
-              styles.energyMessage,
+              styles.paceMessage,
               {
                 color: theme.colors.textSecondary,
                 marginTop: theme.spacing.lg,
               },
             ]}
           >
-            {energyMessage}
+            {paceMessage}
           </Text>
         )}
 
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     fontStyle: 'italic',
   },
-  energyMessage: {
+  paceMessage: {
     fontSize: 16,
     lineHeight: 24,
     letterSpacing: 0.3,
