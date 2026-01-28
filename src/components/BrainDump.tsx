@@ -151,8 +151,8 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
             </Text>
           )}
         </View>
-        <Text style={[styles.collapsedHint, { color: theme.colors.textTertiary }]}>
-          {items.length === 0 ? 'Tap to capture thoughts' : 'Tap to expand'}
+        <Text style={[styles.expandIcon, { color: theme.colors.textTertiary }]}>
+          ▶
         </Text>
       </TouchableOpacity>
     );
@@ -189,7 +189,7 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
                 styles.emptyInput,
                 {
                   color: theme.colors.text,
-                  backgroundColor: theme.colors.background,
+                  backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
                 },
               ]}
@@ -223,7 +223,7 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
                   styles.input,
                   {
                     color: theme.colors.text,
-                    backgroundColor: theme.colors.background,
+                    backgroundColor: theme.colors.surface,
                     borderColor: theme.colors.border,
                   },
                 ]}
@@ -263,7 +263,7 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
                         styles.editInput,
                         {
                           color: theme.colors.text,
-                          backgroundColor: theme.colors.background,
+                          backgroundColor: theme.colors.surface,
                           borderColor: theme.colors.primary,
                         },
                       ]}
@@ -367,9 +367,10 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
 
 const styles = StyleSheet.create({
   collapsedContainer: {
-    paddingHorizontal: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
-    gap: 4,
   },
   collapsedHeader: {
     flexDirection: 'row',
@@ -380,10 +381,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
   },
-  collapsedHint: {
+  expandIcon: {
     fontSize: 12,
-    letterSpacing: 0.1,
-    paddingLeft: 4,
+    fontWeight: '500',
   },
   container: {
     gap: 16,

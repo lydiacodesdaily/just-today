@@ -19,6 +19,7 @@ import { PacePicksCollapsible } from '../../src/components/PacePicksCollapsible'
 import { TodaysFocus } from '../../src/components/TodaysFocus';
 import { LaterList } from '../../src/components/LaterList';
 import { BrainDump } from '../../src/components/BrainDump';
+import { DaylineCapture } from '../../src/components/DaylineCapture';
 import { AddFocusItemModal } from '../../src/components/AddFocusItemModal';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { FocusItem } from '../../src/models/FocusItem';
@@ -36,7 +37,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { setCurrentRun, currentRun } = useRun();
   const { todayItems, laterItems, startItemFocus, addToToday, refreshItems } = useFocus();
-  const { currentMode: energyMode, hasSelectedForToday } = usePace();
+  const { currentPace, hasSelectedForToday } = usePace();
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
@@ -44,6 +45,7 @@ export default function HomeScreen() {
   const [showPickOneThing, setShowPickOneThing] = useState(false);
   const [pacePicks, setPacePicks] = useState<PacePick[]>([]);
   const [isBrainDumpExpanded, setIsBrainDumpExpanded] = useState(false);
+  const [isDaylineExpanded, setIsDaylineExpanded] = useState(false);
   const [isEnergyMenuExpanded, setIsEnergyMenuExpanded] = useState(false);
   const [forceShowTodayView, setForceShowTodayView] = useState(false);
 
@@ -93,13 +95,13 @@ export default function HomeScreen() {
       refreshItems();
 
       // Load extras filtered by current pace
-      getPacePicksByPace(energyMode)
+      getPacePicksByPace(currentPace)
         .then(setPacePicks)
         .catch((err) => {
           console.error('Failed to load extras:', err);
           setPacePicks([]);
         });
-    }, [refreshItems, energyMode])
+    }, [refreshItems, currentPace])
   );
 
   const handleStartRoutine = (template: RoutineTemplate) => {
@@ -121,7 +123,7 @@ export default function HomeScreen() {
             text: 'Start New',
             style: 'destructive',
             onPress: () => {
-              const run = createRunFromTemplate(template, energyMode);
+              const run = createRunFromTemplate(template, currentPace);
               setCurrentRun(run);
               setHasShownResumePrompt(true); // Mark as shown since we're actively starting
               router.push('/routine/run');
@@ -145,7 +147,7 @@ export default function HomeScreen() {
             text: 'Start Fresh',
             style: 'cancel',
             onPress: () => {
-              const run = createRunFromTemplate(template, energyMode);
+              const run = createRunFromTemplate(template, currentPace);
               setCurrentRun(run);
               setHasShownResumePrompt(true);
               router.push('/routine/run');
@@ -165,7 +167,7 @@ export default function HomeScreen() {
       return;
     }
 
-    const run = createRunFromTemplate(template, energyMode);
+    const run = createRunFromTemplate(template, currentPace);
     setCurrentRun(run);
     setHasShownResumePrompt(true); // Mark as shown since we're actively starting
     router.push('/routine/run');
@@ -321,7 +323,7 @@ export default function HomeScreen() {
         {/* 2. Optional Extras (collapsed by default) */}
         <View style={styles.pacePicksSection}>
           <PacePicksCollapsible
-            energyMode={energyMode}
+            pace={currentPace}
             isExpanded={isEnergyMenuExpanded}
             onToggle={() => setIsEnergyMenuExpanded(!isEnergyMenuExpanded)}
             onAddItem={async (item) => {
@@ -343,7 +345,7 @@ export default function HomeScreen() {
         <View style={styles.routinesSection}>
           <View style={styles.routinesHeader}>
             <SectionLabel>
-              {energyMode === 'low' ? 'Essential Routines' : energyMode === 'flow' ? 'Full Routines' : 'Routines'}
+              {currentPace === 'low' ? 'Essential Routines' : currentPace === 'flow' ? 'Full Routines' : 'Routines'}
             </SectionLabel>
             <TouchableOpacity
               style={[
@@ -400,7 +402,7 @@ export default function HomeScreen() {
                 <RoutineCard
                   key={template.id}
                   routine={template}
-                  energyMode={energyMode}
+                  pace={currentPace}
                   onStart={() => handleStartRoutine(template)}
                   onEdit={() => handleEditRoutine(template)}
                 />
@@ -427,6 +429,14 @@ export default function HomeScreen() {
           <BrainDump
             isExpanded={isBrainDumpExpanded}
             onToggle={() => setIsBrainDumpExpanded(!isBrainDumpExpanded)}
+          />
+        </View>
+
+        {/* 7. Dayline Section (collapsed, for memory capture) */}
+        <View style={styles.daylineSection}>
+          <DaylineCapture
+            isExpanded={isDaylineExpanded}
+            onToggle={() => setIsDaylineExpanded(!isDaylineExpanded)}
           />
         </View>
 
@@ -523,6 +533,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   brainDumpSection: {
+    marginBottom: 24,
+  },
+  daylineSection: {
     marginBottom: 32,
   },
   header: {

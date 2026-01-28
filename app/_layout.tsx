@@ -13,6 +13,7 @@ import { RunProvider } from '../src/context/RunContext';
 import { TodayOptionalProvider } from '../src/context/TodayOptionalContext';
 import { FocusProvider } from '../src/context/FocusContext';
 import { BrainDumpProvider } from '../src/context/BrainDumpContext';
+import { DaylineProvider } from '../src/context/DaylineContext';
 import { GuidesProvider } from '../src/context/GuidesContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
@@ -92,9 +93,11 @@ export default function RootLayout() {
                 <TodayOptionalProvider>
                   <FocusProvider>
                     <BrainDumpProvider>
-                      <GuidesProvider>
-                        <RootStack />
-                      </GuidesProvider>
+                      <DaylineProvider>
+                        <GuidesProvider>
+                          <RootStack />
+                        </GuidesProvider>
+                      </DaylineProvider>
                     </BrainDumpProvider>
                   </FocusProvider>
                 </TodayOptionalProvider>
