@@ -16,7 +16,6 @@ import { BrainDumpProvider } from '../src/context/BrainDumpContext';
 import { GuidesProvider } from '../src/context/GuidesContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
-import { DailyPaceGate } from '../src/components/DailyPaceGate';
 
 function AppStack() {
   const theme = useTheme();
@@ -64,12 +63,12 @@ function AppStack() {
   );
 }
 
-/** Shows pace gate on first open of day, then the main app */
+/** Root stack - no longer blocks on pace selection */
 function RootStack() {
   const theme = useTheme();
-  const { hasSelectedForToday, isLoading } = usePace();
+  const { isLoading } = usePace();
 
-  // Show loading state while checking energy selection
+  // Show loading state while initializing pace context
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
@@ -78,12 +77,7 @@ function RootStack() {
     );
   }
 
-  // Show pace gate if user hasn't selected pace today
-  if (!hasSelectedForToday) {
-    return <DailyPaceGate />;
-  }
-
-  // Show main app
+  // Show main app - pace prompt will appear as banner on home screen
   return <AppStack />;
 }
 

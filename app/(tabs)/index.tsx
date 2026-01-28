@@ -29,13 +29,14 @@ import { PacePick } from '../../src/models/PacePick';
 import { getPacePicksByPace } from '../../src/persistence/pacePicksStore';
 import { moveToToday, triggerCheckOnce } from '../../src/persistence/focusStore';
 import { isCheckOnceDue } from '../../src/models/FocusItem';
+import { PacePromptBanner } from '../../src/components/PacePromptBanner';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { setCurrentRun, currentRun } = useRun();
   const { todayItems, laterItems, startItemFocus, addToToday, refreshItems } = useFocus();
-  const { currentMode: energyMode } = usePace();
+  const { currentMode: energyMode, hasSelectedForToday } = usePace();
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
@@ -313,6 +314,9 @@ export default function HomeScreen() {
             <PaceIndicator />
           </View>
         </View>
+
+        {/* Pace prompt banner - shows when user hasn't selected pace for today */}
+        {!hasSelectedForToday && <PacePromptBanner />}
 
         {/* 2. Optional Pace Picks (collapsed by default) */}
         <View style={styles.pacePicksSection}>

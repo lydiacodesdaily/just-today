@@ -21,7 +21,9 @@ import {
 import { useTheme } from '../constants/theme';
 import { useBrainDump } from '../context/BrainDumpContext';
 import { useFocus } from '../context/FocusContext';
+import { usePace } from '../context/PaceContext';
 import { BrainDumpItem } from '../models/BrainDumpItem';
+import { PacePromptBanner } from './PacePromptBanner';
 
 interface CaptureScreenProps {
   onPickItem: () => void;
@@ -33,6 +35,7 @@ export function CaptureScreen({ onPickItem, onStartRoutine, onViewToday }: Captu
   const theme = useTheme();
   const { items, addItem, deleteItem } = useBrainDump();
   const { addFromBrainDump } = useFocus();
+  const { hasSelectedForToday } = usePace();
   const [inputText, setInputText] = useState('');
   const [showPostCaptureToast, setShowPostCaptureToast] = useState(false);
   const [justCapturedId, setJustCapturedId] = useState<string | null>(null);
@@ -227,6 +230,9 @@ export function CaptureScreen({ onPickItem, onStartRoutine, onViewToday }: Captu
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Pace prompt banner - shows when user hasn't selected pace for today */}
+        {!hasSelectedForToday && <PacePromptBanner />}
 
         {/* Multi-line input area */}
         <View style={styles.inputSection}>
