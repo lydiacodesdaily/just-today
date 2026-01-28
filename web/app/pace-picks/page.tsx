@@ -74,7 +74,7 @@ export default function PacePicksPage() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-calm-text mb-2">Pace Picks</h1>
+          <h1 className="text-3xl font-semibold text-calm-text mb-2">Extras</h1>
           <p className="text-calm-muted mb-6">
             Optional things that tend to feel good at each pace
           </p>
@@ -172,7 +172,7 @@ export default function PacePicksPage() {
         onClose={() => setDeleteConfirm(null)}
         onConfirm={confirmDelete}
         title="Delete Pick?"
-        message="This Pace Pick will be removed. You can always recreate it later."
+        message="This item will be removed. You can always recreate it later."
         confirmLabel="Delete"
         cancelLabel="Keep It"
         variant="danger"

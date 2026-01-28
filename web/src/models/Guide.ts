@@ -1,7 +1,7 @@
 /**
  * Guide Models
  *
- * Guides are ephemeral checklists for context transitions.
+ * Transitions are ephemeral checklists for context changes.
  * They are NOT tasks, habits, or goals.
  * No tracking, no streaks, no analytics.
  */

@@ -1,6 +1,6 @@
 /**
  * FocusContext.tsx
- * Context provider for managing Today's Focus and Later items
+ * Context provider for managing Today and Later items
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
@@ -33,7 +33,7 @@ interface FocusContextValue {
   isLoading: boolean;
   rolloverCount: number;
 
-  // Today's Focus actions
+  // Today actions
   addToToday: (title: string, duration: FocusDuration) => Promise<FocusItem>;
   moveItemToLater: (itemId: string, reminderDate?: string) => Promise<void>;
   completeItem: (itemId: string) => Promise<void>;
@@ -53,7 +53,7 @@ interface FocusContextValue {
   reorderTodayItems: (reorderedItems: FocusItem[]) => Promise<void>;
   reorderLaterItems: (reorderedItems: FocusItem[]) => Promise<void>;
 
-  // Check Once feature
+  // Circle Back feature
   setCheckOnce: (itemId: string, checkOnceDate: string) => Promise<void>;
 
   // Edit items
@@ -119,7 +119,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Today's Focus actions
+  // Today actions
   const addToToday = useCallback(async (title: string, duration: FocusDuration): Promise<FocusItem> => {
     const newItem = await createTodayFocusItem(title, duration);
     setTodayItems((prev) => [...prev, newItem]);
@@ -222,7 +222,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     await reorderItems(reorderedItems, 'later');
   }, []);
 
-  // Check Once feature
+  // Circle Back feature
   const setCheckOnce = useCallback(async (itemId: string, checkOnceDate: string): Promise<void> => {
     await persistSetCheckOnce(itemId, checkOnceDate);
     // Update local state

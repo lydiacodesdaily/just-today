@@ -420,7 +420,7 @@ export default function SettingsScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
-              Pace Picks
+              Extras
             </Text>
             <Text style={[styles.cardDescription, { color: theme.colors.textSecondary }]}>
               Optional things that tend to feel good at each pace

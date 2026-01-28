@@ -50,7 +50,7 @@ async function saveTodayOptionalItems(items: TodayOptionalItem[]): Promise<void>
 }
 
 /**
- * Add a Pace Pick to Today as an Optional item
+ * Add an Extra to Today as an Optional item
  */
 export async function addOptionalItemToToday(menuItem: PacePick): Promise<TodayOptionalItem> {
   const items = await loadTodayOptionalItems();

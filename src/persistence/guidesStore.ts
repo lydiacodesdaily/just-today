@@ -1,9 +1,9 @@
 /**
  * guidesStore.ts
- * Storage operations for Guides
+ * Storage operations for Transitions
  *
  * What we persist:
- * - Custom guides created by user
+ * - Custom transitions created by user
  * - Active session state (if app is backgrounded)
  *
  * What we DON'T persist:

@@ -1,6 +1,6 @@
 /**
  * TodaysFocus.tsx
- * Today's Focus section component - displays items for today only
+ * Today section component - displays items for today only
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -111,7 +111,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           title: item.title,
-          options: ['Cancel', '✏️ Edit...', '⏭ Later', '🔄 Check once later...', 'Delete'],
+          options: ['Cancel', '✏️ Edit...', '⏭ Later', '🔄 Circle back later...', 'Delete'],
           destructiveButtonIndex: 4,
           cancelButtonIndex: 0,
         },
@@ -142,7 +142,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
             onPress: () => moveItemToLater(item.id),
           },
           {
-            text: '🔄 Check once later...',
+            text: '🔄 Circle back later...',
             onPress: () => setCheckOnceItemId(item.id),
           },
           {
@@ -242,7 +242,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
 
       {/* Section Header - Phase 1: 11px caps label + smaller title */}
       <View style={styles.header}>
-        <SectionLabel>Today's Focus</SectionLabel>
+        <SectionLabel>Today</SectionLabel>
       </View>
 
       {/* Empty State */}

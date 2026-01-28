@@ -1,7 +1,7 @@
 /**
  * PickOneThingModal.tsx
  * Modal for "Pick one thing" feature
- * Shows: Ready for Today (Later items) + Pace Picks + Add Custom
+ * Shows: Ready for Today (Later items) + Extras + Add Custom
  */
 
 'use client';

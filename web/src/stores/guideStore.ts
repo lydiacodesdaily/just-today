@@ -1,6 +1,6 @@
 /**
  * guideStore.ts
- * Zustand store for managing Guides (ephemeral checklists for context transitions)
+ * Zustand store for managing Transitions (ephemeral checklists for context changes)
  */
 
 import { create } from 'zustand';

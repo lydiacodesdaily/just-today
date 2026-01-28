@@ -1,6 +1,6 @@
 /**
  * focusStore.ts
- * Storage operations for Today's Focus and Later items
+ * Storage operations for Today and Later items
  */
 
 import { FocusItem, FocusDuration, TimeBucket } from '../models/FocusItem';
@@ -24,7 +24,7 @@ export async function loadFocusItems(): Promise<FocusItem[]> {
 }
 
 /**
- * Load only Today's Focus items
+ * Load only Today items
  */
 export async function loadTodayFocusItems(): Promise<FocusItem[]> {
   const allItems = await loadFocusItems();
@@ -51,7 +51,7 @@ async function saveFocusItems(items: FocusItem[]): Promise<void> {
 }
 
 /**
- * Create a new focus item in Today's Focus
+ * Create a new focus item in Today
  */
 export async function createTodayFocusItem(
   title: string,
@@ -421,21 +421,21 @@ export async function updateFocusItem(
 }
 
 /**
- * Set check once date for an item
+ * Set circle back date for an item
  */
 export async function setCheckOnceDate(itemId: string, checkOnceDate: string): Promise<void> {
   await updateFocusItem(itemId, { checkOnceDate, checkOnceTriggeredAt: undefined });
 }
 
 /**
- * Clear check once date for an item
+ * Clear circle back date for an item
  */
 export async function clearCheckOnceDate(itemId: string): Promise<void> {
   await updateFocusItem(itemId, { checkOnceDate: undefined, checkOnceTriggeredAt: undefined });
 }
 
 /**
- * Mark check once as triggered (prevents re-showing)
+ * Mark circle back as triggered (prevents re-showing)
  */
 export async function triggerCheckOnce(itemId: string): Promise<void> {
   await updateFocusItem(itemId, { checkOnceTriggeredAt: new Date().toISOString() });

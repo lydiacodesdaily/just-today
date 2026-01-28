@@ -119,7 +119,7 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
   };
 
   const handleMoveToToday = async (item: BrainDumpItem) => {
-    // Move to Today's Focus with default duration
+    // Move to Today with default duration
     await addFromBrainDump(item.text, 'today');
     // Remove from brain dump
     await deleteItem(item.id);

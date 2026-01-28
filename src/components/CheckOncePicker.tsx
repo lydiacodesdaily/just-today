@@ -1,6 +1,6 @@
 /**
  * CheckOncePicker.tsx
- * Picker for selecting a "check once later" date - one-time resurfacing
+ * Picker for selecting a "circle back later" date - one-time resurfacing
  */
 
 import React, { useState } from 'react';

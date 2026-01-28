@@ -1,6 +1,6 @@
 /**
  * PacePicksCollapsible.tsx
- * Collapsed-by-default Pace Picks that expands inline.
+ * Collapsed-by-default Extras that expands inline.
  * This is a choice, not a prompt.
  */
 

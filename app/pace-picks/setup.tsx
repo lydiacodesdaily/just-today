@@ -60,7 +60,7 @@ export default function PacePicksSetup() {
   const handleDeleteItem = (item: PacePick) => {
     Alert.alert(
       'Remove item?',
-      `Remove "${item.title}" from your Pace Picks?`,
+      `Remove "${item.title}" from your Extras?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -111,7 +111,7 @@ export default function PacePicksSetup() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={[styles.backText, { color: theme.colors.primary }]}>← Back</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Pace Picks</Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Extras</Text>
         <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
           Optional things that tend to feel good at each pace
         </Text>

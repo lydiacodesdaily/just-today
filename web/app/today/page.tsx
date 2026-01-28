@@ -83,17 +83,17 @@ export default function TodayPage() {
     // Move item from Later to Today
     await moveToToday(item.id);
 
-    // If it's a check-once item, trigger it to prevent re-showing
+    // If it's a circle back item, trigger it to prevent re-showing
     if (isCheckOnceDue(item)) {
       await triggerCheckOnce(item.id);
     }
 
-    // Close modal and scroll to Today's Focus
+    // Close modal and scroll to Today
     setShowPickOneThing(false);
     handleViewToday();
   };
 
-  // Handler for starting a Pace Pick from Pick One Thing
+  // Handler for starting an Extra from Pick One Thing
   const handleStartPacePick = async (pacePick: PacePickItem) => {
     // Add pace pick to Today
     await addToToday(

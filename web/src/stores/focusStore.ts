@@ -277,7 +277,7 @@ export const useFocusStore = create<FocusStore>()(
         }));
       },
 
-      // Set check once date for item
+      // Set circle back date for item
       setCheckOnce: (itemId, checkOnceDate) => {
         set((state) => ({
           todayItems: state.todayItems.map((item) =>
@@ -293,7 +293,7 @@ export const useFocusStore = create<FocusStore>()(
         }));
       },
 
-      // Clear check once date for item
+      // Clear circle back date for item
       clearCheckOnce: (itemId) => {
         set((state) => ({
           todayItems: state.todayItems.map((item) =>
@@ -309,7 +309,7 @@ export const useFocusStore = create<FocusStore>()(
         }));
       },
 
-      // Mark check once as triggered (called when item becomes due)
+      // Mark circle back as triggered (called when item becomes due)
       triggerCheckOnce: (itemId) => {
         const now = new Date().toISOString();
         set((state) => ({

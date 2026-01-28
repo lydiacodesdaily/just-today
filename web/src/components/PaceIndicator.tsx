@@ -2,7 +2,7 @@
  * PaceIndicator.tsx
  * A small, subtle pill showing current pace with option to change.
  *
- * Designed to be compact and non-intrusive - not competing with Today's Focus.
+ * Designed to be compact and non-intrusive - not competing with Today.
  */
 
 'use client';

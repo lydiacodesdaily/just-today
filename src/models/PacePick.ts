@@ -1,8 +1,8 @@
 /**
  * PacePick.ts
- * Defines Pace Pick items - reusable optional actions tagged by pace.
+ * Defines Extra items - reusable optional actions tagged by pace.
  *
- * Pace Pick items are NOT routines and never become part of routine templates.
+ * Extra items are NOT routines and never become part of routine templates.
  * They are optional actions that users can add to Today based on their current capacity.
  */
 
@@ -10,7 +10,7 @@ export type PaceTag = 'low' | 'steady' | 'flow';
 export type EstimatedDuration = '~5 min' | '~10 min' | '~15 min' | '~25 min';
 
 /**
- * A Pace Pick item - a reusable action that can be added to Today
+ * An Extra item - a reusable action that can be added to Today
  */
 export interface PacePick {
   id: string;
@@ -22,7 +22,7 @@ export interface PacePick {
 }
 
 /**
- * A Today Optional Item - an instance of a Pace Pick added to Today
+ * A Today Optional Item - an instance of an Extra added to Today
  * These expire daily and do not roll over.
  */
 export interface TodayOptionalItem {

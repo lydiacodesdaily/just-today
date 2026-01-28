@@ -338,7 +338,7 @@ export default function RunPage() {
         onClose={() => setShowEndConfirm(false)}
         onConfirm={confirmEnd}
         title="End This Routine?"
-        message="You can come back to it anytime from Today's Focus."
+        message="You can come back to it anytime from Today."
         confirmLabel="End Routine"
         cancelLabel="Keep Going"
         variant="warning"

@@ -1,13 +1,13 @@
 /**
  * pacePicksStore.ts
- * Persistence layer for Pace Pick items.
+ * Persistence layer for Extras items.
  */
 
 import { getItem, setItem, KEYS } from './storage';
 import { PacePick, PaceTag } from '../models/PacePick';
 
 /**
- * Load all Pace Pick items from storage
+ * Load all Extras items from storage
  */
 export async function loadPacePicks(): Promise<PacePick[]> {
   const items = await getItem<PacePick[]>(KEYS.PACE_PICKS);
@@ -15,14 +15,14 @@ export async function loadPacePicks(): Promise<PacePick[]> {
 }
 
 /**
- * Save all Pace Pick items to storage
+ * Save all Extras items to storage
  */
 export async function savePacePicks(items: PacePick[]): Promise<void> {
   await setItem(KEYS.PACE_PICKS, items);
 }
 
 /**
- * Create a new Pace Pick item
+ * Create a new Extra item
  */
 export async function createPacePick(item: Omit<PacePick, 'id' | 'createdAt' | 'updatedAt'>): Promise<PacePick> {
   const items = await loadPacePicks();
@@ -39,7 +39,7 @@ export async function createPacePick(item: Omit<PacePick, 'id' | 'createdAt' | '
 }
 
 /**
- * Update an existing Pace Pick item
+ * Update an existing Extra item
  */
 export async function updatePacePick(
   id: string,
@@ -48,7 +48,7 @@ export async function updatePacePick(
   const items = await loadPacePicks();
   const index = items.findIndex(item => item.id === id);
   if (index === -1) {
-    throw new Error(`Pace Pick item ${id} not found`);
+    throw new Error(`Extra item ${id} not found`);
   }
   items[index] = {
     ...items[index],
@@ -59,7 +59,7 @@ export async function updatePacePick(
 }
 
 /**
- * Delete a Pace Pick item
+ * Delete an Extra item
  */
 export async function deletePacePick(id: string): Promise<void> {
   const items = await loadPacePicks();
@@ -68,7 +68,7 @@ export async function deletePacePick(id: string): Promise<void> {
 }
 
 /**
- * Get Pace Pick items by pace
+ * Get Extra items by pace
  */
 export async function getPacePicksByPace(pace: PaceTag): Promise<PacePick[]> {
   const items = await loadPacePicks();

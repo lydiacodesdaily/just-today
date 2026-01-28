@@ -124,7 +124,7 @@ export function createRunFromOptionalItem(item: TodayOptionalItem): RoutineRun {
 }
 
 /**
- * Creates a single-task RoutineRun from a Focus Item (Today's Focus or Later).
+ * Creates a single-task RoutineRun from a Focus Item (Today or Later).
  * Used for focus sessions on user-defined tasks.
  */
 export function createRunFromFocusItem(item: FocusItem): RoutineRun {

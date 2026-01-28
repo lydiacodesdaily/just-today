@@ -27,7 +27,7 @@ export default function GuidesTab() {
     if (!canCreate) {
       Alert.alert(
         'Free Tier Limit',
-        "You've created 3 custom guides (free plan limit). Upgrade to create unlimited guides, or edit your existing ones.",
+        "You've created 3 custom transitions (free plan limit). Upgrade to create unlimited transitions, or edit your existing ones.",
         [{ text: 'OK' }]
       );
       return;
@@ -56,7 +56,7 @@ export default function GuidesTab() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>Guides</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>Transitions</Text>
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
             Support for context transitions
           </Text>
@@ -65,7 +65,7 @@ export default function GuidesTab() {
         {/* Default Guides Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>
-            Default Guides
+            Default Transitions
           </Text>
           <View style={styles.guideList}>
             {defaultGuides.map((guide) => (
@@ -78,7 +78,7 @@ export default function GuidesTab() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>
-              Custom Guides
+              Custom Transitions
             </Text>
             <Text style={[styles.guideCount, { color: theme.colors.textTertiary }]}>
               {customGuideCount} / {guideLimit}
@@ -95,10 +95,10 @@ export default function GuidesTab() {
             <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
               <Feather name="compass" size={32} color={theme.colors.textTertiary} />
               <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                No custom guides yet
+                No custom transitions yet
               </Text>
               <Text style={[styles.emptyHint, { color: theme.colors.textTertiary }]}>
-                Create guides for your own context transitions
+                Create transitions for your own contexts
               </Text>
             </View>
           )}
@@ -110,7 +110,7 @@ export default function GuidesTab() {
             activeOpacity={0.7}
           >
             <Feather name="plus" size={20} color={theme.colors.text} />
-            <Text style={[styles.createButtonText, { color: theme.colors.text }]}>Create Custom Guide</Text>
+            <Text style={[styles.createButtonText, { color: theme.colors.text }]}>Create Custom Transition</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

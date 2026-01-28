@@ -28,7 +28,7 @@ export function scoreItemForPicking(item: FocusItem): ScoredItem {
   let reason: SuggestionReason = 'oldest';
   let reasonText = '';
 
-  // Check-once items due TODAY get highest priority
+  // Circle back items due TODAY get highest priority
   if (isCheckOnceDue(item)) {
     score = 1000;
     reason = 'check-once-due';
@@ -93,7 +93,7 @@ export function getPickOneSuggestions(
 
 /**
  * Check if there are any high-priority suggestions
- * (check-once due or reminder due)
+ * (circle back due or reminder due)
  */
 export function hasHighPrioritySuggestions(laterItems: FocusItem[]): boolean {
   return laterItems.some(item =>

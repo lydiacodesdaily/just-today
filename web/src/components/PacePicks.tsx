@@ -1,6 +1,6 @@
 /**
  * PacePicks.tsx
- * Collapsible component for displaying pace-specific optional items (Pace Picks)
+ * Collapsible component for displaying pace-specific optional items (Extras)
  */
 
 'use client';

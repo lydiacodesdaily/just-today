@@ -1,6 +1,6 @@
 /**
  * EditTodayItemModal.tsx
- * Modal for editing Today's Focus items - title and duration
+ * Modal for editing Today items - title and duration
  */
 
 import React, { useState } from 'react';

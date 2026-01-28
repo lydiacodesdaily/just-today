@@ -1,6 +1,6 @@
 /**
  * FocusItem.ts
- * Data models for Today's Focus and Later items
+ * Data models for Today and Later items
  */
 
 /**
@@ -38,7 +38,7 @@ export type TimeBucket =
   | 'SOMEDAY';
 
 /**
- * FocusItem - Represents an item in either Today's Focus or Later
+ * FocusItem - Represents an item in either Today or Later
  */
 export interface FocusItem {
   id: string;
@@ -59,7 +59,7 @@ export interface FocusItem {
   reminderTiming?: ReminderTiming; // How the reminder was set
   timeBucket?: TimeBucket; // Optional manual time bucket label (defaults to NONE)
 
-  // Check Once resurfacing (calm, single-time resurfacing)
+  // Circle Back resurfacing (calm, single-time resurfacing)
   checkOnceDate?: string; // ISO date string (YYYY-MM-DD) for when to resurface once
   checkOnceTriggeredAt?: string; // ISO timestamp when item became due (ensures one-time resurfacing)
 
@@ -179,7 +179,7 @@ export function formatTimeBucket(bucket?: TimeBucket): string {
 }
 
 /**
- * Helper function to calculate check once date from preset
+ * Helper function to calculate circle back date from preset
  */
 export function calculateCheckOnceDate(preset: 'few-days' | 'next-week' | 'two-weeks' | 'custom', customDate?: Date): string | null {
   const today = new Date();
@@ -213,7 +213,7 @@ export function calculateCheckOnceDate(preset: 'few-days' | 'next-week' | 'two-w
 }
 
 /**
- * Helper function to check if check once date is due (using local date comparison)
+ * Helper function to check if circle back date is due (using local date comparison)
  */
 export function isCheckOnceDue(item: FocusItem): boolean {
   if (!item.checkOnceDate || item.checkOnceTriggeredAt) return false;
@@ -226,7 +226,7 @@ export function isCheckOnceDue(item: FocusItem): boolean {
 }
 
 /**
- * Helper function to format check once date for display
+ * Helper function to format circle back date for display
  */
 export function formatCheckOnceDate(checkOnceDate?: string): string {
   if (!checkOnceDate) return '';

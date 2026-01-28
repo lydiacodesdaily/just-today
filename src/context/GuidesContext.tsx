@@ -1,8 +1,8 @@
 /**
  * GuidesContext.tsx
- * Context provider for managing Guides
+ * Context provider for managing Transitions
  *
- * Guides are ephemeral checklists for context transitions.
+ * Transitions are ephemeral checklists for context changes.
  * No tracking, no streaks, no analytics.
  */
 

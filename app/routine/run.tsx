@@ -175,7 +175,7 @@ export default function RunScreen() {
       };
 
       if (isFocusItem) {
-        // Today's Focus completion message
+        // Today completion message
         Alert.alert(
           "That's it.",
           "You completed this task.\n\nYou don't have to do anything else right now.",

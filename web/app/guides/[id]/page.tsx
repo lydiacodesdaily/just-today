@@ -52,7 +52,7 @@ export default function GuideDetailPage() {
               onClick={() => router.push('/guides')}
               className="text-calm-text hover:underline"
             >
-              Back to Guides
+              Back to Transitions
             </button>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function GuideDetailPage() {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            <span>Back to Guides</span>
+            <span>Back to Transitions</span>
           </button>
 
           <div className="flex items-start justify-between">

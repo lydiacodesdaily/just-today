@@ -1,6 +1,6 @@
 /**
  * TodayOptionalContext.tsx
- * Manages Today Optional Items - Energy Menu items added to Today.
+ * Manages Today Optional Items - Extras added to Today.
  * These items are reset daily at midnight.
  */
 

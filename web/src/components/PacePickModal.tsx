@@ -1,6 +1,6 @@
 /**
  * PacePickModal.tsx
- * Modal for creating and editing Pace Picks
+ * Modal for creating and editing Extras
  */
 
 'use client';

@@ -1,6 +1,6 @@
 /**
  * PacePicksSheet.tsx
- * Gentle prompt card to add items from Pace Picks to Today.
+ * Gentle prompt card to add items from Extras to Today.
  * Only shows when conditions are met (has items, hasn't dismissed recently, etc.)
  */
 
@@ -37,10 +37,10 @@ export function PacePicksSheet({ currentPaceLevel, onDismiss }: PacePicksSheetPr
     // Convert EstimatedDuration to FocusDuration
     const duration = (item.estimatedDuration || '~15 min') as FocusDuration;
 
-    // Add to Today's Focus
+    // Add to Today
     await addToToday(item.title, duration);
 
-    // Close Pace Picks sheet immediately
+    // Close Extras sheet immediately
     setIsVisible(false);
     onDismiss?.();
   };

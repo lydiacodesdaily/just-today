@@ -59,11 +59,11 @@ const STEPS = [
     title: 'Two More Tools for You',
     tools: [
       {
-        name: 'Pace Picks',
+        name: 'Extras',
         description: 'Optional things that tend to feel good at each pace: drink water, take deep breath',
       },
       {
-        name: 'Guides',
+        name: 'Transitions',
         description: 'Step-by-step checklists for when you need structure: morning routine, wind down',
       },
     ],

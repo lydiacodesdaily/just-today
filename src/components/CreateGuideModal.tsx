@@ -129,7 +129,7 @@ export function CreateGuideModal({ visible, onClose, onCreate, editingGuide }: C
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Helper Text */}
           <Text style={[styles.helperText, { color: theme.colors.textSecondary }]}>
-            Guides help you remember during transitions. Keep items concrete and personal. Max{' '}
+            Transitions help you remember during context changes. Keep items concrete and personal. Max{' '}
             {MAX_ITEMS} items.
           </Text>
 

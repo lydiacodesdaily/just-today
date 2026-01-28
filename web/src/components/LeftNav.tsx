@@ -20,7 +20,7 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    name: 'Pace Picks',
+    name: 'Extras',
     href: '/energy-menu',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    name: 'Guides',
+    name: 'Transitions',
     href: '/guides',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

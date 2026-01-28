@@ -1,18 +1,18 @@
 /**
  * useCheckOnce.ts
- * Hook for managing check once resurfacing logic
+ * Hook for managing circle back resurfacing logic
  */
 
 import { FocusItem, isCheckOnceDue } from '@/src/models/FocusItem';
 
 export interface CheckOnceGroups {
-  scheduled: FocusItem[]; // Items with future check dates
+  scheduled: FocusItem[]; // Items with future circle back dates
   due: FocusItem[]; // Items ready to check today or past due
-  none: FocusItem[]; // Items without check once dates
+  none: FocusItem[]; // Items without circle back dates
 }
 
 /**
- * Groups Later items by check once status
+ * Groups Later items by circle back status
  */
 export function useCheckOnce(laterItems: FocusItem[]): CheckOnceGroups {
   const scheduled: FocusItem[] = [];

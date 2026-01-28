@@ -92,11 +92,11 @@ export default function HomeScreen() {
       // Refresh optional items as well
       refreshItems();
 
-      // Load pace picks filtered by current pace
+      // Load extras filtered by current pace
       getPacePicksByPace(energyMode)
         .then(setPacePicks)
         .catch((err) => {
-          console.error('Failed to load pace picks:', err);
+          console.error('Failed to load extras:', err);
           setPacePicks([]);
         });
     }, [refreshItems, energyMode])
@@ -222,7 +222,7 @@ export default function HomeScreen() {
     // Move item from Later to Today
     await moveToToday(item.id);
 
-    // If it's a check-once item, trigger it to prevent re-showing
+    // If it's a circle back item, trigger it to prevent re-showing
     if (isCheckOnceDue(item)) {
       await triggerCheckOnce(item.id);
     }
@@ -318,7 +318,7 @@ export default function HomeScreen() {
         {/* Pace prompt banner - shows when user hasn't selected pace for today */}
         {!hasSelectedForToday && <PacePromptBanner />}
 
-        {/* 2. Optional Pace Picks (collapsed by default) */}
+        {/* 2. Optional Extras (collapsed by default) */}
         <View style={styles.pacePicksSection}>
           <PacePicksCollapsible
             energyMode={energyMode}
@@ -331,7 +331,7 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* 3. Today's Focus Section (primary action area) */}
+        {/* 3. Today Section (primary action area) */}
         <View style={styles.focusSection}>
           <TodaysFocus
             onStartFocus={handleStartFocusItem}

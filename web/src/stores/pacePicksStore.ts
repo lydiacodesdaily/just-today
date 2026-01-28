@@ -1,6 +1,6 @@
 /**
  * pacePicksStore.ts
- * Zustand store for managing Pace Pick items and Today Optional items
+ * Zustand store for managing Extra items and Today Optional items
  */
 
 import { create } from 'zustand';
