@@ -24,6 +24,7 @@ interface LaterItemCardProps {
 
 function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket, onCheckOnceLater }: LaterItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showTimeBucketMenu, setShowTimeBucketMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const timeBucketMenuRef = useRef<HTMLDivElement>(null);
@@ -32,17 +33,18 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket,
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
+        setShowMoreMenu(false);
       }
       if (timeBucketMenuRef.current && !timeBucketMenuRef.current.contains(event.target as Node)) {
         setShowTimeBucketMenu(false);
       }
     }
 
-    if (showMenu || showTimeBucketMenu) {
+    if (showMenu || showMoreMenu || showTimeBucketMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showMenu, showTimeBucketMenu]);
+  }, [showMenu, showMoreMenu, showTimeBucketMenu]);
 
   // Show encouraging message for items rolled over many times
   const showRolloverEncouragement = item.rolloverCount && item.rolloverCount >= 3;
@@ -118,43 +120,68 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket,
               </svg>
             </button>
 
-            {showMenu && (
-              <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+            {/* Primary actions menu */}
+            {showMenu && !showMoreMenu && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
                 <button
                   onClick={() => {
                     onMoveToToday();
                     setShowMenu(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors font-medium"
+                  className="w-full px-4 py-2.5 text-left text-sm font-medium text-calm-text hover:bg-calm-bg transition-colors"
                 >
-                  Do Today
+                  ↩ Move to Today
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowMoreMenu(true);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm font-medium text-calm-muted hover:bg-calm-bg hover:text-calm-text transition-colors border-t border-calm-border"
+                >
+                  More...
+                </button>
+              </div>
+            )}
+
+            {/* Secondary "More" actions menu */}
+            {showMoreMenu && (
+              <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+                <button
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    setShowMenu(true);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-calm-muted hover:bg-calm-bg transition-colors border-b border-calm-border"
+                >
+                  ← Back
                 </button>
                 <button
                   onClick={() => {
                     onEdit();
-                    setShowMenu(false);
+                    setShowMoreMenu(false);
                   }}
                   className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
                 >
-                  Edit
+                  ✏️ Edit...
                 </button>
                 <button
                   onClick={() => {
                     setShowTimeBucketMenu(true);
-                    setShowMenu(false);
+                    setShowMoreMenu(false);
                   }}
                   className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
                 >
-                  When to think about this?
+                  🗓 When to think about this?
                 </button>
                 <button
                   onClick={() => {
                     onCheckOnceLater();
-                    setShowMenu(false);
+                    setShowMoreMenu(false);
                   }}
                   className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
                 >
-                  <div>{item.checkOnceDate ? 'Change check date...' : 'Check once later...'}</div>
+                  <div>🔄 {item.checkOnceDate ? 'Change check date...' : 'Check once later...'}</div>
                   <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
                     Resurface once to close the loop
                   </div>
@@ -162,9 +189,9 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket,
                 <button
                   onClick={() => {
                     onDelete();
-                    setShowMenu(false);
+                    setShowMoreMenu(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors group"
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors group border-t border-calm-border"
                 >
                   <div>Remove</div>
                   <div className="text-xs text-red-600/60 mt-0.5 group-hover:text-red-600/80 transition-colors">

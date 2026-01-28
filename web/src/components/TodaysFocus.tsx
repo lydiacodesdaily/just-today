@@ -50,20 +50,22 @@ function TodayItemCard({
   onCheckOnceLater,
 }: TodayItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
+        setShowMoreMenu(false);
       }
     }
 
-    if (showMenu) {
+    if (showMenu || showMoreMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showMenu]);
+  }, [showMenu, showMoreMenu]);
 
   return (
     <div className="bg-calm-surface border border-calm-border rounded-lg p-4 transition-colors hover:border-calm-text/30">
@@ -94,43 +96,68 @@ function TodayItemCard({
             </svg>
           </button>
 
-          {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
-              <button
-                onClick={() => {
-                  onEdit();
-                  setShowMenu(false);
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
-              >
-                Edit...
-              </button>
+          {/* Primary actions menu */}
+          {showMenu && !showMoreMenu && (
+            <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
               <button
                 onClick={() => {
                   onStart();
                   setShowMenu(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm font-medium text-calm-text hover:bg-calm-bg transition-colors"
               >
-                Start Timer
+                ▶ Start
               </button>
               <button
                 onClick={() => {
                   onComplete();
                   setShowMenu(false);
                 }}
+                className="w-full px-4 py-2.5 text-left text-sm font-medium text-calm-text hover:bg-calm-bg transition-colors"
+              >
+                ✓ Mark Done
+              </button>
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  setShowMoreMenu(true);
+                }}
+                className="w-full px-4 py-2.5 text-left text-sm font-medium text-calm-muted hover:bg-calm-bg hover:text-calm-text transition-colors border-t border-calm-border"
+              >
+                More...
+              </button>
+            </div>
+          )}
+
+          {/* Secondary "More" actions menu */}
+          {showMoreMenu && (
+            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+              <button
+                onClick={() => {
+                  setShowMoreMenu(false);
+                  setShowMenu(true);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-calm-muted hover:bg-calm-bg transition-colors border-b border-calm-border"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => {
+                  onEdit();
+                  setShowMoreMenu(false);
+                }}
                 className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
               >
-                Mark Done
+                ✏️ Edit...
               </button>
               <button
                 onClick={() => {
                   onMoveToLater();
-                  setShowMenu(false);
+                  setShowMoreMenu(false);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
               >
-                <div>Move to Later</div>
+                <div>⏭ Move to Later</div>
                 <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
                   That&apos;s okay — you can come back when ready
                 </div>
@@ -138,11 +165,11 @@ function TodayItemCard({
               <button
                 onClick={() => {
                   onCheckOnceLater();
-                  setShowMenu(false);
+                  setShowMoreMenu(false);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors group"
               >
-                <div>Check once later...</div>
+                <div>🔄 Check once later...</div>
                 <div className="text-xs text-calm-muted mt-0.5 group-hover:text-calm-text/70 transition-colors">
                   Resurface once to close the loop
                 </div>
@@ -150,9 +177,9 @@ function TodayItemCard({
               <button
                 onClick={() => {
                   onDelete();
-                  setShowMenu(false);
+                  setShowMoreMenu(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors group"
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors group border-t border-calm-border"
               >
                 <div>Remove</div>
                 <div className="text-xs text-red-600/60 mt-0.5 group-hover:text-red-600/80 transition-colors">

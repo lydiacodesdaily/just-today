@@ -5,6 +5,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform, Modal } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
@@ -46,7 +47,58 @@ export function LaterList({ onStartFocus }: LaterListProps) {
   // Memoize the minimum date to prevent creating new Date objects on every render
   const minimumDate = useMemo(() => new Date(), []);
 
+  // Progressive disclosure: Show primary actions first, "More" for secondary
   const handleItemPress = (item: FocusItem) => {
+    if (Platform.OS === 'ios') {
+      // Primary actions: Move to Today | Start | More...
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: item.title,
+          options: ['Cancel', '↩ Move to Today', '▶ Start', '✓ Mark Done', 'More...'],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            moveItemToToday(item.id);
+          } else if (buttonIndex === 2) {
+            onStartFocus(item);
+          } else if (buttonIndex === 3) {
+            completeItem(item.id);
+          } else if (buttonIndex === 4) {
+            showMoreOptions(item);
+          }
+        }
+      );
+    } else {
+      // Android: Primary actions
+      Alert.alert(
+        item.title,
+        'Choose an action:',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: '↩ Move to Today',
+            onPress: () => moveItemToToday(item.id),
+          },
+          {
+            text: '▶ Start',
+            onPress: () => onStartFocus(item),
+          },
+          {
+            text: '✓ Mark Done',
+            onPress: () => completeItem(item.id),
+          },
+          {
+            text: 'More...',
+            onPress: () => showMoreOptions(item),
+          },
+        ]
+      );
+    }
+  };
+
+  // Secondary actions menu
+  const showMoreOptions = (item: FocusItem) => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -54,33 +106,24 @@ export function LaterList({ onStartFocus }: LaterListProps) {
           options: [
             'Cancel',
             '✏️ Edit...',
-            '↩ Move to Today',
-            '▶ Start Now',
-            '✓ Mark Done',
             '🔔 Set Reminder',
             '🗓 When to think about this?',
             '🔄 Check once later...',
             'Delete',
           ],
-          destructiveButtonIndex: 8,
+          destructiveButtonIndex: 5,
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
           if (buttonIndex === 1) {
             setEditingItem(item);
           } else if (buttonIndex === 2) {
-            moveItemToToday(item.id);
-          } else if (buttonIndex === 3) {
-            onStartFocus(item);
-          } else if (buttonIndex === 4) {
-            completeItem(item.id);
-          } else if (buttonIndex === 5) {
             showReminderPicker(item);
-          } else if (buttonIndex === 6) {
+          } else if (buttonIndex === 3) {
             showTimeBucketPicker(item);
-          } else if (buttonIndex === 7) {
+          } else if (buttonIndex === 4) {
             setCheckOnceItemId(item.id);
-          } else if (buttonIndex === 8) {
+          } else if (buttonIndex === 5) {
             deleteItem(item.id);
           }
         }
@@ -88,24 +131,12 @@ export function LaterList({ onStartFocus }: LaterListProps) {
     } else {
       Alert.alert(
         item.title,
-        'What would you like to do?',
+        'More options:',
         [
           { text: 'Cancel', style: 'cancel' },
           {
             text: '✏️ Edit...',
             onPress: () => setEditingItem(item),
-          },
-          {
-            text: '↩ Move to Today',
-            onPress: () => moveItemToToday(item.id),
-          },
-          {
-            text: '▶ Start Now',
-            onPress: () => onStartFocus(item),
-          },
-          {
-            text: '✓ Mark Done',
-            onPress: () => completeItem(item.id),
           },
           {
             text: '🔔 Set Reminder',
@@ -296,51 +327,83 @@ export function LaterList({ onStartFocus }: LaterListProps) {
     }
   };
 
+  // Swipe right = Mark Done
+  const renderRightActions = () => (
+    <View style={[styles.swipeAction, { backgroundColor: theme.colors.primary }]}>
+      <Text style={styles.swipeActionText}>✓ Done</Text>
+    </View>
+  );
+
+  // Swipe left = Move to Today
+  const renderLeftActions = () => (
+    <View style={[styles.swipeAction, { backgroundColor: theme.colors.primary, opacity: 0.8 }]}>
+      <Text style={styles.swipeActionText}>↩ Today</Text>
+    </View>
+  );
+
+  const handleSwipeRight = (item: FocusItem) => {
+    completeItem(item.id);
+  };
+
+  const handleSwipeLeft = (item: FocusItem) => {
+    moveItemToToday(item.id);
+  };
+
   const renderItem = (item: FocusItem) => {
     return (
-      <TouchableOpacity
+      <Swipeable
         key={item.id}
-        style={[styles.item, { backgroundColor: theme.colors.surface }]}
-        onPress={() => handleItemPress(item)}
-        activeOpacity={0.7}
+        renderRightActions={() => renderRightActions()}
+        renderLeftActions={() => renderLeftActions()}
+        onSwipeableOpen={(direction) => {
+          if (direction === 'right') {
+            handleSwipeRight(item);
+          } else if (direction === 'left') {
+            handleSwipeLeft(item);
+          }
+        }}
+        overshootRight={false}
+        overshootLeft={false}
       >
-        <View style={styles.itemContent}>
-          <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-            {item.title}
-          </Text>
-          <View style={styles.itemMeta}>
-            {item.estimatedDuration && (
-              <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
-                {item.estimatedDuration}
-              </Text>
-            )}
-            {item.timeBucket && item.timeBucket !== 'NONE' && (
-              <Text style={[styles.itemTimeBucket, { color: theme.colors.textSecondary }]}>
-                • {formatTimeBucket(item.timeBucket)}
-              </Text>
-            )}
-            {item.reminderDate && (
-              <Text style={[styles.itemReminder, { color: theme.colors.textSecondary }]}>
-                • Remind {formatReminderDate(item.reminderDate)}
-              </Text>
-            )}
-            {item.checkOnceDate && (
-              <Text style={[styles.itemCheckOnce, { color: theme.colors.primary }]}>
-                • {formatCheckOnceDate(item.checkOnceDate)}
-              </Text>
-            )}
-          </View>
-        </View>
         <TouchableOpacity
-          style={[styles.moveButton, { borderColor: theme.colors.primary }]}
-          onPress={() => moveItemToToday(item.id)}
+          style={[styles.item, { backgroundColor: theme.colors.surface }]}
+          onPress={() => handleItemPress(item)}
           activeOpacity={0.7}
         >
-          <Text style={[styles.moveButtonText, { color: theme.colors.primary }]}>
-            ↩ Today
-          </Text>
+          <View style={styles.itemContent}>
+            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+              {item.title}
+            </Text>
+            <View style={styles.itemMeta}>
+              {item.estimatedDuration && (
+                <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
+                  {item.estimatedDuration}
+                </Text>
+              )}
+              {item.timeBucket && item.timeBucket !== 'NONE' && (
+                <Text style={[styles.itemTimeBucket, { color: theme.colors.textSecondary }]}>
+                  • {formatTimeBucket(item.timeBucket)}
+                </Text>
+              )}
+              {item.reminderDate && (
+                <Text style={[styles.itemReminder, { color: theme.colors.textSecondary }]}>
+                  • Remind {formatReminderDate(item.reminderDate)}
+                </Text>
+              )}
+              {item.checkOnceDate && (
+                <Text style={[styles.itemCheckOnce, { color: theme.colors.primary }]}>
+                  • {formatCheckOnceDate(item.checkOnceDate)}
+                </Text>
+              )}
+            </View>
+          </View>
+          <View style={styles.itemActions}>
+            <Text style={[styles.itemActionHint, { color: theme.colors.textSecondary }]}>
+              Tap or swipe
+            </Text>
+          </View>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </Swipeable>
     );
   };
 
@@ -637,6 +700,25 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   moveButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  itemActions: {
+    marginTop: 8,
+  },
+  itemActionHint: {
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  swipeAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    borderRadius: 12,
+    marginVertical: 0,
+  },
+  swipeActionText: {
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
   },

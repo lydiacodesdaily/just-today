@@ -3,8 +3,9 @@
  * Today's Focus section component - displays items for today only
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
 import { FocusItem, formatCheckOnceDate } from '../models/FocusItem';
@@ -60,41 +61,33 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
     }
   }, [rolloverCount, dismissRolloverMessage]);
 
+  // Progressive disclosure: Show primary actions first, "More" for secondary
   const handleItemPress = (item: FocusItem) => {
     if (Platform.OS === 'ios') {
+      // Primary actions: Start | Mark Done | More...
       ActionSheetIOS.showActionSheetWithOptions(
         {
           title: item.title,
-          options: ['Cancel', '✏️ Edit...', '▶ Start', '✓ Mark Done', '⏭ Later', '🔄 Check once later...', 'Delete'],
-          destructiveButtonIndex: 6,
+          options: ['Cancel', '▶ Start', '✓ Mark Done', 'More...'],
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
           if (buttonIndex === 1) {
-            setEditingItem(item);
-          } else if (buttonIndex === 2) {
             onStartFocus(item);
-          } else if (buttonIndex === 3) {
+          } else if (buttonIndex === 2) {
             completeItem(item.id);
-          } else if (buttonIndex === 4) {
-            moveItemToLater(item.id);
-          } else if (buttonIndex === 5) {
-            setCheckOnceItemId(item.id);
-          } else if (buttonIndex === 6) {
-            deleteItem(item.id);
+          } else if (buttonIndex === 3) {
+            showMoreOptions(item);
           }
         }
       );
     } else {
+      // Android: Primary actions
       Alert.alert(
         item.title,
-        'What would you like to do?',
+        'Choose an action:',
         [
           { text: 'Cancel', style: 'cancel' },
-          {
-            text: '✏️ Edit...',
-            onPress: () => setEditingItem(item),
-          },
           {
             text: '▶ Start',
             onPress: () => onStartFocus(item),
@@ -102,6 +95,47 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
           {
             text: '✓ Mark Done',
             onPress: () => completeItem(item.id),
+          },
+          {
+            text: 'More...',
+            onPress: () => showMoreOptions(item),
+          },
+        ]
+      );
+    }
+  };
+
+  // Secondary actions menu
+  const showMoreOptions = (item: FocusItem) => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: item.title,
+          options: ['Cancel', '✏️ Edit...', '⏭ Later', '🔄 Check once later...', 'Delete'],
+          destructiveButtonIndex: 4,
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            setEditingItem(item);
+          } else if (buttonIndex === 2) {
+            moveItemToLater(item.id);
+          } else if (buttonIndex === 3) {
+            setCheckOnceItemId(item.id);
+          } else if (buttonIndex === 4) {
+            deleteItem(item.id);
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        item.title,
+        'More options:',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: '✏️ Edit...',
+            onPress: () => setEditingItem(item),
           },
           {
             text: '⏭ Later',
@@ -121,6 +155,28 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
     }
   };
 
+  // Swipe right = Mark Done
+  const renderRightActions = () => (
+    <View style={[styles.swipeAction, { backgroundColor: theme.colors.primary }]}>
+      <Text style={styles.swipeActionText}>✓ Done</Text>
+    </View>
+  );
+
+  // Swipe left = Move to Later
+  const renderLeftActions = () => (
+    <View style={[styles.swipeAction, { backgroundColor: theme.colors.textSecondary }]}>
+      <Text style={styles.swipeActionText}>⏭ Later</Text>
+    </View>
+  );
+
+  const handleSwipeRight = (item: FocusItem) => {
+    completeItem(item.id);
+  };
+
+  const handleSwipeLeft = (item: FocusItem) => {
+    moveItemToLater(item.id);
+  };
+
   const handleCheckOnceConfirm = (checkOnceDate: string) => {
     if (checkOnceItemId) {
       setCheckOnce(checkOnceItemId, checkOnceDate);
@@ -130,35 +186,49 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
 
   const renderItem = (item: FocusItem) => {
     return (
-      <TouchableOpacity
+      <Swipeable
         key={item.id}
-        style={[styles.item, { backgroundColor: theme.colors.surface }]}
-        onPress={() => handleItemPress(item)}
-        activeOpacity={0.7}
+        renderRightActions={() => renderRightActions()}
+        renderLeftActions={() => renderLeftActions()}
+        onSwipeableOpen={(direction) => {
+          if (direction === 'right') {
+            handleSwipeRight(item);
+          } else if (direction === 'left') {
+            handleSwipeLeft(item);
+          }
+        }}
+        overshootRight={false}
+        overshootLeft={false}
       >
-        <View style={styles.itemContent}>
-          <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-            {item.title}
-          </Text>
-          <View style={styles.itemMeta}>
-            {item.estimatedDuration && (
-              <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
-                {item.estimatedDuration}
-              </Text>
-            )}
-            {item.checkOnceDate && (
-              <Text style={[styles.checkOnceDate, { color: theme.colors.primary }]}>
-                • {formatCheckOnceDate(item.checkOnceDate)}
-              </Text>
-            )}
+        <TouchableOpacity
+          style={[styles.item, { backgroundColor: theme.colors.surface }]}
+          onPress={() => handleItemPress(item)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.itemContent}>
+            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+              {item.title}
+            </Text>
+            <View style={styles.itemMeta}>
+              {item.estimatedDuration && (
+                <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
+                  {item.estimatedDuration}
+                </Text>
+              )}
+              {item.checkOnceDate && (
+                <Text style={[styles.checkOnceDate, { color: theme.colors.primary }]}>
+                  • {formatCheckOnceDate(item.checkOnceDate)}
+                </Text>
+              )}
+            </View>
           </View>
-        </View>
-        <View style={styles.itemActions}>
-          <Text style={[styles.itemActionHint, { color: theme.colors.textSecondary }]}>
-            Tap for options
-          </Text>
-        </View>
-      </TouchableOpacity>
+          <View style={styles.itemActions}>
+            <Text style={[styles.itemActionHint, { color: theme.colors.textSecondary }]}>
+              Tap or swipe
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </Swipeable>
     );
   };
 
@@ -336,6 +406,18 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   addAnotherText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  swipeAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    borderRadius: 12,
+    marginVertical: 0,
+  },
+  swipeActionText: {
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
   },
