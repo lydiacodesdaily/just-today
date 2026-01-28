@@ -49,7 +49,7 @@ export default function GuideDetailPage() {
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-calm-text mb-4">Guide not found</h1>
             <button
-              onClick={() => router.push('/guides')}
+              onClick={() => router.push('/transitions')}
               className="text-calm-text hover:underline"
             >
               Back to Transitions
@@ -81,7 +81,7 @@ export default function GuideDetailPage() {
     try {
       const newGuideId = duplicateGuide(guideId, title);
       setShowDuplicateModal(false);
-      router.push(`/guides/${newGuideId}`);
+      router.push(`/transitions/${newGuideId}`);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to duplicate guide');
     }
@@ -93,7 +93,7 @@ export default function GuideDetailPage() {
 
   const confirmDelete = () => {
     deleteGuide(guideId);
-    router.push('/guides');
+    router.push('/transitions');
   };
 
   return (
@@ -102,7 +102,7 @@ export default function GuideDetailPage() {
         {/* Header */}
         <div className="mb-6">
           <button
-            onClick={() => router.push('/guides')}
+            onClick={() => router.push('/transitions')}
             className="flex items-center gap-2 text-calm-muted hover:text-calm-text transition-colors mb-4"
           >
             <svg

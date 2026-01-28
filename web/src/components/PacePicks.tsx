@@ -70,7 +70,7 @@ export function PacePicks({ paceTag }: PacePicksProps) {
                 No Pace Picks for {getPaceLabel()} pace yet.
               </p>
               <Link
-                href="/pace-picks"
+                href="/extras"
                 className="inline-block px-4 py-2 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
               >
                 Create Pace Picks →
@@ -104,7 +104,7 @@ export function PacePicks({ paceTag }: PacePicksProps) {
 
               {/* Manage link */}
               <Link
-                href="/pace-picks"
+                href="/extras"
                 className="block text-center text-sm text-calm-muted hover:text-calm-text transition-colors py-2"
               >
                 Manage Pace Picks →

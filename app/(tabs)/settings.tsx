@@ -412,11 +412,11 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* Pace Picks Setup */}
+        {/* Extras Setup */}
         <View style={styles.cardGroup}>
           <TouchableOpacity
             style={[styles.card, { backgroundColor: theme.colors.surface }]}
-            onPress={() => router.push('/energy-menu/setup' as any)}
+            onPress={() => router.push('/extras/setup' as any)}
             activeOpacity={0.7}
           >
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>

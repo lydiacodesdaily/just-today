@@ -23,7 +23,7 @@ const navItems: NavItem[] = [
   },
   {
     name: 'Extras',
-    href: '/energy-menu',
+    href: '/extras',
     label: 'Extras',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
   },
   {
     name: 'Transitions',
-    href: '/guides',
+    href: '/transitions',
     label: 'Transitions',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

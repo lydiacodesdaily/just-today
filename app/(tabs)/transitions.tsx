@@ -19,7 +19,7 @@ export default function GuidesTab() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleGuidePress = (guideId: string) => {
-    router.push(`/guides/${guideId}` as any);
+    router.push(`/transitions/${guideId}` as any);
   };
 
   const handleCreateGuide = async () => {

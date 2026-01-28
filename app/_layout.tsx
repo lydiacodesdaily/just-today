@@ -32,7 +32,7 @@ function AppStack() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
-        name="guides"
+        name="transitions"
         options={{
           headerShown: false,
         }}
@@ -53,9 +53,9 @@ function AppStack() {
         }}
       />
       <Stack.Screen
-        name="pace-picks/setup"
+        name="extras/setup"
         options={{
-          title: 'Pace Picks',
+          title: 'Extras',
           headerShown: false,
         }}
       />

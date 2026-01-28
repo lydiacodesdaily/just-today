@@ -53,10 +53,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="guides"
+        name="transitions"
         options={{
-          title: 'Guides',
-          tabBarLabel: 'Guides',
+          title: 'Transitions',
+          tabBarLabel: 'Transitions',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Feather

@@ -14,7 +14,7 @@ interface GuideCardProps {
 
 export function GuideCard({ guide }: GuideCardProps) {
   return (
-    <Link href={`/guides/${guide.id}`}>
+    <Link href={`/transitions/${guide.id}`}>
       <div className="bg-calm-surface border border-calm-border rounded-lg p-5 hover:border-calm-text/30 transition-colors cursor-pointer">
         <div className="flex items-center justify-between">
           <div className="flex-1">
