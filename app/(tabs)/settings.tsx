@@ -431,6 +431,25 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Projects */}
+        <View style={styles.cardGroup}>
+          <TouchableOpacity
+            style={[styles.card, { backgroundColor: theme.colors.surface }]}
+            onPress={() => router.push('/projects/manage' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+              Projects
+            </Text>
+            <Text style={[styles.cardDescription, { color: theme.colors.textSecondary }]}>
+              Optional grouping for your tasks
+            </Text>
+            <Text style={[styles.linkArrow, { color: theme.colors.primary }]}>
+              →
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Volume Controls - Simplified and grouped */}
         <View style={styles.cardGroup}>
           <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>

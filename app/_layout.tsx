@@ -15,6 +15,7 @@ import { FocusProvider } from '../src/context/FocusContext';
 import { BrainDumpProvider } from '../src/context/BrainDumpContext';
 import { DaylineProvider } from '../src/context/DaylineContext';
 import { GuidesProvider } from '../src/context/GuidesContext';
+import { ProjectsProvider } from '../src/context/ProjectsContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
@@ -60,6 +61,13 @@ function AppStack() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="projects/manage"
+        options={{
+          title: 'Projects',
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
@@ -93,11 +101,13 @@ export default function RootLayout() {
                 <TodayOptionalProvider>
                   <FocusProvider>
                     <BrainDumpProvider>
-                      <DaylineProvider>
-                        <GuidesProvider>
-                          <RootStack />
-                        </GuidesProvider>
-                      </DaylineProvider>
+                      <ProjectsProvider>
+                        <DaylineProvider>
+                          <GuidesProvider>
+                            <RootStack />
+                          </GuidesProvider>
+                        </DaylineProvider>
+                      </ProjectsProvider>
                     </BrainDumpProvider>
                   </FocusProvider>
                 </TodayOptionalProvider>

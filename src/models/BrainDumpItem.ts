@@ -6,6 +6,9 @@ export interface BrainDumpItem {
   createdAt: string;
   status: BrainDumpStatus;
   keptAt?: string;
+
+  // Optional project grouping
+  projectId?: string | null;
 }
 
 export function createBrainDumpItem(text: string): BrainDumpItem {

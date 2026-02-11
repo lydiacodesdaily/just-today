@@ -91,6 +91,9 @@ export interface FocusItem {
   // Circle Back resurfacing (calm, single-time resurfacing)
   checkOnceDate?: string; // ISO date string (YYYY-MM-DD) for when to resurface once
   checkOnceTriggeredAt?: string; // ISO timestamp when item became due (ensures one-time resurfacing)
+
+  // Optional project grouping
+  projectId?: string | null;
 }
 
 /**

@@ -21,6 +21,7 @@ const KEYS = {
   CUSTOM_GUIDES: '@just-today/custom-guides',
   ACTIVE_GUIDE_SESSION: '@just-today/active-guide-session',
   DAYLINE_ITEMS: '@just-today/dayline-items',
+  PROJECTS: '@just-today/projects',
 } as const;
 
 export async function getItem<T>(key: string): Promise<T | null> {
