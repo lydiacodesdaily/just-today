@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useBrainDumpStore } from '@/src/stores/brainDumpStore';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { CheckOncePicker } from './CheckOncePicker';
@@ -33,6 +33,17 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false, onView
   const [editingText, setEditingText] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Capture-time routing state
+  const [pendingText, setPendingText] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+  const pendingTextRef = useRef<string | null>(null);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep ref in sync with state
+  pendingTextRef.current = pendingText;
+
   const unsortedItems = items.filter((item) => item.status === 'unsorted');
 
   useEffect(() => {
@@ -48,11 +59,64 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false, onView
     }
   }, [showMenuForId]);
 
-  const handleAddItem = () => {
-    if (inputText.trim()) {
-      addItem(inputText.trim());
-      setInputText('');
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
+
+  const showToast = useCallback((message: string) => {
+    setToastMessage(message);
+    setToastVisible(true);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => {
+      setToastVisible(false);
+      setTimeout(() => setToastMessage(null), 300);
+    }, 2000);
+  }, []);
+
+  const confirmDestination = useCallback((destination: 'braindump' | 'today' | 'later') => {
+    const textToSave = pendingTextRef.current;
+    if (!textToSave) return;
+
+    setPendingText(null);
+    if (autoSaveTimer.current) {
+      clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = null;
     }
+
+    if (destination === 'braindump') {
+      addItem(textToSave);
+      showToast('Saved to Brain Dump');
+    } else if (destination === 'today') {
+      addToToday(textToSave, '~15 min');
+      showToast('Added to Today');
+    } else {
+      addToLater(textToSave, '~15 min');
+      showToast('Saved for Later');
+    }
+  }, [addItem, addToToday, addToLater, showToast]);
+
+  const handleAddItem = () => {
+    if (!inputText.trim()) return;
+
+    // If there's already a pending capture, auto-save it to Brain Dump first
+    if (pendingTextRef.current) {
+      confirmDestination('braindump');
+    }
+
+    const text = inputText.trim();
+    setPendingText(text);
+    pendingTextRef.current = text;
+    setInputText('');
+
+    // Start auto-save timer — defaults to Brain Dump after 2.5s
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      confirmDestination('braindump');
+    }, 2500);
   };
 
   const handleDoToday = (itemId: string, itemText: string) => {
@@ -172,7 +236,7 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false, onView
       {isExpanded && (
         <div className="space-y-3">
           {/* Input */}
-          <div className="bg-calm-surface border border-calm-border rounded-lg p-4">
+          <div className={`bg-calm-surface border border-calm-border rounded-lg p-4 ${pendingText ? 'opacity-50' : ''} transition-opacity`}>
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -184,6 +248,7 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false, onView
               }}
               placeholder={arrivalMode ? "What's on your mind right now?" : "Dump anything on your mind..."}
               className="w-full min-h-[80px] bg-transparent border-none focus:outline-none text-calm-text placeholder-calm-muted resize-none"
+              disabled={!!pendingText}
             />
             <div className="flex justify-between items-start gap-3 mt-2">
               <div className="flex-1 space-y-0.5">
@@ -194,15 +259,57 @@ export function BrainDump({ initialExpanded = false, arrivalMode = false, onView
                   Items auto-expire in 24h
                 </span>
               </div>
-              <button
-                onClick={handleAddItem}
-                disabled={!inputText.trim()}
-                className="px-4 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm flex-shrink-0"
-              >
-                Add
-              </button>
+              {!pendingText && (
+                <button
+                  onClick={handleAddItem}
+                  disabled={!inputText.trim()}
+                  className="px-4 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm flex-shrink-0"
+                >
+                  Save
+                </button>
+              )}
             </div>
           </div>
+
+          {/* Destination row — shown after submitting text */}
+          {pendingText && (
+            <div className="bg-calm-surface border border-calm-border rounded-lg p-3 space-y-2">
+              <span className="text-[13px] font-medium text-calm-muted">
+                Where should this go?
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => confirmDestination('braindump')}
+                  className="px-3.5 py-1.5 text-sm font-semibold rounded-full bg-calm-primary text-white hover:opacity-90 transition-opacity"
+                >
+                  Brain Dump
+                </button>
+                <button
+                  onClick={() => confirmDestination('today')}
+                  className="px-3.5 py-1.5 text-sm font-semibold rounded-full bg-calm-surface border border-calm-border text-calm-text hover:bg-calm-bg transition-colors"
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => confirmDestination('later')}
+                  className="px-3.5 py-1.5 text-sm font-semibold rounded-full bg-calm-surface border border-calm-border text-calm-text hover:bg-calm-bg transition-colors"
+                >
+                  Later
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Toast */}
+          {toastMessage && (
+            <div
+              className={`bg-green-50 border border-green-200 rounded-lg px-3.5 py-2.5 text-center text-sm font-medium text-calm-text transition-opacity duration-300 ${
+                toastVisible ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              {toastMessage}
+            </div>
+          )}
 
           {/* Items list */}
           {unsortedItems.length > 0 && (

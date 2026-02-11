@@ -3,7 +3,7 @@
  * Brain Dump section component - quick capture for unsorted thoughts
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   Modal,
+  Animated,
 } from 'react-native';
 import { useTheme } from '../constants/theme';
 import { useBrainDump } from '../context/BrainDumpContext';
@@ -39,16 +40,89 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
 
+  // Capture-time routing state
+  const [pendingText, setPendingText] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const pendingTextRef = useRef<string | null>(null);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  // Keep ref in sync with state
+  pendingTextRef.current = pendingText;
+
   // Check if we should show example link
   useEffect(() => {
     shouldShowBrainDumpExample().then(setShowExample);
   }, [items.length]);
 
-  const handleAddItem = async () => {
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
+
+  // Toast animation
+  useEffect(() => {
+    if (toastMessage) {
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+
+      toastTimer.current = setTimeout(() => {
+        Animated.timing(toastOpacity, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }).start(() => setToastMessage(null));
+      }, 2000);
+    }
+  }, [toastMessage, toastOpacity]);
+
+  const confirmDestination = useCallback(async (destination: 'braindump' | 'today' | 'later') => {
+    const textToSave = pendingTextRef.current;
+    if (!textToSave) return;
+
+    setPendingText(null);
+    if (autoSaveTimer.current) {
+      clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = null;
+    }
+
+    if (destination === 'braindump') {
+      await addItem(textToSave);
+      setToastMessage('Saved to Brain Dump');
+    } else if (destination === 'today') {
+      await addFromBrainDump(textToSave, 'today');
+      setToastMessage('Added to Today');
+    } else {
+      await addFromBrainDump(textToSave, 'later');
+      setToastMessage('Saved for Later');
+    }
+  }, [addItem, addFromBrainDump]);
+
+  const handleAddItem = () => {
     if (!inputText.trim()) return;
 
-    await addItem(inputText.trim());
+    // If there's already a pending capture, auto-save it to Brain Dump first
+    if (pendingTextRef.current) {
+      confirmDestination('braindump');
+    }
+
+    const text = inputText.trim();
+    setPendingText(text);
+    pendingTextRef.current = text;
     setInputText('');
+
+    // Start auto-save timer — defaults to Brain Dump after 2.5s
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      confirmDestination('braindump');
+    }, 2500);
   };
 
   const handleStartEdit = (item: BrainDumpItem) => {
@@ -190,8 +264,9 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
                 {
                   color: theme.colors.text,
                   backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
+                  borderColor: pendingText ? theme.colors.textTertiary : theme.colors.border,
                 },
+                pendingText ? { opacity: 0.5 } : undefined,
               ]}
               placeholder="Dump thoughts here… half-sentences welcome."
               placeholderTextColor={theme.colors.textTertiary}
@@ -201,8 +276,9 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
               returnKeyType="done"
               multiline
               blurOnSubmit
+              editable={!pendingText}
             />
-            {showExample && (
+            {showExample && !pendingText && (
               <TouchableOpacity
                 style={styles.exampleButton}
                 onPress={() => setShowExampleModal(true)}
@@ -224,8 +300,9 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
                   {
                     color: theme.colors.text,
                     backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
+                    borderColor: pendingText ? theme.colors.textTertiary : theme.colors.border,
                   },
+                  pendingText ? { opacity: 0.5 } : undefined,
                 ]}
                 placeholder="Dump anything on your mind."
                 placeholderTextColor={theme.colors.textTertiary}
@@ -235,20 +312,77 @@ export function BrainDump({ isExpanded, onToggle }: BrainDumpProps) {
                 returnKeyType="done"
                 multiline={false}
                 blurOnSubmit
+                editable={!pendingText}
               />
-              {inputText.trim() && (
+              {inputText.trim() && !pendingText && (
                 <TouchableOpacity
                   style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
                   onPress={handleAddItem}
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.addButtonText, { color: theme.colors.surface }]}>
-                    Add
+                    Save
                   </Text>
                 </TouchableOpacity>
               )}
             </View>
           </>
+        )}
+
+        {/* Destination row — shown after submitting text */}
+        {pendingText && (
+          <View style={[styles.destinationRow, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <Text style={[styles.destinationLabel, { color: theme.colors.textSecondary }]}>
+              Where should this go?
+            </Text>
+            <View style={styles.destinationPills}>
+              <TouchableOpacity
+                style={[styles.destinationPill, styles.destinationPillSelected, { backgroundColor: theme.colors.primary }]}
+                onPress={() => confirmDestination('braindump')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.destinationPillText, { color: theme.colors.surface }]}>
+                  Brain Dump
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.destinationPill, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
+                onPress={() => confirmDestination('today')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.destinationPillText, { color: theme.colors.text }]}>
+                  Today
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.destinationPill, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
+                onPress={() => confirmDestination('later')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.destinationPillText, { color: theme.colors.text }]}>
+                  Later
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Toast */}
+        {toastMessage && (
+          <Animated.View
+            style={[
+              styles.toast,
+              {
+                backgroundColor: theme.colors.successSubtle,
+                borderColor: theme.colors.success,
+                opacity: toastOpacity,
+              },
+            ]}
+          >
+            <Text style={[styles.toastText, { color: theme.colors.text }]}>
+              {toastMessage}
+            </Text>
+          </Animated.View>
         )}
 
         {/* Recent Items List (max 3) */}
@@ -553,5 +687,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  destinationRow: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    gap: 10,
+  },
+  destinationLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+  destinationPills: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  destinationPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  destinationPillSelected: {
+    borderWidth: 0,
+  },
+  destinationPillText: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  toast: {
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  toastText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
