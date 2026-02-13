@@ -16,7 +16,6 @@ import { TodayOptionalItem } from '@/src/models/PacePick';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 import { CheckOncePicker } from '@/src/components/CheckOncePicker';
-import { EditTodayItemModal } from '@/src/components/EditTodayItemModal';
 import { SectionLabel } from '@/src/components/SectionLabel';
 
 const DURATION_OPTIONS: FocusDuration[] = [
@@ -36,8 +35,15 @@ interface TodayItemCardProps {
   onMoveToLater: () => void;
   onDelete: () => void;
   onStart: () => void;
-  onEdit: () => void;
   onCheckOnceLater: () => void;
+  isEditing: boolean;
+  editingTitle: string;
+  editingDuration: FocusDuration | null;
+  onEditTitleChange: (text: string) => void;
+  onEditDurationChange: (dur: FocusDuration) => void;
+  onEditSave: () => void;
+  onEditCancel: () => void;
+  onEditStart: () => void;
 }
 
 function TodayItemCard({
@@ -46,12 +52,20 @@ function TodayItemCard({
   onMoveToLater,
   onDelete,
   onStart,
-  onEdit,
   onCheckOnceLater,
+  isEditing,
+  editingTitle,
+  editingDuration,
+  onEditTitleChange,
+  onEditDurationChange,
+  onEditSave,
+  onEditCancel,
+  onEditStart,
 }: TodayItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const canceledByEscapeRef = useRef(false);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -67,12 +81,77 @@ function TodayItemCard({
     }
   }, [showMenu, showMoreMenu]);
 
+  const activeDuration = editingDuration ?? item.estimatedDuration;
+
   return (
     <div className="bg-calm-surface border border-calm-border rounded-lg p-4 transition-colors hover:border-calm-text/30">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-medium text-calm-text mb-1">{item.title}</h3>
-          <p className="text-sm text-calm-muted">{item.estimatedDuration}</p>
+          {isEditing ? (
+            <input
+              type="text"
+              value={editingTitle}
+              onChange={(e) => onEditTitleChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onEditSave();
+                } else if (e.key === 'Escape') {
+                  canceledByEscapeRef.current = true;
+                  onEditCancel();
+                }
+              }}
+              onBlur={() => {
+                if (!canceledByEscapeRef.current) {
+                  onEditSave();
+                }
+                canceledByEscapeRef.current = false;
+              }}
+              className="w-full text-base font-medium text-calm-text bg-transparent border-none outline-none p-0 m-0 mb-1"
+              autoFocus
+            />
+          ) : (
+            <h3
+              className="text-base font-medium text-calm-text mb-1 cursor-text"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditStart();
+              }}
+            >
+              {item.title}
+            </h3>
+          )}
+          {isEditing ? (
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {DURATION_OPTIONS.map((dur) => (
+                <button
+                  key={dur}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditDurationChange(dur);
+                  }}
+                  className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                    activeDuration === dur
+                      ? 'bg-calm-primary/10 border-calm-primary text-calm-primary font-medium'
+                      : 'bg-calm-surface border-calm-border text-calm-muted hover:border-calm-text/30'
+                  }`}
+                >
+                  {dur}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p
+              className="text-sm text-calm-muted cursor-pointer hover:text-calm-text/70 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditStart();
+              }}
+            >
+              {item.estimatedDuration}
+            </p>
+          )}
         </div>
 
         <div className="relative" ref={menuRef}>
@@ -143,7 +222,7 @@ function TodayItemCard({
               </button>
               <button
                 onClick={() => {
-                  onEdit();
+                  onEditStart();
                   setShowMoreMenu(false);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
@@ -304,6 +383,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
     moveToLater,
     deleteItem,
     setCheckOnce,
+    updateTodayItem,
     rolloverCount,
     dismissRollover,
     completionCelebrationMessage,
@@ -317,7 +397,11 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
   const [selectedDuration, setSelectedDuration] = useState<FocusDuration>('~15 min');
   const [srAnnouncement, setSrAnnouncement] = useState('');
   const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
-  const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
+
+  // Inline editing state
+  const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
+  const [inlineEditTitle, setInlineEditTitle] = useState('');
+  const [inlineEditDuration, setInlineEditDuration] = useState<FocusDuration | null>(null);
 
   const addModalRef = useFocusTrap<HTMLDivElement>(showAddModal);
 
@@ -371,6 +455,26 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
       location: 'today',
     };
     handleStartFocus(focusItem);
+  };
+
+  const handleInlineEditStart = (item: FocusItem) => {
+    setInlineEditingId(item.id);
+    setInlineEditTitle(item.title);
+    setInlineEditDuration(null);
+  };
+
+  const handleInlineSave = (itemId: string) => {
+    const trimmed = inlineEditTitle.trim();
+    if (trimmed) {
+      const item = incompleteTodayItems.find((i) => i.id === itemId);
+      const finalDuration = inlineEditDuration ?? item?.estimatedDuration ?? '~15 min';
+      updateTodayItem(itemId, trimmed, finalDuration);
+    }
+    setInlineEditingId(null);
+  };
+
+  const handleInlineCancel = () => {
+    setInlineEditingId(null);
   };
 
   const handleCheckOnceLater = (itemId: string) => {
@@ -455,8 +559,15 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
               onMoveToLater={() => moveToLater(item.id)}
               onDelete={() => deleteItem(item.id)}
               onStart={() => handleStartFocus(item)}
-              onEdit={() => setEditingItem(item)}
               onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+              isEditing={inlineEditingId === item.id}
+              editingTitle={inlineEditTitle}
+              editingDuration={inlineEditDuration}
+              onEditTitleChange={setInlineEditTitle}
+              onEditDurationChange={setInlineEditDuration}
+              onEditSave={() => handleInlineSave(item.id)}
+              onEditCancel={handleInlineCancel}
+              onEditStart={() => handleInlineEditStart(item)}
             />
           ))}
 
@@ -580,14 +691,6 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
         <CheckOncePicker
           onConfirm={handleCheckOnceConfirm}
           onCancel={() => setCheckOnceItemId(null)}
-        />
-      )}
-
-      {/* Edit Today Item Modal */}
-      {editingItem && (
-        <EditTodayItemModal
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
         />
       )}
 

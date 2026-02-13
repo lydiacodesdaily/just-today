@@ -3,17 +3,27 @@
  * Today section component - displays items for today only
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert, ActionSheetIOS, Platform } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
-import { FocusItem, formatCheckOnceDate } from '../models/FocusItem';
+import { FocusItem, FocusDuration, formatCheckOnceDate } from '../models/FocusItem';
 import { shouldShowTodayExamples } from '../persistence/onboardingStore';
 import { CoachMark } from './CoachMark';
 import { CheckOncePicker } from './CheckOncePicker';
-import { EditTodayItemModal } from './EditTodayItemModal';
 import { SectionLabel } from './SectionLabel';
+
+const DURATION_OPTIONS: FocusDuration[] = [
+  '~5 min',
+  '~10 min',
+  '~15 min',
+  '~25 min',
+  '~30 min',
+  '~45 min',
+  '~1 hour',
+  '~2 hours',
+];
 
 interface TodaysFocusProps {
   onStartFocus: (item: FocusItem) => void;
@@ -22,10 +32,14 @@ interface TodaysFocusProps {
 
 export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
   const theme = useTheme();
-  const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage, addToToday, setCheckOnce } = useFocus();
+  const { todayItems, completeItem, moveItemToLater, deleteItem, rolloverCount, dismissRolloverMessage, addToToday, setCheckOnce, updateTodayItem } = useFocus();
   const [showExamples, setShowExamples] = useState(false);
   const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
-  const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
+
+  // Inline editing state
+  const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
+  const [inlineEditTitle, setInlineEditTitle] = useState('');
+  const [inlineEditDuration, setInlineEditDuration] = useState<FocusDuration | null>(null);
 
   // Check if we should show example link
   useEffect(() => {
@@ -107,6 +121,12 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
 
   // Secondary actions menu
   const showMoreOptions = (item: FocusItem) => {
+    const startInlineEdit = () => {
+      setInlineEditingId(item.id);
+      setInlineEditTitle(item.title);
+      setInlineEditDuration(null);
+    };
+
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -117,7 +137,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
         },
         (buttonIndex) => {
           if (buttonIndex === 1) {
-            setEditingItem(item);
+            startInlineEdit();
           } else if (buttonIndex === 2) {
             moveItemToLater(item.id);
           } else if (buttonIndex === 3) {
@@ -135,7 +155,7 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
           { text: 'Cancel', style: 'cancel' },
           {
             text: '✏️ Edit...',
-            onPress: () => setEditingItem(item),
+            onPress: startInlineEdit,
           },
           {
             text: '⏭ Later',
@@ -184,7 +204,79 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
     }
   };
 
+  const handleInlineSave = async (itemId: string) => {
+    const trimmed = inlineEditTitle.trim();
+    if (trimmed) {
+      const item = todayItems.find((i) => i.id === itemId);
+      const finalDuration = inlineEditDuration ?? item?.estimatedDuration ?? '~15 min';
+      await updateTodayItem(itemId, trimmed, finalDuration);
+    }
+    setInlineEditingId(null);
+  };
+
   const renderItem = (item: FocusItem) => {
+    const isEditing = inlineEditingId === item.id;
+    const activeDuration = inlineEditDuration ?? item.estimatedDuration;
+
+    if (isEditing) {
+      return (
+        <View key={item.id} style={[styles.item, { backgroundColor: theme.colors.surface }]}>
+          <View style={styles.itemContent}>
+            <TextInput
+              style={[styles.itemTitle, styles.inlineEditInput, { color: theme.colors.text }]}
+              value={inlineEditTitle}
+              onChangeText={setInlineEditTitle}
+              autoFocus
+              onBlur={() => handleInlineSave(item.id)}
+              onSubmitEditing={() => handleInlineSave(item.id)}
+              returnKeyType="done"
+              selectTextOnFocus
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.durationChipRow}
+              contentContainerStyle={styles.durationChipRowContent}
+              keyboardShouldPersistTaps="always"
+            >
+              {DURATION_OPTIONS.map((dur) => (
+                <TouchableOpacity
+                  key={dur}
+                  style={[
+                    styles.durationChip,
+                    {
+                      backgroundColor: activeDuration === dur
+                        ? theme.colors.primarySubtle
+                        : theme.colors.surface,
+                      borderColor: activeDuration === dur
+                        ? theme.colors.primary
+                        : theme.colors.borderSubtle,
+                    },
+                  ]}
+                  onPress={() => setInlineEditDuration(dur)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.durationChipText,
+                      {
+                        color: activeDuration === dur
+                          ? theme.colors.primary
+                          : theme.colors.text,
+                        fontWeight: activeDuration === dur ? '600' : '400',
+                      },
+                    ]}
+                  >
+                    {dur}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <Swipeable
         key={item.id}
@@ -206,15 +298,33 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
           activeOpacity={0.7}
         >
           <View style={styles.itemContent}>
-            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-              {item.title}
-            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setInlineEditingId(item.id);
+                setInlineEditTitle(item.title);
+                setInlineEditDuration(null);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+                {item.title}
+              </Text>
+            </TouchableOpacity>
             <View style={styles.itemMeta}>
-              {item.estimatedDuration && (
-                <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
-                  {item.estimatedDuration}
-                </Text>
-              )}
+              <TouchableOpacity
+                onPress={() => {
+                  setInlineEditingId(item.id);
+                  setInlineEditTitle(item.title);
+                  setInlineEditDuration(null);
+                }}
+                activeOpacity={0.7}
+              >
+                {item.estimatedDuration && (
+                  <Text style={[styles.itemDuration, { color: theme.colors.textSecondary }]}>
+                    {item.estimatedDuration}
+                  </Text>
+                )}
+              </TouchableOpacity>
               {item.checkOnceDate && (
                 <Text style={[styles.checkOnceDate, { color: theme.colors.primary }]}>
                   • {formatCheckOnceDate(item.checkOnceDate)}
@@ -301,14 +411,6 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
         onCancel={() => setCheckOnceItemId(null)}
       />
 
-      {/* Edit Today Item Modal */}
-      {editingItem && (
-        <EditTodayItemModal
-          item={editingItem}
-          visible={true}
-          onClose={() => setEditingItem(null)}
-        />
-      )}
     </View>
   );
 }
@@ -408,6 +510,28 @@ const styles = StyleSheet.create({
   addAnotherText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  inlineEditInput: {
+    padding: 0,
+    margin: 0,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+  },
+  durationChipRow: {
+    marginTop: 8,
+  },
+  durationChipRowContent: {
+    gap: 6,
+    paddingRight: 8,
+  },
+  durationChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1.5,
+  },
+  durationChipText: {
+    fontSize: 13,
   },
   swipeAction: {
     justifyContent: 'center',
