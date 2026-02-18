@@ -31,6 +31,8 @@ import { getPacePicksByPace } from '../../src/persistence/pacePicksStore';
 import { moveToToday, triggerCheckOnce } from '../../src/persistence/focusStore';
 import { isCheckOnceDue } from '../../src/models/FocusItem';
 import { PacePromptBanner } from '../../src/components/PacePromptBanner';
+import { WeeklyIntentBanner } from '../../src/components/WeeklyIntentBanner';
+import { useSettings } from '../../src/context/SettingsContext';
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -38,6 +40,7 @@ export default function HomeScreen() {
   const { setCurrentRun, currentRun } = useRun();
   const { todayItems, laterItems, startItemFocus, addToToday, refreshItems } = useFocus();
   const { currentPace, hasSelectedForToday } = usePace();
+  const { settings } = useSettings();
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
@@ -319,6 +322,9 @@ export default function HomeScreen() {
 
         {/* Pace prompt banner - shows when user hasn't selected pace for today */}
         {!hasSelectedForToday && <PacePromptBanner />}
+
+        {/* Weekly intent banner - shows when weekly planning is enabled */}
+        {settings.weeklyIntentEnabled && <WeeklyIntentBanner />}
 
         {/* 2. Optional Extras (collapsed by default) */}
         <View style={styles.pacePicksSection}>

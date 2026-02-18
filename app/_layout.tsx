@@ -16,6 +16,7 @@ import { BrainDumpProvider } from '../src/context/BrainDumpContext';
 import { DaylineProvider } from '../src/context/DaylineContext';
 import { GuidesProvider } from '../src/context/GuidesContext';
 import { ProjectsProvider } from '../src/context/ProjectsContext';
+import { WeeklyIntentProvider } from '../src/context/WeeklyIntentContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
@@ -68,6 +69,20 @@ function AppStack() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="weekly/plan"
+        options={{
+          title: 'Weekly Plan',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="weekly/review"
+        options={{
+          title: 'Weekly Review',
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
@@ -102,11 +117,13 @@ export default function RootLayout() {
                   <FocusProvider>
                     <BrainDumpProvider>
                       <ProjectsProvider>
-                        <DaylineProvider>
-                          <GuidesProvider>
-                            <RootStack />
-                          </GuidesProvider>
-                        </DaylineProvider>
+                        <WeeklyIntentProvider>
+                          <DaylineProvider>
+                            <GuidesProvider>
+                              <RootStack />
+                            </GuidesProvider>
+                          </DaylineProvider>
+                        </WeeklyIntentProvider>
                       </ProjectsProvider>
                     </BrainDumpProvider>
                   </FocusProvider>
