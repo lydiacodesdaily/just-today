@@ -3,6 +3,8 @@
  * User preferences for audio, announcements, and behavior.
  */
 
+import { PlanningDay } from './WeeklyIntent';
+
 export type TickingSoundType = 'tick1-tok1' | 'tick2-tok2' | 'beep';
 export type MilestoneInterval = 1 | 5;
 export type ThemePreference = 'light' | 'dark' | 'system';
@@ -42,6 +44,12 @@ export interface Settings {
   highContrastMode: boolean;
   /** Reduce motion for users sensitive to animations */
   reduceMotion: boolean;
+  /** Whether weekly intent feature is enabled */
+  weeklyIntentEnabled: boolean;
+  /** Day of week for weekly planning (0=Sun, 1=Mon, ..., 6=Sat) */
+  weeklyPlanningDay: PlanningDay;
+  /** Hour of day for planning nudge (0-23) */
+  weeklyPlanningHour: number;
 }
 
 /** Current settings schema version */
@@ -63,4 +71,7 @@ export const DEFAULT_SETTINGS: Settings = {
   fontFamily: 'system',
   highContrastMode: false,
   reduceMotion: false,
+  weeklyIntentEnabled: false,
+  weeklyPlanningDay: 1,
+  weeklyPlanningHour: 9,
 };

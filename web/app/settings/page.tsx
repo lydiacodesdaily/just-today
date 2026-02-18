@@ -2,6 +2,8 @@
 
 import { useSettingsStore } from '@/src/stores/settingsStore';
 import { TickingSoundType, ThemePreference } from '@/src/models/Settings';
+import { PLANNING_DAY_LABELS } from '@/src/models/WeeklyIntent';
+import type { PlanningDay } from '@/src/models/WeeklyIntent';
 import { useTheme } from 'next-themes';
 
 export default function SettingsPage() {
@@ -217,6 +219,68 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* Weekly Planning */}
+          <section className="bg-calm-surface border border-calm-border rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-calm-text mb-4">Weekly Planning</h2>
+
+            <div className="space-y-4">
+              {/* Enable toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-calm-text">Weekly Intent</div>
+                  <div className="text-sm text-calm-muted">Set weekly goals and share with friends</div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.weeklyIntentEnabled}
+                    onChange={() => toggleSetting('weeklyIntentEnabled')}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-calm-border peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-calm-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-calm-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-calm-primary"></div>
+                </label>
+              </div>
+
+              {settings.weeklyIntentEnabled && (
+                <div className="pl-4 space-y-4 border-l-2 border-calm-border">
+                  {/* Planning day */}
+                  <div>
+                    <label className="block text-sm font-medium text-calm-text mb-2">
+                      Planning day
+                    </label>
+                    <select
+                      value={settings.weeklyPlanningDay}
+                      onChange={(e) => updateSettings({ weeklyPlanningDay: parseInt(e.target.value) as PlanningDay })}
+                      className="bg-calm-bg border border-calm-border rounded-lg px-3 py-2 text-calm-text text-sm focus:outline-none focus:ring-2 focus:ring-calm-primary"
+                    >
+                      {([1, 2, 3, 4, 5, 6, 0] as PlanningDay[]).map((day) => (
+                        <option key={day} value={day}>{PLANNING_DAY_LABELS[day]}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Planning hour */}
+                  <div>
+                    <label className="block text-sm font-medium text-calm-text mb-2">
+                      Reminder time
+                    </label>
+                    <select
+                      value={settings.weeklyPlanningHour}
+                      onChange={(e) => updateSettings({ weeklyPlanningHour: parseInt(e.target.value) })}
+                      className="bg-calm-bg border border-calm-border rounded-lg px-3 py-2 text-calm-text text-sm focus:outline-none focus:ring-2 focus:ring-calm-primary"
+                    >
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <option key={i} value={i}>
+                          {i === 0 ? '12:00 AM' : i < 12 ? `${i}:00 AM` : i === 12 ? '12:00 PM' : `${i - 12}:00 PM`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 

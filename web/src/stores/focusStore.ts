@@ -223,6 +223,12 @@ export const useFocusStore = create<FocusStore>()(
           // Track in snapshot
           useSnapshotStore.getState().incrementTodayCounter('focusItemsCompleted');
 
+          // Sync weekly intent completions
+          setTimeout(() => {
+            const { useWeeklyIntentStore } = require('./weeklyIntentStore');
+            useWeeklyIntentStore.getState().syncCompletions();
+          }, 0);
+
           // Celebrate if item had rollover count
           if (item.rolloverCount && item.rolloverCount > 0) {
             setTimeout(() => {

@@ -17,6 +17,7 @@ import { useAutoCheck } from '@/src/hooks/useAutoCheck';
 import { useGlobalKeyboardShortcuts, KeyboardShortcut } from '@/src/hooks/useGlobalKeyboardShortcuts';
 import { FocusItem, isCheckOnceDue } from '@/src/models/FocusItem';
 import { PacePickItem } from '@/src/models/PacePick';
+import { WeeklyIntentBanner } from '@/src/components/WeeklyIntentBanner';
 
 export default function TodayPage() {
   const currentPace = usePaceStore((state) => state.currentPace);
@@ -134,6 +135,9 @@ export default function TodayPage() {
             </div>
           </div>
         </header>
+
+        {/* Weekly Intent Banner */}
+        <WeeklyIntentBanner />
 
         {/* Main content */}
         <div className="space-y-8">
