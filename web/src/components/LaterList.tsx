@@ -8,6 +8,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { FocusItem, TimeBucket, formatReminderDate, formatTimeBucket, formatCheckOnceDate } from '@/src/models/FocusItem';
 import { useFocusStore } from '@/src/stores/focusStore';
+import { useWeeklyIntentStore } from '@/src/stores/weeklyIntentStore';
 import { EditLaterItemModal } from './EditLaterItemModal';
 import { CheckOncePicker } from './CheckOncePicker';
 import { useCheckOnce } from '@/src/hooks/useCheckOnce';
@@ -20,9 +21,10 @@ interface LaterItemCardProps {
   onDelete: () => void;
   onSetTimeBucket: (bucket: TimeBucket) => void;
   onCheckOnceLater: () => void;
+  isOnWeeklyPlan?: boolean;
 }
 
-function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket, onCheckOnceLater }: LaterItemCardProps) {
+function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket, onCheckOnceLater, isOnWeeklyPlan }: LaterItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showTimeBucketMenu, setShowTimeBucketMenu] = useState(false);
@@ -94,6 +96,12 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket,
                   <span className="text-calm-steady" title={item.rolloverCount >= 3 ? "No pressure, work with your energy" : undefined}>
                     Rolled over {item.rolloverCount}x
                   </span>
+                </>
+              )}
+              {isOnWeeklyPlan && (
+                <>
+                  <span>•</span>
+                  <span className="text-calm-primary">This week</span>
                 </>
               )}
             </div>
@@ -238,6 +246,11 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket,
 
 export function LaterList() {
   const { laterItems, moveToToday, deleteItem, setItemTimeBucket, setCheckOnce, triggerCheckOnce } = useFocusStore();
+  const { getActiveIntent } = useWeeklyIntentStore();
+  const activeIntent = getActiveIntent();
+  const weeklySelectedIds = new Set(
+    activeIntent?.items.filter((i) => i.outcome === 'pending').map((i) => i.focusItemId) ?? []
+  );
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCheckOnExpanded, setIsCheckOnExpanded] = useState(false);
   const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
@@ -321,6 +334,7 @@ export function LaterList() {
                       onDelete={() => deleteItem(item.id)}
                       onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
                       onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                      isOnWeeklyPlan={weeklySelectedIds.has(item.id)}
                     />
                   ))}
                 </div>
@@ -338,6 +352,7 @@ export function LaterList() {
                       onDelete={() => deleteItem(item.id)}
                       onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
                       onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                      isOnWeeklyPlan={weeklySelectedIds.has(item.id)}
                     />
                   ))}
                 </div>
@@ -387,6 +402,7 @@ export function LaterList() {
                   onDelete={() => deleteItem(item.id)}
                   onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
                   onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                  isOnWeeklyPlan={weeklySelectedIds.has(item.id)}
                 />
               ))}
             </div>
