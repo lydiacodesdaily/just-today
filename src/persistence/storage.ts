@@ -21,6 +21,7 @@ const KEYS = {
   CUSTOM_GUIDES: '@just-today/custom-guides',
   ACTIVE_GUIDE_SESSION: '@just-today/active-guide-session',
   DAYLINE_ITEMS: '@just-today/dayline-items',
+  CHECKIN_ITEMS: '@just-today/dayline-items', // same storage key as dayline for backward compat
   PROJECTS: '@just-today/projects',
   WEEKLY_INTENTS: '@just-today/weekly-intents',
 } as const;

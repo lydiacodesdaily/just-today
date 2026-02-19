@@ -13,7 +13,7 @@ import { RunProvider } from '../src/context/RunContext';
 import { TodayOptionalProvider } from '../src/context/TodayOptionalContext';
 import { FocusProvider } from '../src/context/FocusContext';
 import { BrainDumpProvider } from '../src/context/BrainDumpContext';
-import { DaylineProvider } from '../src/context/DaylineContext';
+import { CheckInProvider } from '../src/context/CheckInContext';
 import { GuidesProvider } from '../src/context/GuidesContext';
 import { ProjectsProvider } from '../src/context/ProjectsContext';
 import { WeeklyIntentProvider } from '../src/context/WeeklyIntentContext';
@@ -118,11 +118,11 @@ export default function RootLayout() {
                     <BrainDumpProvider>
                       <ProjectsProvider>
                         <WeeklyIntentProvider>
-                          <DaylineProvider>
+                          <CheckInProvider>
                             <GuidesProvider>
                               <RootStack />
                             </GuidesProvider>
-                          </DaylineProvider>
+                          </CheckInProvider>
                         </WeeklyIntentProvider>
                       </ProjectsProvider>
                     </BrainDumpProvider>

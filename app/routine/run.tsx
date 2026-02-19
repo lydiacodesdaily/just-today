@@ -3,8 +3,9 @@
  * Running screen - active routine execution.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Alert, SafeAreaView, ScrollView, TouchableOpacity, Text, View } from 'react-native';
+import { CheckInSheet } from '../../src/components/CheckInSheet';
 import { useRouter } from 'expo-router';
 import { useRun } from '../../src/context/RunContext';
 import { useFocus } from '../../src/context/FocusContext';
@@ -20,7 +21,6 @@ import { markOvertimeAnnounced } from '../../src/engine/overtimeEngine';
 import { initAudio } from '../../src/audio/soundEngine';
 import { initTTS } from '../../src/audio/ttsEngine';
 import { requestNotificationPermissions } from '../../src/utils/notifications';
-import { getRoutineCompleteMessage } from '../../src/utils/transitionMessages';
 import { useTaskTransition } from '../../src/hooks/useTaskTransition';
 import { useTimeMilestones } from '../../src/hooks/useTimeMilestones';
 
@@ -28,6 +28,7 @@ export default function RunScreen() {
   const theme = useTheme();
   const router = useRouter();
   const completionAlertShown = useRef(false);
+  const [showCheckInSheet, setShowCheckInSheet] = useState(false);
   const {
     currentRun,
     setCurrentRun,
@@ -156,49 +157,35 @@ export default function RunScreen() {
     onMilestoneAnnounced: handleMilestoneAnnounced,
   });
 
+  // Lifted completion handler — also called from CheckInSheet onClose
+  const handleRunComplete = async () => {
+    if (!currentRun) return;
+    const isFocusItemRun = currentRun.templateId === 'focus-item';
+    if (isFocusItemRun && currentRun.tasks[0]?.templateTaskId) {
+      const focusItemId = currentRun.tasks[0].templateTaskId;
+      await completeFocusItem(focusItemId);
+      await endItemFocus(focusItemId);
+    }
+    setCurrentRun(null);
+    router.replace('/');
+  };
+
   // Check if run is completed
   useEffect(() => {
     if (currentRun?.status === 'completed' && !completionAlertShown.current) {
       completionAlertShown.current = true;
       const isFocusItem = currentRun.templateId === 'focus-item';
 
-      // If this was a focus item run, mark it complete
-      const handleComplete = async () => {
-        if (isFocusItem && currentRun.tasks[0]?.templateTaskId) {
-          const focusItemId = currentRun.tasks[0].templateTaskId;
-          await completeFocusItem(focusItemId);
-          await endItemFocus(focusItemId);
-        }
-
-        setCurrentRun(null);
-        router.replace('/');
-      };
-
       if (isFocusItem) {
-        // Today completion message
+        // Single-task focus item: brief alert then navigate
         Alert.alert(
           "That's it.",
           "You completed this task.\n\nYou don't have to do anything else right now.",
-          [
-            {
-              text: 'Back to Today',
-              onPress: handleComplete,
-            },
-          ]
+          [{ text: 'Back to Today', onPress: handleRunComplete }]
         );
       } else {
-        // Routine completion message
-        const completeMessage = getRoutineCompleteMessage();
-        Alert.alert(
-          'You did it!',
-          completeMessage.displayMessage,
-          [
-            {
-              text: 'Done',
-              onPress: handleComplete,
-            },
-          ]
-        );
+        // Full routine: show check-in sheet before navigating away
+        setShowCheckInSheet(true);
       }
     } else if (currentRun?.status === 'abandoned') {
       // If this was a focus item run, just end the session (don't complete)
@@ -354,6 +341,16 @@ export default function RunScreen() {
           onSkip={skipCurrentTask}
         />
       </ScrollView>
+
+      {/* Check-in sheet shown after routine (not focus item) completes */}
+      <CheckInSheet
+        visible={showCheckInSheet}
+        title="How did that go?"
+        onClose={() => {
+          setShowCheckInSheet(false);
+          handleRunComplete();
+        }}
+      />
     </SafeAreaView>
   );
 }

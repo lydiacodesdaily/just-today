@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../src/constants/theme';
+import { CheckInSection } from '../../src/components/CheckInSection';
 import { DailySnapshot, formatFocusTime } from '../../src/models/DailySnapshot';
 import {
   loadTodaySnapshot,
@@ -83,8 +84,11 @@ export default function ReflectionsScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={styles.content}
     >
+      {/* Check-ins */}
+      <CheckInSection />
+
       {/* Today's Story Card */}
-      <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.card, { backgroundColor: theme.colors.surface, marginTop: theme.spacing.lg }]}>
         <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
           Today's Story
         </Text>

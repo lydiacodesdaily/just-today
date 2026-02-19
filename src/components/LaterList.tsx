@@ -20,16 +20,17 @@ import { SectionLabel } from './SectionLabel';
 
 interface LaterListProps {
   onStartFocus: (item: FocusItem) => void;
+  defaultExpanded?: boolean;
 }
 
-export function LaterList({ onStartFocus }: LaterListProps) {
+export function LaterList({ onStartFocus, defaultExpanded = false }: LaterListProps) {
   const theme = useTheme();
   const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder, setItemTimeBucket, addToLater, setCheckOnce } = useFocus();
   const { currentIntent } = useWeeklyIntent();
   const weeklySelectedIds = new Set(
     currentIntent?.items.filter((i) => i.outcome === 'pending').map((i) => i.focusItemId) ?? []
   );
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentItem, setCurrentItem] = useState<FocusItem | null>(null);
