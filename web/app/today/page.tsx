@@ -6,12 +6,14 @@ import { PacePicks } from '@/src/components/PacePicks';
 import { TodaysFocus, TodaysFocusRef } from '@/src/components/TodaysFocus';
 import { RoutinesList } from '@/src/components/RoutineCard';
 import { LaterList } from '@/src/components/LaterList';
-import { BrainDump } from '@/src/components/BrainDump';
+import { BrainDumpBar } from '@/src/components/BrainDumpBar';
 import { CompletedToday } from '@/src/components/CompletedToday';
+import { CheckInIndicator } from '@/src/components/CheckInIndicator';
 import { KeyboardShortcutsModal } from '@/src/components/KeyboardShortcutsModal';
 import { PickOneThingModal } from '@/src/components/PickOneThingModal';
 import { usePaceStore } from '@/src/stores/paceStore';
 import { useFocusStore } from '@/src/stores/focusStore';
+import { useBrainDumpStore } from '@/src/stores/brainDumpStore';
 import { usePacePicksStore } from '@/src/stores/pacePicksStore';
 import { useAutoCheck } from '@/src/hooks/useAutoCheck';
 import { useGlobalKeyboardShortcuts, KeyboardShortcut } from '@/src/hooks/useGlobalKeyboardShortcuts';
@@ -19,25 +21,24 @@ import { FocusItem, isCheckOnceDue } from '@/src/models/FocusItem';
 import { PacePickItem } from '@/src/models/PacePick';
 import { WeeklyIntentBanner } from '@/src/components/WeeklyIntentBanner';
 
+type ActiveTab = 'focus' | 'later';
+
 export default function TodayPage() {
   const currentPace = usePaceStore((state) => state.currentPace);
   const { todayItems, laterItems, completedToday, moveToToday, addToToday, triggerCheckOnce } = useFocusStore();
+  const { items: brainDumpItems } = useBrainDumpStore();
   const { menuItems } = usePacePicksStore();
-  const [showMoreSections, setShowMoreSections] = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('focus');
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [showPickOneThing, setShowPickOneThing] = useState(false);
-  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const todaysFocusRef = useRef<TodaysFocusRef>(null);
   const todaysFocusSectionRef = useRef<HTMLDivElement>(null);
 
-  // Detect Arrival vs Action state
-  // Arrival: First open of the day - no committed work yet
-  // Action: User has committed to today's work (has Today's Focus items or completed items)
-  const isArrivalState = useMemo(() => {
-    const hasTodayFocus = todayItems.length > 0;
-    const hasCompletedItems = completedToday.length > 0;
-    return !hasTodayFocus && !hasCompletedItems;
-  }, [todayItems, completedToday]);
+  // Auto-expand BrainDumpBar when the day is empty
+  const isEmptyDay = useMemo(() => {
+    const unsortedBrainDump = brainDumpItems.filter((i) => i.status === 'unsorted');
+    return todayItems.length === 0 && completedToday.length === 0 && unsortedBrainDump.length === 0;
+  }, [todayItems, completedToday, brainDumpItems]);
 
   // Enable automatic daily checks and cleanup
   useAutoCheck();
@@ -81,173 +82,121 @@ export default function TodayPage() {
 
   // Handler for starting a Later item from Pick One Thing
   const handleStartLaterItem = async (item: FocusItem, reason: string) => {
-    // Move item from Later to Today
     await moveToToday(item.id);
 
-    // If it's a circle back item, trigger it to prevent re-showing
     if (isCheckOnceDue(item)) {
       await triggerCheckOnce(item.id);
     }
 
-    // Close modal and scroll to Today
     setShowPickOneThing(false);
     handleViewToday();
   };
 
   // Handler for starting an Extra from Pick One Thing
   const handleStartPacePick = async (pacePick: PacePickItem) => {
-    // Add pace pick to Today
     await addToToday(
       pacePick.title,
       pacePick.estimatedDuration || '~15 min'
     );
 
-    // Close modal and scroll to Today's Focus
     setShowPickOneThing(false);
     handleViewToday();
   };
 
   // Handler to open Quick Add modal
   const handleAddCustom = () => {
-    setShowQuickAdd(true);
     todaysFocusRef.current?.openQuickAdd();
   };
 
   return (
     <div className="min-h-screen bg-calm-bg">
-      {/* Main container */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page header */}
-        <header className="mb-8">
+        <header className="mb-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-calm-text mb-2">Today</h1>
               <p className="text-calm-muted">Focus on what matters, one thing at a time</p>
             </div>
-            <div className="flex items-center gap-3">
-              <PaceIndicator />
-              <button
-                onClick={() => setShowMoreSections(!showMoreSections)}
-                className="px-3 py-2 text-sm text-calm-muted hover:text-calm-text transition-colors"
-              >
-                {showMoreSections ? 'Simplify View' : 'Show More'}
-              </button>
-            </div>
+            <PaceIndicator />
           </div>
         </header>
 
         {/* Weekly Intent Banner */}
         <WeeklyIntentBanner />
 
-        {/* Main content */}
+        {/* Brain Dump Bar — persistent, above tabs */}
+        <div className="mb-5">
+          <BrainDumpBar
+            autoExpand={isEmptyDay}
+            onPickItem={() => setShowPickOneThing(true)}
+          />
+        </div>
+
+        {/* Tab bar */}
+        <div className="flex border-b border-calm-border mb-6">
+          <button
+            onClick={() => setActiveTab('focus')}
+            className={`px-5 py-2.5 text-sm font-medium transition-colors relative ${
+              activeTab === 'focus'
+                ? 'text-calm-text'
+                : 'text-calm-muted hover:text-calm-text'
+            }`}
+          >
+            Focus
+            {activeTab === 'focus' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-calm-primary rounded-full" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('later')}
+            className={`px-5 py-2.5 text-sm font-medium transition-colors relative ${
+              activeTab === 'later'
+                ? 'text-calm-text'
+                : 'text-calm-muted hover:text-calm-text'
+            }`}
+          >
+            Later
+            {laterItems.filter((i) => !i.completedAt).length > 0 && (
+              <span className="ml-1.5 text-xs text-calm-muted">
+                {laterItems.filter((i) => !i.completedAt).length}
+              </span>
+            )}
+            {activeTab === 'later' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-calm-primary rounded-full" />
+            )}
+          </button>
+        </div>
+
+        {/* Tab content */}
         <div className="space-y-8">
-
-          {/* Arrival State: Brain Dump prioritized, Focus secondary */}
-          {isArrivalState ? (
+          {activeTab === 'focus' && (
             <>
-              {/* Brain Dump - expanded and prioritized */}
-              <BrainDump
-                initialExpanded={true}
-                arrivalMode={true}
-                onViewToday={handleViewToday}
-                onPickItem={() => setShowPickOneThing(true)}
-              />
+              {/* Pace Picks */}
+              <PacePicks paceTag={currentPace} />
 
-              {/* Today's Focus - secondary */}
+              {/* Today's Focus */}
               <div ref={todaysFocusSectionRef}>
                 <TodaysFocus ref={todaysFocusRef} />
               </div>
 
-              {/* Show More sections - collapsed by default */}
-              {showMoreSections && (
-                <>
-                  {/* Optional Pace Picks */}
-                  <PacePicks paceTag={currentPace} />
-
-                  {/* Routines Section */}
-                  <RoutinesList pace={currentPace} />
-
-                  {/* Later & Ideas Divider */}
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-calm-border"></div>
-                    </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-calm-bg px-4 text-sm text-calm-muted">Later & Ideas</span>
-                    </div>
-                  </div>
-
-                  {/* Later List */}
-                  <LaterList />
-                </>
-              )}
-
-              {/* Show More button if sections are hidden */}
-              {!showMoreSections && (
-                <div className="text-center">
-                  <button
-                    onClick={() => setShowMoreSections(true)}
-                    className="px-6 py-3 bg-calm-surface border border-calm-border rounded-lg text-calm-text hover:border-calm-text/30 transition-colors text-sm font-medium"
-                  >
-                    Show Optional Items, Routines & Later
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              {/* Action State: Today's Focus prioritized */}
-              {/* Today's Focus - primary */}
-              <div ref={todaysFocusSectionRef}>
-                <TodaysFocus ref={todaysFocusRef} />
-              </div>
-
-              {/* Completed Today - show evidence of work */}
+              {/* Completed Today */}
               <CompletedToday />
 
-              {/* Show More sections - collapsed by default */}
-              {showMoreSections && (
-                <>
-                  {/* Optional Pace Picks */}
-                  <PacePicks paceTag={currentPace} />
+              {/* Routines */}
+              <RoutinesList pace={currentPace} />
 
-                  {/* Routines Section */}
-                  <RoutinesList pace={currentPace} />
-
-                  {/* Later & Ideas Divider */}
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-calm-border"></div>
-                    </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-calm-bg px-4 text-sm text-calm-muted">Later & Ideas</span>
-                    </div>
-                  </div>
-
-                  {/* Later List */}
-                  <LaterList />
-
-                  {/* Brain Dump - collapsed but accessible */}
-                  <BrainDump initialExpanded={false} arrivalMode={false} onViewToday={handleViewToday} />
-                </>
-              )}
-
-              {/* Show More button if sections are hidden */}
-              {!showMoreSections && (
-                <div className="text-center">
-                  <button
-                    onClick={() => setShowMoreSections(true)}
-                    className="px-6 py-3 bg-calm-surface border border-calm-border rounded-lg text-calm-text hover:border-calm-text/30 transition-colors text-sm font-medium"
-                  >
-                    Show Optional Items, Routines, Later & Ideas
-                  </button>
-                </div>
-              )}
+              {/* Check-in indicator */}
+              <CheckInIndicator />
             </>
+          )}
+
+          {activeTab === 'later' && (
+            <LaterList defaultExpanded={true} />
           )}
         </div>
 
-        {/* Footer spacing for mobile bottom nav - ensures tooltips and content aren't hidden */}
+        {/* Footer spacing for mobile bottom nav */}
         <div className="h-24 md:h-0"></div>
       </div>
 

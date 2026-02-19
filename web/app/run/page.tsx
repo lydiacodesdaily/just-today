@@ -16,6 +16,7 @@ import { TimeDisplay } from '@/src/components/TimeDisplay';
 import { TaskControls } from '@/src/components/TaskControls';
 import { SubtaskList } from '@/src/components/SubtaskList';
 import { ConfirmDialog } from '@/src/components/Dialog';
+import { CheckInModal } from '@/src/components/CheckInModal';
 
 export default function RunPage() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export default function RunPage() {
   // Track if we're in a completion flow to prevent double redirect
   const isCompletingRef = useRef(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [showCheckIn, setShowCheckIn] = useState(false);
 
   // Redirect if no run (but not if we just completed/abandoned - let those handle their own redirect)
   useEffect(() => {
@@ -60,15 +62,10 @@ export default function RunPage() {
     if (currentRun?.status === 'completed') {
       // Mark that we're completing to prevent double redirect
       isCompletingRef.current = true;
-      // Show completion message
+      // Show check-in modal after a brief pause
       setTimeout(() => {
-        router.push('/today');
-        // Clear run after navigation starts to prevent blank screen
-        setTimeout(() => {
-          setCurrentRun(null);
-          isCompletingRef.current = false;
-        }, 100);
-      }, 2000);
+        setShowCheckIn(true);
+      }, 1000);
     } else if (currentRun?.status === 'abandoned') {
       // Mark that we're completing to prevent double redirect
       isCompletingRef.current = true;
@@ -125,6 +122,15 @@ export default function RunPage() {
     ];
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
 
+    const handleCheckInClose = () => {
+      setShowCheckIn(false);
+      router.push('/today');
+      setTimeout(() => {
+        setCurrentRun(null);
+        isCompletingRef.current = false;
+      }, 100);
+    };
+
     return (
       <div className="min-h-screen bg-calm-bg flex items-center justify-center animate-in fade-in duration-300">
         <div className="text-center px-4 animate-in slide-in-from-bottom-4 duration-500">
@@ -134,6 +140,11 @@ export default function RunPage() {
             {completedCount} of {totalCount} {totalCount === 1 ? 'task' : 'tasks'} done
           </p>
         </div>
+        <CheckInModal
+          isOpen={showCheckIn}
+          onClose={handleCheckInClose}
+          title="How did that go?"
+        />
       </div>
     );
   }

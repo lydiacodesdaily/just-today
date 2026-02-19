@@ -244,15 +244,19 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket,
   );
 }
 
-export function LaterList() {
+interface LaterListProps {
+  defaultExpanded?: boolean;
+}
+
+export function LaterList({ defaultExpanded = false }: LaterListProps) {
   const { laterItems, moveToToday, deleteItem, setItemTimeBucket, setCheckOnce, triggerCheckOnce } = useFocusStore();
   const { getActiveIntent } = useWeeklyIntentStore();
   const activeIntent = getActiveIntent();
   const weeklySelectedIds = new Set(
     activeIntent?.items.filter((i) => i.outcome === 'pending').map((i) => i.focusItemId) ?? []
   );
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isCheckOnExpanded, setIsCheckOnExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const [isCheckOnExpanded, setIsCheckOnExpanded] = useState(defaultExpanded);
   const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
   const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSnapshotStore } from '@/src/stores/snapshotStore';
 import { DailySnapshot, formatFocusTime } from '@/src/models/DailySnapshot';
+import { CheckInSection } from '@/src/components/CheckInSection';
 import {
   getTodayReflectionMessage,
   getPaceMessage,
@@ -60,6 +61,11 @@ export default function ReflectionsPage() {
           <h1 className="text-3xl font-bold text-calm-text mb-2">Reflections</h1>
           <p className="text-calm-muted">What you did today matters.</p>
         </header>
+
+        {/* Check-ins section */}
+        <div className="mb-6">
+          <CheckInSection />
+        </div>
 
         {/* Two-column layout on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
