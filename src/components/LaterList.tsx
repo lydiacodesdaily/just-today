@@ -9,6 +9,7 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../constants/theme';
 import { useFocus } from '../context/FocusContext';
+import { useWeeklyIntent } from '../context/WeeklyIntentContext';
 import { FocusItem, TimeBucket, formatTimeBucket, formatCheckOnceDate } from '../models/FocusItem';
 import { formatReminderDate } from '../models/FocusItem';
 import { shouldShowLaterExamples } from '../persistence/onboardingStore';
@@ -24,6 +25,10 @@ interface LaterListProps {
 export function LaterList({ onStartFocus }: LaterListProps) {
   const theme = useTheme();
   const { laterItems, moveItemToToday, completeItem, deleteItem, setItemReminder, setItemTimeBucket, addToLater, setCheckOnce } = useFocus();
+  const { currentIntent } = useWeeklyIntent();
+  const weeklySelectedIds = new Set(
+    currentIntent?.items.filter((i) => i.outcome === 'pending').map((i) => i.focusItemId) ?? []
+  );
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -393,6 +398,11 @@ export function LaterList({ onStartFocus }: LaterListProps) {
               {item.checkOnceDate && (
                 <Text style={[styles.itemCheckOnce, { color: theme.colors.primary }]}>
                   • {formatCheckOnceDate(item.checkOnceDate)}
+                </Text>
+              )}
+              {weeklySelectedIds.has(item.id) && (
+                <Text style={[styles.itemCheckOnce, { color: theme.colors.primary }]}>
+                  • This week
                 </Text>
               )}
             </View>
