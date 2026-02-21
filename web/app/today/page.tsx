@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { PaceIndicator } from '@/src/components/PaceIndicator';
 import { PacePicks } from '@/src/components/PacePicks';
 import { TodaysFocus, TodaysFocusRef } from '@/src/components/TodaysFocus';
@@ -20,6 +20,8 @@ import { useGlobalKeyboardShortcuts, KeyboardShortcut } from '@/src/hooks/useGlo
 import { FocusItem, isCheckOnceDue } from '@/src/models/FocusItem';
 import { PacePickItem } from '@/src/models/PacePick';
 import { WeeklyIntentBanner } from '@/src/components/WeeklyIntentBanner';
+import { FirstEntryModal } from '@/src/components/FirstEntryModal';
+import { useDailyEntryStore } from '@/src/stores/dailyEntryStore';
 
 type ActiveTab = 'focus' | 'later';
 
@@ -31,6 +33,16 @@ export default function TodayPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('focus');
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [showPickOneThing, setShowPickOneThing] = useState(false);
+  const [showFirstEntry, setShowFirstEntry] = useState(false);
+
+  const shouldShowFirstEntry = useDailyEntryStore((state) => state.shouldShowFirstEntry);
+
+  // Show first-entry flow once per day on mount
+  useEffect(() => {
+    if (shouldShowFirstEntry()) {
+      setShowFirstEntry(true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const todaysFocusRef = useRef<TodaysFocusRef>(null);
   const todaysFocusSectionRef = useRef<HTMLDivElement>(null);
 
@@ -115,7 +127,7 @@ export default function TodayPage() {
         <header className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-calm-text mb-2">Today</h1>
+              <h1 className="text-[1.75rem] font-semibold tracking-tight text-calm-text mb-2">Today</h1>
               <p className="text-calm-muted">Focus on what matters, one thing at a time</p>
             </div>
             <PaceIndicator />
@@ -137,23 +149,23 @@ export default function TodayPage() {
         <div className="flex border-b border-calm-border mb-6">
           <button
             onClick={() => setActiveTab('focus')}
-            className={`px-5 py-2.5 text-sm font-medium transition-colors relative ${
+            className={`px-5 py-2.5 text-sm transition-colors relative ${
               activeTab === 'focus'
-                ? 'text-calm-text'
-                : 'text-calm-muted hover:text-calm-text'
+                ? 'text-calm-text font-semibold'
+                : 'text-calm-muted font-normal hover:text-calm-text'
             }`}
           >
             Focus
             {activeTab === 'focus' && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-calm-primary rounded-full" />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-calm-primary" />
             )}
           </button>
           <button
             onClick={() => setActiveTab('later')}
-            className={`px-5 py-2.5 text-sm font-medium transition-colors relative ${
+            className={`px-5 py-2.5 text-sm transition-colors relative ${
               activeTab === 'later'
-                ? 'text-calm-text'
-                : 'text-calm-muted hover:text-calm-text'
+                ? 'text-calm-text font-semibold'
+                : 'text-calm-muted font-normal hover:text-calm-text'
             }`}
           >
             Later
@@ -187,7 +199,8 @@ export default function TodayPage() {
               <RoutinesList pace={currentPace} />
 
               {/* Check-in indicator */}
-              <CheckInIndicator />
+              <CheckInIndicator onOpenFirstEntry={() => setShowFirstEntry(true)} />
+
             </>
           )}
 
@@ -216,6 +229,12 @@ export default function TodayPage() {
       <KeyboardShortcutsModal
         isOpen={showShortcutsModal}
         onClose={() => setShowShortcutsModal(false)}
+      />
+
+      {/* Daily first-entry modal */}
+      <FirstEntryModal
+        isOpen={showFirstEntry}
+        onClose={() => setShowFirstEntry(false)}
       />
     </div>
   );

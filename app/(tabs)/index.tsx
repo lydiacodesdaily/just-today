@@ -40,6 +40,8 @@ import { PacePromptBanner } from '../../src/components/PacePromptBanner';
 import { WeeklyIntentBanner } from '../../src/components/WeeklyIntentBanner';
 import { useSettings } from '../../src/context/SettingsContext';
 import { CheckInIndicator } from '../../src/components/CheckInIndicator';
+import { FirstEntrySheet } from '../../src/components/FirstEntrySheet';
+import { useDailyEntry } from '../../src/context/DailyEntryContext';
 
 type Tab = 'focus' | 'later';
 
@@ -52,11 +54,21 @@ export default function HomeScreen() {
   const { currentPace, hasSelectedForToday } = usePace();
   const { settings } = useSettings();
 
+  const { shouldShow: shouldShowFirstEntry, isLoading: dailyEntryLoading } = useDailyEntry();
+
   const [templates, setTemplates] = useState<RoutineTemplate[]>([]);
   const [hasShownResumePrompt, setHasShownResumePrompt] = useState(false);
   const [showAddFocusModal, setShowAddFocusModal] = useState(false);
   const [isEnergyMenuExpanded, setIsEnergyMenuExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('focus');
+  const [showFirstEntry, setShowFirstEntry] = useState(false);
+
+  // Show first-entry flow once per day when context finishes loading
+  useEffect(() => {
+    if (!dailyEntryLoading && shouldShowFirstEntry()) {
+      setShowFirstEntry(true);
+    }
+  }, [dailyEntryLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prompt user to resume or discard saved run
   useEffect(() => {
@@ -472,7 +484,7 @@ export default function HomeScreen() {
 
             {/* Check-in indicator */}
             <View style={styles.checkInSection}>
-              <CheckInIndicator />
+              <CheckInIndicator onOpenFirstEntry={() => setShowFirstEntry(true)} />
             </View>
 
             {/* Resume routine banner */}
@@ -533,6 +545,12 @@ export default function HomeScreen() {
         onClose={() => setShowAddFocusModal(false)}
         onAdd={handleAddFocusItem}
         defaultLocation="today"
+      />
+
+      {/* Daily First-Entry Sheet */}
+      <FirstEntrySheet
+        visible={showFirstEntry}
+        onClose={() => setShowFirstEntry(false)}
       />
     </View>
   );

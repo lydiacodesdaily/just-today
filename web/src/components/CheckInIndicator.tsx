@@ -11,12 +11,6 @@ import { useCheckInStore } from '@/src/stores/checkInStore';
 import { CheckInModal } from './CheckInModal';
 import { Pace } from '@/src/models/RoutineTemplate';
 
-const MOOD_COLORS: Record<Pace, string> = {
-  low: 'bg-calm-care',
-  steady: 'bg-calm-steady',
-  flow: 'bg-calm-flow',
-};
-
 const MOOD_LABELS: Record<Pace, string> = {
   low: '🌙',
   steady: '🌤',
@@ -28,12 +22,15 @@ function formatTime(isoString: string): string {
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
-export function CheckInIndicator() {
+interface CheckInIndicatorProps {
+  onOpenFirstEntry?: () => void;
+}
+
+export function CheckInIndicator({ onOpenFirstEntry }: CheckInIndicatorProps = {}) {
   const { getTodayItems } = useCheckInStore();
   const [showModal, setShowModal] = useState(false);
 
   const todayItems = getTodayItems();
-  // Show most recent 2, reversed so newest is first
   const recentItems = [...todayItems].reverse().slice(0, 2);
   const extraCount = todayItems.length - 2;
 
@@ -56,12 +53,11 @@ export function CheckInIndicator() {
           <div className="space-y-2">
             {recentItems.map((item) => (
               <div key={item.id} className="flex items-start gap-2.5">
-                {item.mood && (
+                {item.mood ? (
                   <span className="text-sm flex-shrink-0" title={item.mood}>
                     {MOOD_LABELS[item.mood]}
                   </span>
-                )}
-                {!item.mood && (
+                ) : (
                   <div className="w-2 h-2 rounded-full bg-calm-border flex-shrink-0 mt-1" />
                 )}
                 <div className="flex-1 min-w-0">
@@ -81,6 +77,17 @@ export function CheckInIndicator() {
             {extraCount > 0 && (
               <p className="text-xs text-calm-muted">+{extraCount} more today</p>
             )}
+          </div>
+        )}
+
+        {onOpenFirstEntry && (
+          <div className="mt-3 pt-3 border-t border-calm-border">
+            <button
+              onClick={onOpenFirstEntry}
+              className="text-xs text-calm-muted hover:text-calm-text transition-colors"
+            >
+              Morning check-in →
+            </button>
           </div>
         )}
       </div>

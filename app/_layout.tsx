@@ -14,6 +14,7 @@ import { TodayOptionalProvider } from '../src/context/TodayOptionalContext';
 import { FocusProvider } from '../src/context/FocusContext';
 import { BrainDumpProvider } from '../src/context/BrainDumpContext';
 import { CheckInProvider } from '../src/context/CheckInContext';
+import { DailyEntryProvider } from '../src/context/DailyEntryContext';
 import { GuidesProvider } from '../src/context/GuidesContext';
 import { ProjectsProvider } from '../src/context/ProjectsContext';
 import { WeeklyIntentProvider } from '../src/context/WeeklyIntentContext';
@@ -119,9 +120,11 @@ export default function RootLayout() {
                       <ProjectsProvider>
                         <WeeklyIntentProvider>
                           <CheckInProvider>
-                            <GuidesProvider>
-                              <RootStack />
-                            </GuidesProvider>
+                            <DailyEntryProvider>
+                              <GuidesProvider>
+                                <RootStack />
+                              </GuidesProvider>
+                            </DailyEntryProvider>
                           </CheckInProvider>
                         </WeeklyIntentProvider>
                       </ProjectsProvider>

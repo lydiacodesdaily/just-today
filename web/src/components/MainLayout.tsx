@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { LeftNav } from './LeftNav';
 import { BottomNav } from './BottomNav';
+import { CheckInModal } from './CheckInModal';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [showCheckIn, setShowCheckIn] = useState(false);
 
   // Focus mode: hide nav and remove margin on Run page
   const isFocusMode = pathname === '/run';
@@ -29,6 +32,21 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <BottomNav />
+
+      {/* Floating check-in button — hidden in focus mode */}
+      {!isFocusMode && (
+        <button
+          onClick={() => setShowCheckIn(true)}
+          aria-label="Check in"
+          className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40 w-14 h-14 rounded-full bg-calm-primary text-white shadow-lg hover:opacity-90 active:scale-95 transition-all flex items-center justify-center"
+        >
+          <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      )}
+
+      <CheckInModal isOpen={showCheckIn} onClose={() => setShowCheckIn(false)} />
     </div>
   );
 }

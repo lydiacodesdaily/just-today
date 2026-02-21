@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  /* Calm color palette - matching mobile theme.ts */
-  --calm-bg: #F5F1ED;          /* Same as mobile sand.background */
-  --calm-surface: #FFFFFF;
-  --calm-border: #E8E4E0;      /* Same as mobile sand.border */
-  --calm-text: #2F3138;        /* Same as mobile ink.primary */
-  --calm-muted: #6B6E75;       /* Same as mobile ink.disabled */
-  --calm-hover: #F5F5F3;
-  --calm-primary: #6B8570;     /* Same as mobile sage.primary */
-  --calm-success: #6B8570;
+  /* Calm color palette — neutral monochrome, editorial */
+  --calm-bg: #F0F0EE;          /* Near-neutral, barely any hue */
+  --calm-surface: #FAFAFA;     /* Soft off-white (not stark) */
+  --calm-border: #E3E3E1;      /* Neutral grey, no warm cast */
+  --calm-text: #1C1C1C;        /* Near-black — clean, strong */
+  --calm-muted: #767676;       /* Neutral mid-grey (4.5:1 on white) */
+  --calm-hover: #EAEAE8;       /* Subtle hover, derives from bg */
+  --calm-primary: #333333;     /* Placeholder dark accent — to be finalized */
+  --calm-success: #333333;
 
   /* Energy mode colors - distinct, calm, and supportive */
   --calm-low: #6B88AB;         /* Care: cool blue-grey (restful) */
@@ -40,7 +40,7 @@
   --color-calm-success: var(--calm-success);
 
   /* Button colors */
-  --color-btn-primary-bg: var(--calm-text);
+  --color-btn-primary-bg: var(--calm-primary);
   --color-btn-primary-text: var(--calm-surface);
 
   /* Energy mode colors */
@@ -53,7 +53,7 @@
   --color-calm-steady-subtle: var(--calm-steady-subtle);
   --color-calm-flow-subtle: var(--calm-flow-subtle);
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Typography system - matching mobile theme.ts */

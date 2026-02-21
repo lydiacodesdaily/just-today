@@ -587,9 +587,9 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
       {/* Empty state when no items at all */}
       {!hasItems && (
         <div className="bg-calm-surface border border-calm-border rounded-lg p-8 text-center">
-          <p className="text-calm-text mb-2">Ready when you are</p>
+          <p className="text-calm-text mb-2">Nothing planned yet.</p>
           <p className="text-sm text-calm-muted mb-6">
-            Add your first task, or try an item from your Pace Picks
+            That's okay. Start small when you're ready.
           </p>
           <button
             onClick={() => setShowAddModal(true)}

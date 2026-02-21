@@ -19,14 +19,10 @@ import { CheckInSheet } from './CheckInSheet';
 
 function getMoodColor(mood: Pace | undefined, theme: any): string {
   switch (mood) {
-    case 'low':
-      return theme.colors.energyCare;
-    case 'steady':
-      return theme.colors.energySteady;
-    case 'flow':
-      return theme.colors.energyFlow;
-    default:
-      return theme.colors.border;
+    case 'low': return theme.colors.energyCare;
+    case 'steady': return theme.colors.energySteady;
+    case 'flow': return theme.colors.energyFlow;
+    default: return theme.colors.border;
   }
 }
 
@@ -35,12 +31,15 @@ function formatTime(isoString: string): string {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function CheckInIndicator() {
+interface CheckInIndicatorProps {
+  onOpenFirstEntry?: () => void;
+}
+
+export function CheckInIndicator({ onOpenFirstEntry }: CheckInIndicatorProps = {}) {
   const theme = useTheme();
   const { todayItems } = useCheckIn();
   const [showSheet, setShowSheet] = useState(false);
 
-  // Show last 2 check-ins
   const recentItems = todayItems.slice(-2).reverse();
 
   return (
@@ -56,12 +55,7 @@ export function CheckInIndicator() {
       >
         {/* Header row */}
         <View style={styles.headerRow}>
-          <Text
-            style={[
-              styles.label,
-              { color: theme.colors.textTertiary },
-            ]}
-          >
+          <Text style={[styles.label, { color: theme.colors.textTertiary }]}>
             CHECK-IN
           </Text>
           <TouchableOpacity
@@ -69,12 +63,7 @@ export function CheckInIndicator() {
             activeOpacity={0.7}
             hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           >
-            <Text
-              style={[
-                styles.addButton,
-                { color: theme.colors.primary },
-              ]}
-            >
+            <Text style={[styles.addButton, { color: theme.colors.primary }]}>
               + Check in
             </Text>
           </TouchableOpacity>
@@ -82,19 +71,13 @@ export function CheckInIndicator() {
 
         {/* Recent check-ins or empty hint */}
         {recentItems.length === 0 ? (
-          <Text
-            style={[
-              styles.emptyHint,
-              { color: theme.colors.textTertiary },
-            ]}
-          >
+          <Text style={[styles.emptyHint, { color: theme.colors.textTertiary }]}>
             Check-ins will appear here as you move through your day.
           </Text>
         ) : (
           <View style={styles.itemsList}>
             {recentItems.map((item: CheckInItem) => (
               <View key={item.id} style={styles.item}>
-                {/* Mood dot */}
                 <View
                   style={[
                     styles.moodDot,
@@ -113,28 +96,41 @@ export function CheckInIndicator() {
                 >
                   {item.text}
                 </Text>
-                <Text
-                  style={[styles.itemTime, { color: theme.colors.textTertiary }]}
-                >
+                <Text style={[styles.itemTime, { color: theme.colors.textTertiary }]}>
                   {formatTime(item.createdAt)}
                 </Text>
               </View>
             ))}
             {todayItems.length > 2 && (
-              <Text
-                style={[styles.moreHint, { color: theme.colors.textTertiary }]}
-              >
+              <Text style={[styles.moreHint, { color: theme.colors.textTertiary }]}>
                 +{todayItems.length - 2} more — see Reflections
               </Text>
             )}
           </View>
         )}
+
+        {/* Manual first-entry trigger */}
+        {onOpenFirstEntry && (
+          <View
+            style={[
+              styles.morningEntryRow,
+              { borderTopColor: theme.colors.borderSubtle },
+            ]}
+          >
+            <TouchableOpacity
+              onPress={onOpenFirstEntry}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+            >
+              <Text style={[styles.morningEntryText, { color: theme.colors.textTertiary }]}>
+                Morning check-in →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
-      <CheckInSheet
-        visible={showSheet}
-        onClose={() => setShowSheet(false)}
-      />
+      <CheckInSheet visible={showSheet} onClose={() => setShowSheet(false)} />
     </>
   );
 }
@@ -190,5 +186,14 @@ const styles = StyleSheet.create({
   moreHint: {
     fontSize: 11,
     marginTop: 2,
+  },
+  morningEntryRow: {
+    borderTopWidth: 1,
+    paddingTop: 10,
+    marginTop: 2,
+  },
+  morningEntryText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 });

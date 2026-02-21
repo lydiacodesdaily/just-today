@@ -76,7 +76,7 @@ export function LeftNav() {
   }
 
   return (
-    <nav className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-calm-surface border-r border-calm-border flex-col">
+    <nav className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-calm-bg flex-col">
       {/* Logo/Brand */}
       <div className="p-6 border-b border-calm-border">
         <h1 className="text-xl font-semibold text-calm-text">JustToday</h1>
@@ -96,7 +96,7 @@ export function LeftNav() {
                 transition-colors duration-200
                 ${
                   isActive
-                    ? 'bg-calm-primary/10 text-calm-primary font-medium'
+                    ? 'bg-calm-text/[0.07] text-calm-text font-medium'
                     : 'text-calm-muted hover:bg-calm-hover hover:text-calm-text'
                 }
               `}

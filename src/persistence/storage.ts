@@ -24,6 +24,8 @@ const KEYS = {
   CHECKIN_ITEMS: '@just-today/dayline-items', // same storage key as dayline for backward compat
   PROJECTS: '@just-today/projects',
   WEEKLY_INTENTS: '@just-today/weekly-intents',
+  DAILY_ENTRY: '@just-today/daily-entry',
+  DAILY_ENTRY_DISMISSED: '@just-today/daily-entry-dismissed',
 } as const;
 
 export async function getItem<T>(key: string): Promise<T | null> {

@@ -359,11 +359,10 @@ export function TodaysFocus({ onStartFocus, onAddItem }: TodaysFocusProps) {
       {todayItems.length === 0 ? (
         <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
           <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-            What's one thing for today?
+            Nothing planned yet.
           </Text>
           <Text style={[styles.emptyBody, { color: theme.colors.textSecondary }]}>
-            You don't need a full list.{'\n'}
-            One small, doable thing is enough.
+            That's okay. Start small{'\n'}when you're ready.
           </Text>
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
