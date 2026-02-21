@@ -13,6 +13,7 @@
 import { useState } from 'react';
 import { Modal, ModalBody } from './Modal';
 import { useDailyEntryStore } from '@/src/stores/dailyEntryStore';
+import { useCheckInStore } from '@/src/stores/checkInStore';
 import { DailyEmotion } from '@/src/models/DailyEntry';
 
 interface FirstEntryModalProps {
@@ -62,6 +63,7 @@ function pickResponse(): string {
 
 export function FirstEntryModal({ isOpen, onClose }: FirstEntryModalProps) {
   const { saveEntry, dismissForToday } = useDailyEntryStore();
+  const { addItem } = useCheckInStore();
 
   const [modalState, setModalState] = useState<ModalState>('input');
   const [selectedEmotion, setSelectedEmotion] = useState<DailyEmotion | null>(null);
@@ -69,9 +71,11 @@ export function FirstEntryModal({ isOpen, onClose }: FirstEntryModalProps) {
   const [responseMessage, setResponseMessage] = useState('');
 
   const handleSave = () => {
-    saveEntry(text.trim(), selectedEmotion ?? undefined);
+    const trimmedText = text.trim();
+    saveEntry(trimmedText, selectedEmotion ?? undefined);
+    addItem(trimmedText, selectedEmotion ?? undefined);
 
-    const tone = detectTone(text, selectedEmotion ?? undefined);
+    const tone = detectTone(trimmedText, selectedEmotion ?? undefined);
     if (tone === 'heavy') {
       setResponseMessage(pickResponse());
       setModalState('response');

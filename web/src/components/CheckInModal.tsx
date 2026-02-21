@@ -1,6 +1,6 @@
 /**
  * CheckInModal.tsx
- * Modal for capturing check-in moments — mood + optional note.
+ * Modal for capturing check-in moments — mood chip + optional note.
  * Used on the Today page (manual) and after routine completion.
  */
 
@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from './Modal';
 import { useCheckInStore } from '@/src/stores/checkInStore';
-import { Pace } from '@/src/models/RoutineTemplate';
+import { DailyEmotion } from '@/src/models/DailyEntry';
 
 interface CheckInModalProps {
   isOpen: boolean;
@@ -18,15 +18,18 @@ interface CheckInModalProps {
   title?: string;
 }
 
-const MOOD_OPTIONS: { value: Pace; label: string; emoji: string; description: string }[] = [
-  { value: 'low', label: 'Low', emoji: '🌙', description: 'Drained or struggling' },
-  { value: 'steady', label: 'Okay', emoji: '🌤', description: 'Getting through it' },
-  { value: 'flow', label: 'Flow', emoji: '☀️', description: 'In the zone' },
+const EMOTION_CHIPS: { label: string; value: DailyEmotion }[] = [
+  { label: 'Anxious', value: 'anxious' },
+  { label: 'Tired', value: 'tired' },
+  { label: 'Overwhelmed', value: 'overwhelmed' },
+  { label: 'Stuck', value: 'stuck' },
+  { label: 'Good', value: 'good' },
+  { label: 'Neutral', value: 'neutral' },
 ];
 
 export function CheckInModal({ isOpen, onClose, title = "How's it going?" }: CheckInModalProps) {
   const { addItem } = useCheckInStore();
-  const [selectedMood, setSelectedMood] = useState<Pace | null>(null);
+  const [selectedMood, setSelectedMood] = useState<DailyEmotion | null>(null);
   const [note, setNote] = useState('');
 
   const canSave = selectedMood !== null || note.trim().length > 0;
@@ -48,28 +51,24 @@ export function CheckInModal({ isOpen, onClose, title = "How's it going?" }: Che
 
       <ModalBody>
         <div className="space-y-5">
-          {/* Mood selector */}
-          <div>
-            <p className="text-sm text-calm-muted mb-3">How's your energy?</p>
-            <div className="flex gap-2">
-              {MOOD_OPTIONS.map((option) => {
-                const isSelected = selectedMood === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => setSelectedMood(isSelected ? null : option.value)}
-                    className={`flex-1 flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all ${
-                      isSelected
-                        ? 'border-calm-primary bg-calm-primary/10 text-calm-text'
-                        : 'border-calm-border bg-calm-bg hover:border-calm-text/30 text-calm-muted'
-                    }`}
-                  >
-                    <span className="text-2xl">{option.emoji}</span>
-                    <span className="text-xs font-semibold">{option.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Mood chips */}
+          <div className="flex flex-wrap gap-2">
+            {EMOTION_CHIPS.map((chip) => {
+              const isSelected = selectedMood === chip.value;
+              return (
+                <button
+                  key={chip.value}
+                  onClick={() => setSelectedMood(isSelected ? null : chip.value)}
+                  className={`px-3.5 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${
+                    isSelected
+                      ? 'bg-calm-primary border-calm-primary text-white'
+                      : 'bg-calm-bg border-calm-border text-calm-text hover:border-calm-text/40'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Optional note */}

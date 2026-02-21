@@ -3,7 +3,7 @@
  * Data model for Check-ins - one-line captures of how the day is going
  */
 
-import { Pace } from './RoutineTemplate';
+import { DailyEmotion } from './DailyEntry';
 
 export type TimeBlock = 'morning' | 'afternoon' | 'evening';
 
@@ -12,7 +12,7 @@ export interface CheckInItem {
   text: string;
   createdAt: string; // ISO date string
   timeBlock: TimeBlock; // morning, afternoon, evening
-  mood?: Pace; // Optional mood/energy dot (low, steady, flow)
+  mood?: DailyEmotion; // Optional mood chip (anxious, tired, overwhelmed, stuck, good, neutral)
   dateKey: string; // YYYY-MM-DD for grouping by day
 }
 
@@ -36,7 +36,7 @@ export function getTodayDateKey(): string {
 /**
  * Create a new Check-in item
  */
-export function createCheckInItem(text: string, mood?: Pace): CheckInItem {
+export function createCheckInItem(text: string, mood?: DailyEmotion): CheckInItem {
   const now = new Date();
   const randomId = Math.random().toString(36).substr(2, 9);
 

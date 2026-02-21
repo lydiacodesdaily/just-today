@@ -199,7 +199,7 @@ export default function TodayPage() {
               <RoutinesList pace={currentPace} />
 
               {/* Check-in indicator */}
-              <CheckInIndicator onOpenFirstEntry={() => setShowFirstEntry(true)} />
+              <CheckInIndicator />
 
             </>
           )}

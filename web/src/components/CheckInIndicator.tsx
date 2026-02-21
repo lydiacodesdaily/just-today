@@ -9,12 +9,15 @@
 import { useState } from 'react';
 import { useCheckInStore } from '@/src/stores/checkInStore';
 import { CheckInModal } from './CheckInModal';
-import { Pace } from '@/src/models/RoutineTemplate';
+import { DailyEmotion } from '@/src/models/DailyEntry';
 
-const MOOD_LABELS: Record<Pace, string> = {
-  low: '🌙',
-  steady: '🌤',
-  flow: '☀️',
+const MOOD_LABELS: Record<DailyEmotion, string> = {
+  anxious: '😰',
+  tired: '😴',
+  overwhelmed: '😵',
+  stuck: '🫠',
+  good: '🙂',
+  neutral: '😐',
 };
 
 function formatTime(isoString: string): string {
@@ -22,11 +25,7 @@ function formatTime(isoString: string): string {
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
-interface CheckInIndicatorProps {
-  onOpenFirstEntry?: () => void;
-}
-
-export function CheckInIndicator({ onOpenFirstEntry }: CheckInIndicatorProps = {}) {
+export function CheckInIndicator() {
   const { getTodayItems } = useCheckInStore();
   const [showModal, setShowModal] = useState(false);
 
@@ -77,17 +76,6 @@ export function CheckInIndicator({ onOpenFirstEntry }: CheckInIndicatorProps = {
             {extraCount > 0 && (
               <p className="text-xs text-calm-muted">+{extraCount} more today</p>
             )}
-          </div>
-        )}
-
-        {onOpenFirstEntry && (
-          <div className="mt-3 pt-3 border-t border-calm-border">
-            <button
-              onClick={onOpenFirstEntry}
-              className="text-xs text-calm-muted hover:text-calm-text transition-colors"
-            >
-              Morning check-in →
-            </button>
           </div>
         )}
       </div>

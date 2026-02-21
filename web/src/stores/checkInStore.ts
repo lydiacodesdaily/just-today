@@ -6,15 +6,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CheckInItem, createCheckInItem, getTodayDateKey, isFromToday } from '@/src/models/CheckInItem';
-import { Pace } from '@/src/models/RoutineTemplate';
+import { DailyEmotion } from '@/src/models/DailyEntry';
 
 interface CheckInStore {
   // State
   items: CheckInItem[];
 
   // Actions
-  addItem: (text: string, mood?: Pace) => void;
-  updateMood: (itemId: string, mood: Pace) => void;
+  addItem: (text: string, mood?: DailyEmotion) => void;
+  updateMood: (itemId: string, mood: DailyEmotion) => void;
   deleteItem: (itemId: string) => void;
 
   // Selectors

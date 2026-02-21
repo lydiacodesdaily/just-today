@@ -10,12 +10,15 @@ import { useState } from 'react';
 import { useCheckInStore } from '@/src/stores/checkInStore';
 import { groupByTimeBlock } from '@/src/utils/checkInGrouping';
 import { CheckInModal } from './CheckInModal';
-import { Pace } from '@/src/models/RoutineTemplate';
+import { DailyEmotion } from '@/src/models/DailyEntry';
 
-const MOOD_LABELS: Record<Pace, string> = {
-  low: '🌙',
-  steady: '🌤',
-  flow: '☀️',
+const MOOD_LABELS: Record<DailyEmotion, string> = {
+  anxious: '😰',
+  tired: '😴',
+  overwhelmed: '😵',
+  stuck: '🫠',
+  good: '🙂',
+  neutral: '😐',
 };
 
 function formatTime(isoString: string): string {
