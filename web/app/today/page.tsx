@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { PaceIndicator } from '@/src/components/PaceIndicator';
 import { PacePicks } from '@/src/components/PacePicks';
 import { TodaysFocus, TodaysFocusRef } from '@/src/components/TodaysFocus';
@@ -8,7 +8,7 @@ import { RoutinesList } from '@/src/components/RoutineCard';
 import { LaterList } from '@/src/components/LaterList';
 import { BrainDumpBar } from '@/src/components/BrainDumpBar';
 import { CompletedToday } from '@/src/components/CompletedToday';
-import { CheckInIndicator } from '@/src/components/CheckInIndicator';
+import { TodayCheckIn } from '@/src/components/TodayCheckIn';
 import { KeyboardShortcutsModal } from '@/src/components/KeyboardShortcutsModal';
 import { PickOneThingModal } from '@/src/components/PickOneThingModal';
 import { usePaceStore } from '@/src/stores/paceStore';
@@ -20,8 +20,6 @@ import { useGlobalKeyboardShortcuts, KeyboardShortcut } from '@/src/hooks/useGlo
 import { FocusItem, isCheckOnceDue } from '@/src/models/FocusItem';
 import { PacePickItem } from '@/src/models/PacePick';
 import { WeeklyIntentBanner } from '@/src/components/WeeklyIntentBanner';
-import { FirstEntryModal } from '@/src/components/FirstEntryModal';
-import { useDailyEntryStore } from '@/src/stores/dailyEntryStore';
 
 type ActiveTab = 'focus' | 'later';
 
@@ -33,16 +31,7 @@ export default function TodayPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('focus');
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [showPickOneThing, setShowPickOneThing] = useState(false);
-  const [showFirstEntry, setShowFirstEntry] = useState(false);
-
-  const shouldShowFirstEntry = useDailyEntryStore((state) => state.shouldShowFirstEntry);
-
-  // Show first-entry flow once per day on mount
-  useEffect(() => {
-    if (shouldShowFirstEntry()) {
-      setShowFirstEntry(true);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [showPacePicks, setShowPacePicks] = useState(false);
   const todaysFocusRef = useRef<TodaysFocusRef>(null);
   const todaysFocusSectionRef = useRef<HTMLDivElement>(null);
 
@@ -134,6 +123,11 @@ export default function TodayPage() {
           </div>
         </header>
 
+        {/* Section 1 — Check-in */}
+        <div className="mb-5">
+          <TodayCheckIn />
+        </div>
+
         {/* Weekly Intent Banner */}
         <WeeklyIntentBanner />
 
@@ -184,13 +178,22 @@ export default function TodayPage() {
         <div className="space-y-8">
           {activeTab === 'focus' && (
             <>
-              {/* Pace Picks */}
-              <PacePicks paceTag={currentPace} />
-
               {/* Today's Focus */}
               <div ref={todaysFocusSectionRef}>
-                <TodaysFocus ref={todaysFocusRef} />
+                <TodaysFocus
+                  ref={todaysFocusRef}
+                  onOpenPacePicks={() => setShowPacePicks(true)}
+                />
               </div>
+
+              {/* Pace Picks — shown only when triggered from + Add dropdown */}
+              {showPacePicks && (
+                <PacePicks
+                  paceTag={currentPace}
+                  defaultExpanded
+                  onCollapse={() => setShowPacePicks(false)}
+                />
+              )}
 
               {/* Completed Today */}
               <CompletedToday />
@@ -198,10 +201,8 @@ export default function TodayPage() {
               {/* Routines */}
               <RoutinesList pace={currentPace} />
 
-              {/* Check-in indicator */}
-              <CheckInIndicator />
-
-            </>
+        
+</>
           )}
 
           {activeTab === 'later' && (
@@ -231,11 +232,6 @@ export default function TodayPage() {
         onClose={() => setShowShortcutsModal(false)}
       />
 
-      {/* Daily first-entry modal */}
-      <FirstEntryModal
-        isOpen={showFirstEntry}
-        onClose={() => setShowFirstEntry(false)}
-      />
     </div>
   );
 }

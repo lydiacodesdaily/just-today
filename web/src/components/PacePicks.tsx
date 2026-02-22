@@ -13,11 +13,13 @@ import { SectionLabel } from './SectionLabel';
 
 interface PacePicksProps {
   paceTag: PaceTag;
+  defaultExpanded?: boolean;
+  onCollapse?: () => void;
 }
 
-export function PacePicks({ paceTag }: PacePicksProps) {
+export function PacePicks({ paceTag, defaultExpanded, onCollapse }: PacePicksProps) {
   const { menuItems, addToToday } = usePacePicksStore();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? false);
 
   // Filter menu items for current pace
   const filteredItems = menuItems
@@ -43,7 +45,10 @@ export function PacePicks({ paceTag }: PacePicksProps) {
     <section className="space-y-3">
       {/* Header */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => {
+          if (isExpanded) onCollapse?.();
+          setIsExpanded(!isExpanded);
+        }}
         className="w-full flex items-center justify-between p-3 hover:bg-calm-surface/50 rounded-lg transition-colors"
         aria-expanded={isExpanded}
       >

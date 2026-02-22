@@ -12,6 +12,7 @@ import { useFocusStore } from '@/src/stores/focusStore';
 import { useRunStore } from '@/src/stores/runStore';
 import { usePacePicksStore } from '@/src/stores/pacePicksStore';
 import { useProjectsStore } from '@/src/stores/projectsStore';
+import { usePaceStore } from '@/src/stores/paceStore';
 import { createRunFromFocusItem } from '@/src/engine/runEngine';
 import { TodayOptionalItem } from '@/src/models/PacePick';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
@@ -381,7 +382,11 @@ export interface TodaysFocusRef {
   markCurrentTaskDone: () => void;
 }
 
-export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFocus(props, ref) {
+interface TodaysFocusProps {
+  onOpenPacePicks?: () => void;
+}
+
+export const TodaysFocus = forwardRef<TodaysFocusRef, TodaysFocusProps>(function TodaysFocus({ onOpenPacePicks }, ref) {
   const {
     todayItems,
     addToToday,
@@ -397,9 +402,12 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
   const { todayOptionalItems, completeOptionalItem, removeFromToday } = usePacePicksStore();
   const { setCurrentRun } = useRunStore();
   const { projects } = useProjectsStore();
+  const currentPace = usePaceStore((state) => state.currentPace);
   const router = useRouter();
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddDropdown, setShowAddDropdown] = useState(false);
+  const addDropdownRef = useRef<HTMLDivElement>(null);
   const [newTitle, setNewTitle] = useState('');
   const [selectedDuration, setSelectedDuration] = useState<FocusDuration>('~15 min');
   const [srAnnouncement, setSrAnnouncement] = useState('');
@@ -411,6 +419,26 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
   const [inlineEditDuration, setInlineEditDuration] = useState<FocusDuration | null>(null);
 
   const addModalRef = useFocusTrap<HTMLDivElement>(showAddModal);
+
+  const getPaceLabel = () => {
+    switch (currentPace) {
+      case 'low': return 'Gentle';
+      case 'steady': return 'Steady';
+      case 'flow': return 'Deep';
+    }
+  };
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (addDropdownRef.current && !addDropdownRef.current.contains(e.target as Node)) {
+        setShowAddDropdown(false);
+      }
+    }
+    if (showAddDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showAddDropdown]);
 
   // All incomplete today items - show all items (no Show More pattern)
   const incompleteTodayItems = todayItems.filter((item) => !item.completedAt);
@@ -504,12 +532,36 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
       {/* Header */}
       <div className="flex items-center justify-between">
         <SectionLabel>Today&apos;s Focus</SectionLabel>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-3 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-xs"
-        >
-          + Add
-        </button>
+        <div className="relative" ref={addDropdownRef}>
+          <button
+            onClick={() => setShowAddDropdown(!showAddDropdown)}
+            className="px-3 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-xs flex items-center gap-1"
+          >
+            + Add
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showAddDropdown && (
+            <div className="absolute right-0 top-full mt-1 w-56 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+              <button
+                onClick={() => { setShowAddDropdown(false); setShowAddModal(true); }}
+                className="w-full px-4 py-2.5 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+              >
+                Add a task
+              </button>
+              {onOpenPacePicks && (
+                <button
+                  onClick={() => { setShowAddDropdown(false); onOpenPacePicks(); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors border-t border-calm-border"
+                >
+                  Add from Pace Picks ({getPaceLabel()})
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Completion celebration message */}
