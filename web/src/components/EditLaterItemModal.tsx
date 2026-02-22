@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFocusStore } from '@/src/stores/focusStore';
+import { useProjectsStore } from '@/src/stores/projectsStore';
 import { FocusItem, FocusDuration, TimeBucket } from '@/src/models/FocusItem';
 import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 
@@ -37,11 +38,13 @@ const TIME_BUCKETS: { value: TimeBucket; label: string }[] = [
 
 export function EditLaterItemModal({ item, onClose }: EditLaterItemModalProps) {
   const { updateLaterItem } = useFocusStore();
+  const { projects } = useProjectsStore();
   const modalRef = useFocusTrap<HTMLDivElement>(true);
 
   const [title, setTitle] = useState(item.title);
   const [duration, setDuration] = useState<FocusDuration>(item.estimatedDuration);
   const [timeBucket, setTimeBucket] = useState<TimeBucket | undefined>(item.timeBucket);
+  const [projectId, setProjectId] = useState<string | null>(item.projectId ?? null);
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -52,7 +55,7 @@ export function EditLaterItemModal({ item, onClose }: EditLaterItemModalProps) {
       return;
     }
 
-    updateLaterItem(item.id, title.trim(), duration, timeBucket === 'NONE' ? undefined : timeBucket);
+    updateLaterItem(item.id, title.trim(), duration, timeBucket === 'NONE' ? undefined : timeBucket, projectId);
     onClose();
   };
 
@@ -156,6 +159,26 @@ export function EditLaterItemModal({ item, onClose }: EditLaterItemModalProps) {
               ))}
             </select>
           </div>
+
+          {/* Project Picker */}
+          {projects.length > 0 && (
+            <div>
+              <label htmlFor="project" className="block text-sm font-medium text-calm-text mb-2">
+                Project <span className="text-calm-muted text-xs">(optional)</span>
+              </label>
+              <select
+                id="project"
+                value={projectId ?? ''}
+                onChange={(e) => setProjectId(e.target.value || null)}
+                className="w-full px-4 py-2 bg-calm-bg border border-calm-border rounded-lg text-calm-text focus:outline-none focus:ring-2 focus:ring-calm-text/30 focus:border-transparent"
+              >
+                <option value="">No project</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
         </form>
 

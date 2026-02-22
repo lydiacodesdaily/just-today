@@ -27,13 +27,15 @@ interface FocusStore {
   completedTodayDate: string; // YYYY-MM-DD for day reset
 
   // Actions
-  addToToday: (title: string, duration: FocusDuration) => void;
-  addToLater: (title: string, duration: FocusDuration, reminderTiming?: ReminderTiming, customDate?: Date) => void;
+  addToToday: (title: string, duration: FocusDuration, projectId?: string | null) => void;
+  addToLater: (title: string, duration: FocusDuration, reminderTiming?: ReminderTiming, customDate?: Date, projectId?: string | null) => void;
   addFromBrainDump: (item: BrainDumpItem, location: 'today' | 'later') => void;
   moveToLater: (itemId: string, reminderTiming?: ReminderTiming, customDate?: Date) => void;
   moveToToday: (itemId: string) => void;
-  updateTodayItem: (itemId: string, title: string, duration: FocusDuration) => void;
-  updateLaterItem: (itemId: string, title: string, duration: FocusDuration, timeBucket?: TimeBucket) => void;
+  updateTodayItem: (itemId: string, title: string, duration: FocusDuration, projectId?: string | null) => void;
+  updateLaterItem: (itemId: string, title: string, duration: FocusDuration, timeBucket?: TimeBucket, projectId?: string | null) => void;
+  setItemProject: (itemId: string, projectId: string | null) => void;
+  clearProjectFromItems: (projectId: string) => void;
   completeItem: (itemId: string) => void;
   deleteItem: (itemId: string) => void;
   setItemReminder: (itemId: string, reminderTiming?: ReminderTiming, customDate?: Date) => void;
@@ -92,16 +94,18 @@ export const useFocusStore = create<FocusStore>()(
       completedTodayDate: getTodayDateString(),
 
       // Add to Today
-      addToToday: (title, duration) => {
+      addToToday: (title, duration, projectId) => {
         const item = createFocusItem(title, duration, 'today');
+        if (projectId !== undefined) item.projectId = projectId;
         set((state) => ({
           todayItems: [...state.todayItems, item],
         }));
       },
 
       // Add to Later
-      addToLater: (title, duration, reminderTiming, customDate) => {
+      addToLater: (title, duration, reminderTiming, customDate, projectId) => {
         const item = createFocusItem(title, duration, 'later');
+        if (projectId !== undefined) item.projectId = projectId;
         const now = new Date().toISOString();
 
         if (reminderTiming) {
@@ -180,7 +184,7 @@ export const useFocusStore = create<FocusStore>()(
       },
 
       // Update Today item
-      updateTodayItem: (itemId, title, duration) => {
+      updateTodayItem: (itemId, title, duration, projectId) => {
         set((state) => ({
           todayItems: state.todayItems.map((item) =>
             item.id === itemId
@@ -188,6 +192,7 @@ export const useFocusStore = create<FocusStore>()(
                   ...item,
                   title,
                   estimatedDuration: duration,
+                  projectId: projectId !== undefined ? projectId : item.projectId,
                 }
               : item
           ),
@@ -195,7 +200,7 @@ export const useFocusStore = create<FocusStore>()(
       },
 
       // Update Later item
-      updateLaterItem: (itemId, title, duration, timeBucket) => {
+      updateLaterItem: (itemId, title, duration, timeBucket, projectId) => {
         set((state) => ({
           laterItems: state.laterItems.map((item) =>
             item.id === itemId
@@ -204,8 +209,33 @@ export const useFocusStore = create<FocusStore>()(
                   title,
                   estimatedDuration: duration,
                   timeBucket,
+                  projectId: projectId !== undefined ? projectId : item.projectId,
                 }
               : item
+          ),
+        }));
+      },
+
+      // Assign or remove a project from a focus item
+      setItemProject: (itemId, projectId) => {
+        set((state) => ({
+          todayItems: state.todayItems.map((item) =>
+            item.id === itemId ? { ...item, projectId } : item
+          ),
+          laterItems: state.laterItems.map((item) =>
+            item.id === itemId ? { ...item, projectId } : item
+          ),
+        }));
+      },
+
+      // Un-assign all items that belonged to a deleted project
+      clearProjectFromItems: (projectId) => {
+        set((state) => ({
+          todayItems: state.todayItems.map((item) =>
+            item.projectId === projectId ? { ...item, projectId: null } : item
+          ),
+          laterItems: state.laterItems.map((item) =>
+            item.projectId === projectId ? { ...item, projectId: null } : item
           ),
         }));
       },

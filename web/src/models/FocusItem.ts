@@ -73,6 +73,9 @@ export interface FocusItem {
 
   // Ordering within section
   order?: number; // Position within the section (lower = higher priority)
+
+  // Optional project grouping (GTD: next action belongs to a project)
+  projectId?: string | null;
 }
 
 /**
