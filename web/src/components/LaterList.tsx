@@ -9,6 +9,7 @@ import { useState, useRef, useEffect } from 'react';
 import { FocusItem, TimeBucket, formatReminderDate, formatTimeBucket, formatCheckOnceDate } from '@/src/models/FocusItem';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { useWeeklyIntentStore } from '@/src/stores/weeklyIntentStore';
+import { useProjectsStore } from '@/src/stores/projectsStore';
 import { EditLaterItemModal } from './EditLaterItemModal';
 import { CheckOncePicker } from './CheckOncePicker';
 import { useCheckOnce } from '@/src/hooks/useCheckOnce';
@@ -16,6 +17,7 @@ import { SectionLabel } from './SectionLabel';
 
 interface LaterItemCardProps {
   item: FocusItem;
+  projectName?: string;
   onEdit: () => void;
   onMoveToToday: () => void;
   onDelete: () => void;
@@ -24,7 +26,7 @@ interface LaterItemCardProps {
   isOnWeeklyPlan?: boolean;
 }
 
-function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket, onCheckOnceLater, isOnWeeklyPlan }: LaterItemCardProps) {
+function LaterItemCard({ item, projectName, onEdit, onMoveToToday, onDelete, onSetTimeBucket, onCheckOnceLater, isOnWeeklyPlan }: LaterItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showTimeBucketMenu, setShowTimeBucketMenu] = useState(false);
@@ -96,6 +98,12 @@ function LaterItemCard({ item, onEdit, onMoveToToday, onDelete, onSetTimeBucket,
                   <span className="text-calm-steady" title={item.rolloverCount >= 3 ? "No pressure, work with your energy" : undefined}>
                     Rolled over {item.rolloverCount}x
                   </span>
+                </>
+              )}
+              {projectName && (
+                <>
+                  <span>•</span>
+                  <span className="text-calm-primary/70">{projectName}</span>
                 </>
               )}
               {isOnWeeklyPlan && (
@@ -251,6 +259,7 @@ interface LaterListProps {
 export function LaterList({ defaultExpanded = false }: LaterListProps) {
   const { laterItems, moveToToday, deleteItem, setItemTimeBucket, setCheckOnce, triggerCheckOnce } = useFocusStore();
   const { getActiveIntent } = useWeeklyIntentStore();
+  const { projects } = useProjectsStore();
   const activeIntent = getActiveIntent();
   const weeklySelectedIds = new Set(
     activeIntent?.items.filter((i) => i.outcome === 'pending').map((i) => i.focusItemId) ?? []
@@ -333,6 +342,7 @@ export function LaterList({ defaultExpanded = false }: LaterListProps) {
                     <LaterItemCard
                       key={item.id}
                       item={item}
+                      projectName={item.projectId ? projects.find((p) => p.id === item.projectId)?.name : undefined}
                       onEdit={() => setEditingItem(item)}
                       onMoveToToday={() => moveToToday(item.id)}
                       onDelete={() => deleteItem(item.id)}
@@ -351,6 +361,7 @@ export function LaterList({ defaultExpanded = false }: LaterListProps) {
                     <LaterItemCard
                       key={item.id}
                       item={item}
+                      projectName={item.projectId ? projects.find((p) => p.id === item.projectId)?.name : undefined}
                       onEdit={() => setEditingItem(item)}
                       onMoveToToday={() => moveToToday(item.id)}
                       onDelete={() => deleteItem(item.id)}
@@ -401,6 +412,7 @@ export function LaterList({ defaultExpanded = false }: LaterListProps) {
                 <LaterItemCard
                   key={item.id}
                   item={item}
+                  projectName={item.projectId ? projects.find((p) => p.id === item.projectId)?.name : undefined}
                   onEdit={() => setEditingItem(item)}
                   onMoveToToday={() => moveToToday(item.id)}
                   onDelete={() => deleteItem(item.id)}

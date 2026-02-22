@@ -11,6 +11,7 @@ import { FocusItem, FocusDuration } from '@/src/models/FocusItem';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { useRunStore } from '@/src/stores/runStore';
 import { usePacePicksStore } from '@/src/stores/pacePicksStore';
+import { useProjectsStore } from '@/src/stores/projectsStore';
 import { createRunFromFocusItem } from '@/src/engine/runEngine';
 import { TodayOptionalItem } from '@/src/models/PacePick';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
@@ -31,6 +32,7 @@ const DURATION_OPTIONS: FocusDuration[] = [
 
 interface TodayItemCardProps {
   item: FocusItem;
+  projectName?: string;
   onComplete: () => void;
   onMoveToLater: () => void;
   onDelete: () => void;
@@ -48,6 +50,7 @@ interface TodayItemCardProps {
 
 function TodayItemCard({
   item,
+  projectName,
   onComplete,
   onMoveToLater,
   onDelete,
@@ -150,6 +153,9 @@ function TodayItemCard({
               }}
             >
               {item.estimatedDuration}
+              {projectName && (
+                <span className="text-calm-primary/70"> · {projectName}</span>
+              )}
             </p>
           )}
         </div>
@@ -390,6 +396,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
   } = useFocusStore();
   const { todayOptionalItems, completeOptionalItem, removeFromToday } = usePacePicksStore();
   const { setCurrentRun } = useRunStore();
+  const { projects } = useProjectsStore();
   const router = useRouter();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -555,6 +562,7 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, object>(function TodaysFoc
             <TodayItemCard
               key={item.id}
               item={item}
+              projectName={item.projectId ? projects.find((p) => p.id === item.projectId)?.name : undefined}
               onComplete={() => completeItem(item.id)}
               onMoveToLater={() => moveToLater(item.id)}
               onDelete={() => deleteItem(item.id)}
