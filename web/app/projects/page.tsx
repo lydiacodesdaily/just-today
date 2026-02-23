@@ -140,10 +140,11 @@ interface ActionRowProps {
   item: FocusItem;
   onMoveToToday?: () => void;
   onMoveToLater?: () => void;
+  onMarkDone: () => void;
   onDelete: () => void;
 }
 
-function ActionRow({ item, onMoveToToday, onMoveToLater, onDelete }: ActionRowProps) {
+function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete }: ActionRowProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -185,6 +186,13 @@ function ActionRow({ item, onMoveToToday, onMoveToLater, onDelete }: ActionRowPr
             → Later
           </button>
         )}
+        <button
+          onClick={onMarkDone}
+          className="px-2 py-1 text-xs text-calm-muted hover:bg-calm-border/50 rounded transition-colors"
+          title="Mark done"
+        >
+          ✓ Done
+        </button>
 
         <div className="relative" ref={menuRef}>
           <button
@@ -223,7 +231,7 @@ interface ProjectCardProps {
 }
 
 function ProjectCard({ project, todayItems, laterItems, onRename, onDelete }: ProjectCardProps) {
-  const { moveToToday, moveToLater, deleteItem } = useFocusStore();
+  const { moveToToday, moveToLater, completeItem, deleteItem } = useFocusStore();
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -323,6 +331,7 @@ function ProjectCard({ project, todayItems, laterItems, onRename, onDelete }: Pr
                   key={item.id}
                   item={item}
                   onMoveToLater={() => moveToLater(item.id)}
+                  onMarkDone={() => completeItem(item.id)}
                   onDelete={() => deleteItem(item.id)}
                 />
               ))}
@@ -338,6 +347,7 @@ function ProjectCard({ project, todayItems, laterItems, onRename, onDelete }: Pr
                   key={item.id}
                   item={item}
                   onMoveToToday={() => moveToToday(item.id)}
+                  onMarkDone={() => completeItem(item.id)}
                   onDelete={() => deleteItem(item.id)}
                 />
               ))}
