@@ -20,6 +20,7 @@ import { useGlobalKeyboardShortcuts, KeyboardShortcut } from '@/src/hooks/useGlo
 import { FocusItem, isCheckOnceDue } from '@/src/models/FocusItem';
 import { PacePickItem } from '@/src/models/PacePick';
 import { WeeklyIntentBanner } from '@/src/components/WeeklyIntentBanner';
+import { AddFocusItemModal } from '@/src/components/AddFocusItemModal';
 
 type ActiveTab = 'focus' | 'later';
 
@@ -32,6 +33,7 @@ export default function TodayPage() {
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [showPickOneThing, setShowPickOneThing] = useState(false);
   const [showPacePicks, setShowPacePicks] = useState(false);
+  const [showAddLaterModal, setShowAddLaterModal] = useState(false);
   const todaysFocusRef = useRef<TodaysFocusRef>(null);
   const todaysFocusSectionRef = useRef<HTMLDivElement>(null);
 
@@ -206,7 +208,23 @@ export default function TodayPage() {
           )}
 
           {activeTab === 'later' && (
-            <LaterList defaultExpanded={true} />
+            <>
+              <div className="flex justify-end mb-3">
+                <button
+                  onClick={() => setShowAddLaterModal(true)}
+                  className="px-3 py-1.5 text-xs text-calm-muted border border-calm-border rounded-lg hover:text-calm-text hover:border-calm-text/30 transition-colors"
+                >
+                  + Add
+                </button>
+              </div>
+              <LaterList defaultExpanded={true} />
+              {showAddLaterModal && (
+                <AddFocusItemModal
+                  destination="later"
+                  onClose={() => setShowAddLaterModal(false)}
+                />
+              )}
+            </>
           )}
         </div>
 

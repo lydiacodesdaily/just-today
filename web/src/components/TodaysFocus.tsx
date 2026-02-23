@@ -16,9 +16,9 @@ import { usePaceStore } from '@/src/stores/paceStore';
 import { createRunFromFocusItem } from '@/src/engine/runEngine';
 import { TodayOptionalItem } from '@/src/models/PacePick';
 import { AriaLiveRegion } from '@/src/components/AriaLiveRegion';
-import { useFocusTrap } from '@/src/hooks/useFocusTrap';
 import { CheckOncePicker } from '@/src/components/CheckOncePicker';
 import { SectionLabel } from '@/src/components/SectionLabel';
+import { AddFocusItemModal } from '@/src/components/AddFocusItemModal';
 
 const DURATION_OPTIONS: FocusDuration[] = [
   '~5 min',
@@ -389,7 +389,6 @@ interface TodaysFocusProps {
 export const TodaysFocus = forwardRef<TodaysFocusRef, TodaysFocusProps>(function TodaysFocus({ onOpenPacePicks }, ref) {
   const {
     todayItems,
-    addToToday,
     completeItem,
     moveToLater,
     deleteItem,
@@ -408,8 +407,6 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, TodaysFocusProps>(function
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddDropdown, setShowAddDropdown] = useState(false);
   const addDropdownRef = useRef<HTMLDivElement>(null);
-  const [newTitle, setNewTitle] = useState('');
-  const [selectedDuration, setSelectedDuration] = useState<FocusDuration>('~15 min');
   const [srAnnouncement, setSrAnnouncement] = useState('');
   const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
 
@@ -417,8 +414,6 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, TodaysFocusProps>(function
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
   const [inlineEditTitle, setInlineEditTitle] = useState('');
   const [inlineEditDuration, setInlineEditDuration] = useState<FocusDuration | null>(null);
-
-  const addModalRef = useFocusTrap<HTMLDivElement>(showAddModal);
 
   const getPaceLabel = () => {
     switch (currentPace) {
@@ -461,16 +456,6 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, TodaysFocusProps>(function
       }
     },
   }));
-
-  const handleAdd = () => {
-    if (newTitle.trim()) {
-      addToToday(newTitle.trim(), selectedDuration);
-      setSrAnnouncement(`Added to today: ${newTitle.trim()}`);
-      setNewTitle('');
-      setSelectedDuration('~15 min');
-      setShowAddModal(false);
-    }
-  };
 
   const handleStartFocus = (item: FocusItem) => {
     // Create a run from the focus item
@@ -662,88 +647,10 @@ export const TodaysFocus = forwardRef<TodaysFocusRef, TodaysFocusProps>(function
 
       {/* Add item modal */}
       {showAddModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          onClick={() => setShowAddModal(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-modal-title"
-        >
-          <div
-            ref={addModalRef}
-            className="bg-calm-surface border border-calm-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-6 pt-6 pb-4 border-b border-calm-border">
-              <h3 id="add-modal-title" className="text-xl font-semibold text-calm-text">
-                Add to Today
-              </h3>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-calm-text mb-2">
-                  What do you want to focus on?
-                </label>
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAdd();
-                    } else if (e.key === 'Escape') {
-                      setShowAddModal(false);
-                    }
-                  }}
-                  placeholder="e.g., Review pull requests"
-                  className="w-full px-4 py-2 bg-calm-bg border border-calm-border rounded-lg focus:outline-none focus:ring-2 focus:ring-calm-text/30 text-calm-text"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-calm-text mb-2">
-                  Estimated duration
-                </label>
-                <p className="text-xs text-calm-muted mb-2">
-                  How long do you think this will take? It&apos;s okay to adjust as you go.
-                </p>
-                <select
-                  value={selectedDuration}
-                  onChange={(e) => setSelectedDuration(e.target.value as FocusDuration)}
-                  className="w-full px-4 py-2 bg-calm-bg border border-calm-border rounded-lg focus:outline-none focus:ring-2 focus:ring-calm-text/30 text-calm-text"
-                >
-                  {DURATION_OPTIONS.map((duration) => (
-                    <option key={duration} value={duration}>
-                      {duration}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-calm-border flex gap-3">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-border/80 transition-colors touch-manipulation"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAdd}
-                disabled={!newTitle.trim()}
-                className="flex-1 min-h-[48px] px-4 py-3 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
+        <AddFocusItemModal
+          destination="today"
+          onClose={() => setShowAddModal(false)}
+        />
       )}
 
       {/* Check Once Picker */}
