@@ -143,10 +143,13 @@ interface ActionRowProps {
   onMarkDone: () => void;
   onDelete: () => void;
   onEdit: (title: string, duration: FocusDuration) => void;
+  onAssignProject?: (projectId: string) => void;
+  availableProjects?: { id: string; name: string }[];
 }
 
-function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete, onEdit }: ActionRowProps) {
+function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete, onEdit, onAssignProject, availableProjects }: ActionRowProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [showAssignMenu, setShowAssignMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDuration, setEditDuration] = useState<FocusDuration>(item.estimatedDuration);
@@ -157,13 +160,14 @@ function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete, o
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
+        setShowAssignMenu(false);
       }
     }
-    if (showMenu) {
+    if (showMenu || showAssignMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showMenu]);
+  }, [showMenu, showAssignMenu]);
 
   const startEditing = () => {
     setEditTitle(item.title);
@@ -265,20 +269,47 @@ function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete, o
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
           </button>
-          {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-40 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+          {showMenu && !showAssignMenu && (
+            <div className="absolute right-0 top-full mt-1 w-44 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
               <button
                 onClick={() => { startEditing(); setShowMenu(false); }}
                 className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
               >
                 Edit
               </button>
+              {onAssignProject && availableProjects && availableProjects.length > 0 && (
+                <button
+                  onClick={() => setShowAssignMenu(true)}
+                  className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors border-t border-calm-border"
+                >
+                  Assign to project...
+                </button>
+              )}
               <button
                 onClick={() => { onDelete(); setShowMenu(false); }}
                 className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors border-t border-calm-border"
               >
                 Remove
               </button>
+            </div>
+          )}
+          {showAssignMenu && (
+            <div className="absolute right-0 top-full mt-1 w-44 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+              <button
+                onClick={() => { setShowAssignMenu(false); setShowMenu(true); }}
+                className="w-full px-3 py-2 text-left text-sm text-calm-muted hover:bg-calm-bg transition-colors border-b border-calm-border"
+              >
+                ← Back
+              </button>
+              {availableProjects?.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => { onAssignProject?.(p.id); setShowAssignMenu(false); }}
+                  className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                >
+                  {p.name}
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -509,7 +540,7 @@ function ProjectFormModal({ project, onSave, onCancel }: ProjectFormModalProps) 
 
 export default function ProjectsPage() {
   const { projects, addProject, renameProject, deleteProject } = useProjectsStore();
-  const { todayItems, laterItems } = useFocusStore();
+  const { todayItems, laterItems, moveToToday, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem, setItemProject } = useFocusStore();
 
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -628,10 +659,16 @@ export default function ProjectsPage() {
                   <div className="mt-3">
                     <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Today</p>
                     {unassignedToday.map((item) => (
-                      <div key={item.id} className="flex items-center gap-2 py-2 px-3 rounded-lg">
-                        <span className="flex-1 text-sm text-calm-text">{item.title}</span>
-                        <span className="text-xs text-calm-muted">{item.estimatedDuration}</span>
-                      </div>
+                      <ActionRow
+                        key={item.id}
+                        item={item}
+                        onMoveToLater={() => moveToLater(item.id)}
+                        onMarkDone={() => completeItem(item.id)}
+                        onDelete={() => deleteItem(item.id)}
+                        onEdit={(title, duration) => updateTodayItem(item.id, title, duration)}
+                        onAssignProject={(projectId) => setItemProject(item.id, projectId)}
+                        availableProjects={projects}
+                      />
                     ))}
                   </div>
                 )}
@@ -639,16 +676,19 @@ export default function ProjectsPage() {
                   <div className="mt-3">
                     <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Later</p>
                     {unassignedLater.map((item) => (
-                      <div key={item.id} className="flex items-center gap-2 py-2 px-3 rounded-lg">
-                        <span className="flex-1 text-sm text-calm-text">{item.title}</span>
-                        <span className="text-xs text-calm-muted">{item.estimatedDuration}</span>
-                      </div>
+                      <ActionRow
+                        key={item.id}
+                        item={item}
+                        onMoveToToday={() => moveToToday(item.id)}
+                        onMarkDone={() => completeItem(item.id)}
+                        onDelete={() => deleteItem(item.id)}
+                        onEdit={(title, duration) => updateLaterItem(item.id, title, duration)}
+                        onAssignProject={(projectId) => setItemProject(item.id, projectId)}
+                        availableProjects={projects}
+                      />
                     ))}
                   </div>
                 )}
-                <p className="mt-3 px-3 text-xs text-calm-muted">
-                  Assign these to a project via the edit menu on the Today or Later page.
-                </p>
               </div>
             )}
           </div>
