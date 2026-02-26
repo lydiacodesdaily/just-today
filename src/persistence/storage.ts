@@ -26,6 +26,8 @@ const KEYS = {
   WEEKLY_INTENTS: '@just-today/weekly-intents',
   DAILY_ENTRY: '@just-today/daily-entry',
   DAILY_ENTRY_DISMISSED: '@just-today/daily-entry-dismissed',
+  LISTS: '@just-today/lists',
+  LIST_ITEMS: '@just-today/list-items',
 } as const;
 
 export async function getItem<T>(key: string): Promise<T | null> {

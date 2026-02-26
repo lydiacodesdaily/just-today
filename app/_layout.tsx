@@ -18,6 +18,7 @@ import { DailyEntryProvider } from '../src/context/DailyEntryContext';
 import { GuidesProvider } from '../src/context/GuidesContext';
 import { ProjectsProvider } from '../src/context/ProjectsContext';
 import { WeeklyIntentProvider } from '../src/context/WeeklyIntentContext';
+import { ListsProvider } from '../src/context/ListsContext';
 import { useTheme } from '../src/constants/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
@@ -71,6 +72,13 @@ function AppStack() {
         }}
       />
       <Stack.Screen
+        name="lists/[id]"
+        options={{
+          title: 'List',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="weekly/plan"
         options={{
           title: 'Weekly Plan',
@@ -118,15 +126,17 @@ export default function RootLayout() {
                   <FocusProvider>
                     <BrainDumpProvider>
                       <ProjectsProvider>
-                        <WeeklyIntentProvider>
-                          <CheckInProvider>
-                            <DailyEntryProvider>
-                              <GuidesProvider>
-                                <RootStack />
-                              </GuidesProvider>
-                            </DailyEntryProvider>
-                          </CheckInProvider>
-                        </WeeklyIntentProvider>
+                        <ListsProvider>
+                          <WeeklyIntentProvider>
+                            <CheckInProvider>
+                              <DailyEntryProvider>
+                                <GuidesProvider>
+                                  <RootStack />
+                                </GuidesProvider>
+                              </DailyEntryProvider>
+                            </CheckInProvider>
+                          </WeeklyIntentProvider>
+                        </ListsProvider>
                       </ProjectsProvider>
                     </BrainDumpProvider>
                   </FocusProvider>

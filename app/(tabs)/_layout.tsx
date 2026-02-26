@@ -84,6 +84,21 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="lists"
+        options={{
+          title: 'Lists',
+          tabBarLabel: 'Lists',
+          tabBarIcon: ({ color, focused }) => (
+            <Feather
+              name="list"
+              size={24}
+              color={color}
+              style={{ opacity: focused ? 1 : 0.6 }}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
