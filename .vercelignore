@@ -1,0 +1,16 @@
+node_modules
+ios
+android
+app
+src
+assets
+dist
+.expo
+*.md
+*.log
+jest.config.js
+jest.setup.js
+metro.config.js
+app.json
+eas.json
+expo-env.d.ts
