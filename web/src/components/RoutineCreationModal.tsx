@@ -9,6 +9,21 @@ import { useState, useRef, useEffect } from 'react';
 import { RoutineTask, RoutineTemplate } from '@/src/models/RoutineTemplate';
 import { useRoutineStore } from '@/src/stores/routineStore';
 import { Modal } from './Modal';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface RoutineCreationModalProps {
   isOpen: boolean;
@@ -16,13 +31,32 @@ interface RoutineCreationModalProps {
   editingRoutine?: RoutineTemplate | null;
 }
 
+type TaskDraft = Omit<RoutineTask, 'id' | 'order'> & { _key: string };
+
+function makeKey() {
+  return `draft-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
 export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: RoutineCreationModalProps) {
   const { addTemplate, updateTemplate } = useRoutineStore();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [tasks, setTasks] = useState<Array<Omit<RoutineTask, 'id' | 'order'>>>([]);
+  const [tasks, setTasks] = useState<TaskDraft[]>([]);
   const [errors, setErrors] = useState<{ name?: string; tasks?: string }>({});
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setTasks((items) => {
+        const oldIndex = items.findIndex((t) => t._key === active.id);
+        const newIndex = items.findIndex((t) => t._key === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   // Auto-focus name input when modal opens
   useEffect(() => {
@@ -37,6 +71,7 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
       setName(editingRoutine.name);
       setDescription(editingRoutine.description || '');
       setTasks(editingRoutine.tasks.map(task => ({
+        _key: task.id,
         name: task.name,
         durationMs: task.durationMs,
         lowIncluded: task.lowIncluded ?? task.lowSafe ?? false,
@@ -47,7 +82,6 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
       })));
       setErrors({});
     } else if (isOpen && !editingRoutine) {
-      // Reset form for new routine
       setName('');
       setDescription('');
       setTasks([]);
@@ -66,29 +100,29 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
   }, [isOpen]);
 
   const handleAddTask = () => {
-    const newTask: Omit<RoutineTask, 'id' | 'order'> = {
+    const newTask: TaskDraft = {
+      _key: makeKey(),
       name: '',
-      durationMs: 5 * 60 * 1000, // 5 minutes default
+      durationMs: 5 * 60 * 1000,
       lowIncluded: false,
-      steadyIncluded: true, // Default to Steady only
+      steadyIncluded: true,
       flowIncluded: false,
       autoAdvance: false,
     };
-    setTasks([...tasks, newTask]);
+    setTasks((prev) => [...prev, newTask]);
   };
 
-  const handleUpdateTask = (index: number, updates: Partial<Omit<RoutineTask, 'id' | 'order'>>) => {
-    const updated = [...tasks];
-    updated[index] = { ...updated[index], ...updates };
-    setTasks(updated);
+  const handleUpdateTask = (key: string, updates: Partial<Omit<RoutineTask, 'id' | 'order'>>) => {
+    setTasks((prev) =>
+      prev.map((t) => (t._key === key ? { ...t, ...updates } : t))
+    );
   };
 
-  const handleDeleteTask = (index: number) => {
-    setTasks(tasks.filter((_, i) => i !== index));
+  const handleDeleteTask = (key: string) => {
+    setTasks((prev) => prev.filter((t) => t._key !== key));
   };
 
   const handleSave = () => {
-    // Validation
     const newErrors: { name?: string; tasks?: string } = {};
 
     if (!name.trim()) {
@@ -98,13 +132,9 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
     if (tasks.length === 0) {
       newErrors.tasks = 'Please add at least one task';
     } else {
-      const unnamedTasks = tasks.filter(t => !t.name.trim());
-      if (unnamedTasks.length > 0) {
+      if (tasks.some((t) => !t.name.trim())) {
         newErrors.tasks = 'All tasks must have a name';
-      }
-
-      const invalidDurations = tasks.filter(t => !t.durationMs || t.durationMs <= 0);
-      if (invalidDurations.length > 0) {
+      } else if (tasks.some((t) => !t.durationMs || t.durationMs <= 0)) {
         newErrors.tasks = 'All tasks must have a valid duration';
       }
     }
@@ -114,28 +144,28 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
       return;
     }
 
-    // Format tasks
+    // Build a map of original task ids by their key (for edits preserving ids)
+    const originalIdByKey = new Map(editingRoutine?.tasks.map((t) => [t.id, t.id]) ?? []);
+
     const formattedTasks: RoutineTask[] = tasks.map((task, i) => ({
-      id: editingRoutine?.tasks[i]?.id || `task-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 11)}`,
+      id: originalIdByKey.get(task._key) ?? task._key,
       name: task.name.trim(),
       durationMs: Math.max(0, task.durationMs || 0),
       order: i,
       lowIncluded: task.lowIncluded || false,
-      steadyIncluded: task.steadyIncluded ?? true, // Default to true if undefined
+      steadyIncluded: task.steadyIncluded ?? true,
       flowIncluded: task.flowIncluded || false,
       autoAdvance: task.autoAdvance || false,
       subtasks: task.subtasks,
     }));
 
     if (editingRoutine) {
-      // Update existing routine
       updateTemplate(editingRoutine.id, {
         name: name.trim(),
         description: description.trim(),
         tasks: formattedTasks,
       });
     } else {
-      // Create new routine
       const templateId = addTemplate(name.trim(), description.trim());
       updateTemplate(templateId, { tasks: formattedTasks });
     }
@@ -200,24 +230,29 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
               )}
             </div>
 
-            <div className="space-y-3">
-              {tasks.map((task, index) => (
-                <TaskInput
-                  key={index}
-                  task={task}
-                  onUpdate={(updates) => handleUpdateTask(index, updates)}
-                  onDelete={() => handleDeleteTask(index)}
-                  autoFocus={index === tasks.length - 1}
-                />
-              ))}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={tasks.map((t) => t._key)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3">
+                  {tasks.map((task, index) => (
+                    <SortableTaskInput
+                      key={task._key}
+                      id={task._key}
+                      task={task}
+                      onUpdate={(updates) => handleUpdateTask(task._key, updates)}
+                      onDelete={() => handleDeleteTask(task._key)}
+                      autoFocus={index === tasks.length - 1}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
 
-              <button
-                onClick={handleAddTask}
-                className="w-full px-4 py-3 bg-calm-text/5 hover:bg-calm-text/10 text-calm-text rounded-lg transition-colors font-medium text-sm"
-              >
-                + Add Task
-              </button>
-            </div>
+            <button
+              onClick={handleAddTask}
+              className="mt-3 w-full px-4 py-3 bg-calm-text/5 hover:bg-calm-text/10 text-calm-text rounded-lg transition-colors font-medium text-sm"
+            >
+              + Add Task
+            </button>
           </div>
         </div>
 
@@ -240,14 +275,45 @@ export function RoutineCreationModal({ isOpen, onClose, editingRoutine }: Routin
   );
 }
 
-interface TaskInputProps {
-  task: Omit<RoutineTask, 'id' | 'order'>;
+interface SortableTaskInputProps {
+  id: string;
+  task: TaskDraft;
   onUpdate: (updates: Partial<Omit<RoutineTask, 'id' | 'order'>>) => void;
   onDelete: () => void;
   autoFocus?: boolean;
 }
 
-function TaskInput({ task, onUpdate, onDelete, autoFocus }: TaskInputProps) {
+function SortableTaskInput({ id, task, onUpdate, onDelete, autoFocus }: SortableTaskInputProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <TaskInput
+        task={task}
+        dragHandleProps={{ ...attributes, ...listeners }}
+        onUpdate={onUpdate}
+        onDelete={onDelete}
+        autoFocus={autoFocus}
+      />
+    </div>
+  );
+}
+
+interface TaskInputProps {
+  task: Omit<RoutineTask, 'id' | 'order'>;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
+  onUpdate: (updates: Partial<Omit<RoutineTask, 'id' | 'order'>>) => void;
+  onDelete: () => void;
+  autoFocus?: boolean;
+}
+
+function TaskInput({ task, dragHandleProps, onUpdate, onDelete, autoFocus }: TaskInputProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -261,7 +327,22 @@ function TaskInput({ task, onUpdate, onDelete, autoFocus }: TaskInputProps) {
   return (
     <div className="bg-calm-background border border-calm-border rounded-lg p-4 space-y-3">
       {/* Task name and duration */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 items-center">
+        <button
+          {...dragHandleProps}
+          className="text-calm-muted/40 hover:text-calm-muted cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+          aria-label="Drag to reorder"
+          tabIndex={-1}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <circle cx="5" cy="4" r="1.5"/>
+            <circle cx="11" cy="4" r="1.5"/>
+            <circle cx="5" cy="8" r="1.5"/>
+            <circle cx="11" cy="8" r="1.5"/>
+            <circle cx="5" cy="12" r="1.5"/>
+            <circle cx="11" cy="12" r="1.5"/>
+          </svg>
+        </button>
         <input
           ref={nameInputRef}
           type="text"

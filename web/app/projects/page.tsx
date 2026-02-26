@@ -142,11 +142,16 @@ interface ActionRowProps {
   onMoveToLater?: () => void;
   onMarkDone: () => void;
   onDelete: () => void;
+  onEdit: (title: string, duration: FocusDuration) => void;
 }
 
-function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete }: ActionRowProps) {
+function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete, onEdit }: ActionRowProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDuration, setEditDuration] = useState<FocusDuration>(item.estimatedDuration);
   const menuRef = useRef<HTMLDivElement>(null);
+  const canceledByEscapeRef = useRef(false);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -160,9 +165,65 @@ function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete }:
     }
   }, [showMenu]);
 
+  const startEditing = () => {
+    setEditTitle(item.title);
+    setEditDuration(item.estimatedDuration);
+    setIsEditing(true);
+  };
+
+  const saveEdit = () => {
+    const trimmed = editTitle.trim();
+    if (trimmed) {
+      onEdit(trimmed, editDuration);
+    }
+    setIsEditing(false);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="py-2 px-3 rounded-lg bg-calm-bg/60">
+        <input
+          type="text"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
+            else if (e.key === 'Escape') { canceledByEscapeRef.current = true; cancelEdit(); }
+          }}
+          onBlur={() => {
+            if (!canceledByEscapeRef.current) saveEdit();
+            canceledByEscapeRef.current = false;
+          }}
+          className="w-full text-sm text-calm-text bg-transparent border-none outline-none p-0 mb-2"
+          autoFocus
+        />
+        <div className="flex flex-wrap gap-1">
+          {DURATIONS.map((d) => (
+            <button
+              key={d}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setEditDuration(d)}
+              className={`px-2 py-0.5 text-xs rounded-full border transition-colors ${
+                editDuration === d
+                  ? 'bg-calm-primary/10 border-calm-primary text-calm-primary font-medium'
+                  : 'bg-calm-surface border-calm-border text-calm-muted hover:border-calm-text/30'
+              }`}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg hover:bg-calm-bg/60 transition-colors group">
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 cursor-text" onClick={startEditing}>
         <span className="text-sm text-calm-text">{item.title}</span>
         <span className="ml-2 text-xs text-calm-muted">{item.estimatedDuration}</span>
       </div>
@@ -207,8 +268,14 @@ function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete }:
           {showMenu && (
             <div className="absolute right-0 top-full mt-1 w-40 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
               <button
+                onClick={() => { startEditing(); setShowMenu(false); }}
+                className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+              >
+                Edit
+              </button>
+              <button
                 onClick={() => { onDelete(); setShowMenu(false); }}
-                className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors"
+                className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors border-t border-calm-border"
               >
                 Remove
               </button>
@@ -231,7 +298,7 @@ interface ProjectCardProps {
 }
 
 function ProjectCard({ project, todayItems, laterItems, onRename, onDelete }: ProjectCardProps) {
-  const { moveToToday, moveToLater, completeItem, deleteItem } = useFocusStore();
+  const { moveToToday, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem } = useFocusStore();
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -333,6 +400,7 @@ function ProjectCard({ project, todayItems, laterItems, onRename, onDelete }: Pr
                   onMoveToLater={() => moveToLater(item.id)}
                   onMarkDone={() => completeItem(item.id)}
                   onDelete={() => deleteItem(item.id)}
+                  onEdit={(title, duration) => updateTodayItem(item.id, title, duration)}
                 />
               ))}
             </div>
@@ -349,6 +417,7 @@ function ProjectCard({ project, todayItems, laterItems, onRename, onDelete }: Pr
                   onMoveToToday={() => moveToToday(item.id)}
                   onMarkDone={() => completeItem(item.id)}
                   onDelete={() => deleteItem(item.id)}
+                  onEdit={(title, duration) => updateLaterItem(item.id, title, duration)}
                 />
               ))}
             </div>
