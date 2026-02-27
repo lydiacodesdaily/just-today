@@ -47,10 +47,22 @@ const HEAVY_KEYWORDS = [
   "can't", 'cannot', 'struggling', 'rough',
 ];
 
-const HEAVY_RESPONSES = [
+const HEAVY_RESPONSES_MORNING = [
   "That sounds like a heavy morning.\nLet's make today smaller.",
-  "Sounds like a lot to carry.\nYou don't have to do it all today.",
   "It's okay to start slow.\nEven tiny steps count.",
+  "A heavy start doesn't set the tone for the whole day.",
+];
+
+const HEAVY_RESPONSES_AFTERNOON = [
+  "That sounds like a heavy afternoon.\nYou don't have to do it all today.",
+  "Sounds like a lot to carry.\nOne thing at a time.",
+  "It's okay to pause.\nEven a small reset helps.",
+];
+
+const HEAVY_RESPONSES_EVENING = [
+  "That was a lot to carry.\nYou made it through.",
+  "A heavy day deserves a gentle evening.",
+  "You don't have to resolve everything tonight.\nRest is part of the work.",
 ];
 
 function detectTone(text: string, emotion?: DailyEmotion): EmotionalTone {
@@ -60,9 +72,16 @@ function detectTone(text: string, emotion?: DailyEmotion): EmotionalTone {
 }
 
 function pickResponse(): string {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
   const index = today.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return HEAVY_RESPONSES[index % HEAVY_RESPONSES.length];
+  const hour = now.getHours();
+  const pool = hour < 12
+    ? HEAVY_RESPONSES_MORNING
+    : hour < 18
+      ? HEAVY_RESPONSES_AFTERNOON
+      : HEAVY_RESPONSES_EVENING;
+  return pool[index % pool.length];
 }
 
 export function TodayCheckIn() {

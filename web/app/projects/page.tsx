@@ -326,11 +326,12 @@ interface ProjectCardProps {
   laterItems: FocusItem[];
   onRename: () => void;
   onDelete: () => void;
+  initialExpanded?: boolean;
 }
 
-function ProjectCard({ project, todayItems, laterItems, onRename, onDelete }: ProjectCardProps) {
+function ProjectCard({ project, todayItems, laterItems, onRename, onDelete, initialExpanded = false }: ProjectCardProps) {
   const { moveToToday, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem } = useFocusStore();
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -546,6 +547,7 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Project | null>(null);
   const [showUnassigned, setShowUnassigned] = useState(false);
+  const [newlyCreatedId, setNewlyCreatedId] = useState<string | null>(null);
 
   // Items grouped by project
   const getProjectItems = (projectId: string) => ({
@@ -562,11 +564,19 @@ export default function ProjectsPage() {
     if (editingProject) {
       renameProject(editingProject.id, name);
     } else {
-      addProject(name);
+      const newId = addProject(name);
+      setNewlyCreatedId(newId);
     }
     setShowModal(false);
     setEditingProject(null);
   };
+
+  // Sort projects: most recently created or renamed first
+  const sortedProjects = [...projects].sort((a, b) => {
+    const aTime = a.updatedAt ?? a.createdAt;
+    const bTime = b.updatedAt ?? b.createdAt;
+    return bTime.localeCompare(aTime);
+  });
 
   const handleRename = (project: Project) => {
     setEditingProject(project);
@@ -616,7 +626,7 @@ export default function ProjectsPage() {
 
         {/* Project Cards */}
         <div className="mt-6 space-y-4">
-          {projects.map((project) => {
+          {sortedProjects.map((project) => {
             const { today, later } = getProjectItems(project.id);
             return (
               <ProjectCard
@@ -626,6 +636,7 @@ export default function ProjectsPage() {
                 laterItems={later}
                 onRename={() => handleRename(project)}
                 onDelete={() => setDeleteConfirm(project)}
+                initialExpanded={project.id === newlyCreatedId}
               />
             );
           })}

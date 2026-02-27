@@ -10,7 +10,7 @@ import { useFocusStore } from './focusStore';
 
 interface ProjectsStore {
   projects: Project[];
-  addProject: (name: string) => void;
+  addProject: (name: string) => string; // returns new project id
   renameProject: (id: string, name: string) => void;
   deleteProject: (id: string) => void;
 }
@@ -25,12 +25,13 @@ export const useProjectsStore = create<ProjectsStore>()(
         set((state) => ({
           projects: [...state.projects, project],
         }));
+        return project.id;
       },
 
       renameProject: (id, name) => {
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === id ? { ...p, name: name.trim() } : p
+            p.id === id ? { ...p, name: name.trim(), updatedAt: new Date().toISOString() } : p
           ),
         }));
       },
