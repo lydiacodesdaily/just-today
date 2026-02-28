@@ -323,6 +323,7 @@ function TaskInput({ task, dragHandleProps, onUpdate, onDelete, autoFocus }: Tas
   }, [autoFocus]);
 
   const minutes = Math.floor((task.durationMs || 0) / 60000);
+  const [minutesInput, setMinutesInput] = useState(String(minutes));
 
   return (
     <div className="bg-calm-background border border-calm-border rounded-lg p-4 space-y-3">
@@ -356,10 +357,18 @@ function TaskInput({ task, dragHandleProps, onUpdate, onDelete, autoFocus }: Tas
             type="number"
             min="1"
             className="w-16 px-3 py-2 bg-calm-surface border border-calm-border rounded-lg text-calm-text text-center focus:outline-none focus:ring-2 focus:ring-calm-text/20 text-sm font-semibold"
-            value={minutes}
+            value={minutesInput}
             onChange={(e) => {
+              setMinutesInput(e.target.value);
               const mins = parseInt(e.target.value, 10);
-              const validMins = isNaN(mins) ? 1 : Math.max(1, mins);
+              if (!isNaN(mins) && mins >= 1) {
+                onUpdate({ durationMs: mins * 60000 });
+              }
+            }}
+            onBlur={() => {
+              const mins = parseInt(minutesInput, 10);
+              const validMins = isNaN(mins) || mins < 1 ? 1 : mins;
+              setMinutesInput(String(validMins));
               onUpdate({ durationMs: validMins * 60000 });
             }}
           />
