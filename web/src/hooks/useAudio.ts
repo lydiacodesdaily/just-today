@@ -20,6 +20,9 @@ import {
   initAudio,
 } from '@/src/audio/soundEngine.web';
 
+// Seconds at which to announce countdown (last 60s)
+const COUNTDOWN_SECONDS = [50, 40, 30, 20, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
 interface UseAudioOptions {
   activeTask: RunTask | null;
   timeRemaining: TimeRemaining | null;
@@ -30,7 +33,7 @@ interface UseAudioOptions {
 
 /**
  * Manages audio during routine run.
- * Handles ticking, TTS announcements, overtime reminders.
+ * Handles ticking, TTS announcements, overtime reminders, and final countdown.
  */
 export function useAudio({
   activeTask,
@@ -41,6 +44,7 @@ export function useAudio({
 }: UseAudioOptions) {
   const lastMinuteRef = useRef<number | null>(null);
   const hasAnnouncedOvertimeRef = useRef<Set<number>>(new Set());
+  const announcedCountdownRef = useRef<Set<number>>(new Set());
   const isInitializedRef = useRef(false);
 
   // Initialize audio on first mount
@@ -66,7 +70,7 @@ export function useAudio({
 
   // Manage ticking sound
   useEffect(() => {
-    if (!activeTask || isPaused || !settings.tickingEnabled) {
+    if (!activeTask || isPaused || !settings.tickingEnabled || settings.soundMuted) {
       stopTicking();
       return;
     }
@@ -76,9 +80,9 @@ export function useAudio({
     return () => {
       stopTicking();
     };
-  }, [activeTask, isPaused, settings.tickingEnabled]);
+  }, [activeTask, isPaused, settings.tickingEnabled, settings.soundMuted]);
 
-  // Minute announcements
+  // Minute announcements (respects milestoneInterval)
   useEffect(() => {
     if (
       !activeTask ||
@@ -86,6 +90,7 @@ export function useAudio({
       isPaused ||
       !settings.minuteAnnouncementsEnabled ||
       !settings.ttsEnabled ||
+      settings.soundMuted ||
       timeRemaining.isOvertime
     ) {
       return;
@@ -95,7 +100,13 @@ export function useAudio({
 
     if (currentMinute !== lastMinuteRef.current && currentMinute > 0) {
       lastMinuteRef.current = currentMinute;
-      announceWithDucking(`${currentMinute} minute${currentMinute !== 1 ? 's' : ''}`);
+
+      // Announce if on the milestone interval boundary, or at 1 minute remaining
+      const onInterval = currentMinute % settings.milestoneInterval === 0;
+      const isLastMinute = currentMinute === 1;
+      if (onInterval || isLastMinute) {
+        announceWithDucking(`${currentMinute} minute${currentMinute !== 1 ? 's' : ''}`);
+      }
     }
   }, [
     activeTask,
@@ -103,6 +114,42 @@ export function useAudio({
     isPaused,
     settings.minuteAnnouncementsEnabled,
     settings.ttsEnabled,
+    settings.soundMuted,
+    settings.milestoneInterval,
+  ]);
+
+  // Final countdown (last 60 seconds)
+  useEffect(() => {
+    if (
+      !activeTask ||
+      !timeRemaining ||
+      isPaused ||
+      !settings.countdownEnabled ||
+      !settings.ttsEnabled ||
+      settings.soundMuted ||
+      timeRemaining.isOvertime
+    ) {
+      return;
+    }
+
+    const remainingSeconds = Math.floor(timeRemaining.remainingMs / 1000);
+
+    if (
+      remainingSeconds <= 60 &&
+      remainingSeconds > 0 &&
+      COUNTDOWN_SECONDS.includes(remainingSeconds) &&
+      !announcedCountdownRef.current.has(remainingSeconds)
+    ) {
+      announcedCountdownRef.current.add(remainingSeconds);
+      announceWithDucking(String(remainingSeconds));
+    }
+  }, [
+    activeTask,
+    timeRemaining,
+    isPaused,
+    settings.countdownEnabled,
+    settings.ttsEnabled,
+    settings.soundMuted,
   ]);
 
   // Overtime reminders
@@ -112,7 +159,8 @@ export function useAudio({
       !timeRemaining ||
       isPaused ||
       !settings.overtimeRemindersEnabled ||
-      !settings.ttsEnabled
+      !settings.ttsEnabled ||
+      settings.soundMuted
     ) {
       return;
     }
@@ -131,13 +179,15 @@ export function useAudio({
     isPaused,
     settings.overtimeRemindersEnabled,
     settings.ttsEnabled,
+    settings.soundMuted,
     onOvertimeAnnounced,
   ]);
 
-  // Reset overtime tracking when task changes
+  // Reset tracking when task changes
   useEffect(() => {
     hasAnnouncedOvertimeRef.current.clear();
     lastMinuteRef.current = null;
+    announcedCountdownRef.current.clear();
   }, [activeTask?.id]);
 
   // Cleanup on unmount

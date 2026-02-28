@@ -6,7 +6,7 @@
 import { PlanningDay } from './WeeklyIntent';
 
 export type TickingSoundType = 'tick1-tok1' | 'tick2-tok2' | 'beep';
-export type MilestoneInterval = 1 | 5;
+export type MilestoneInterval = 1 | 5 | 10;
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type FontSize = 'system' | 'small' | 'medium' | 'large' | 'extra-large';
 export type FontFamily = 'system' | 'dyslexia-friendly';
@@ -44,6 +44,10 @@ export interface Settings {
   highContrastMode: boolean;
   /** Reduce motion for users sensitive to animations */
   reduceMotion: boolean;
+  /** Global sound mute (overrides all audio) */
+  soundMuted: boolean;
+  /** Announce countdown in the last 60 seconds (50, 40, 30, 20, 10, 9...1) */
+  countdownEnabled: boolean;
   /** Whether weekly intent feature is enabled */
   weeklyIntentEnabled: boolean;
   /** Day of week for weekly planning (0=Sun, 1=Mon, ..., 6=Sat) */
@@ -71,6 +75,8 @@ export const DEFAULT_SETTINGS: Settings = {
   fontFamily: 'system',
   highContrastMode: false,
   reduceMotion: false,
+  soundMuted: false,
+  countdownEnabled: false,
   weeklyIntentEnabled: false,
   weeklyPlanningDay: 1,
   weeklyPlanningHour: 9,
