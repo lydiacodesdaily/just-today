@@ -29,8 +29,8 @@ const TICK_TOK_SOUNDS: Record<TickingSoundType, { tick: string; tok: string }> =
     tok: '/assets/sounds/effects/tok2.wav',
   },
   'beep': {
-    tick: '/assets/sounds/effects/tick1.mp3',
-    tok: '/assets/sounds/effects/tick1.mp3',
+    tick: '/assets/sounds/effects/beep2.mp3',
+    tok: '/assets/sounds/effects/beep2.mp3',
   },
 };
 

@@ -399,18 +399,13 @@ export async function skipTask(
 /**
  * Extends or reduces a task's duration.
  *
- * For positive deltaMs (+1m, +5m):
- *   - Gives the user fresh time from 0, regardless of current overtime
- *   - If task is 2min overdue and user adds +5m, they get a full 5 minutes of positive time
- *   - Resets announcement flags so they trigger again naturally
+ * Shifts the planned end time by deltaMs in either direction:
+ *   - +1m with 2min remaining → 3min remaining
+ *   - -1m with 3min remaining → 2min remaining
+ *   - +5m while 2min overtime → 3min remaining (covers overtime + adds time)
  *
- * For negative deltaMs (-1m, -5m):
- *   - Moves the deadline closer by that amount
- *   - If task has 3min remaining and user presses -1m, they'll have 2min remaining
- *   - If task is overdue and user presses -1m, it increases the overtime
- *
- * This approach is calm and supportive: adding time always gives you what you asked for,
- * without punishing you for being overdue.
+ * Works correctly whether running or paused, because it adjusts plannedEndAt
+ * directly rather than using Date.now() as an anchor.
  */
 export function extendTask(
   run: RoutineRun,
@@ -421,17 +416,10 @@ export function extendTask(
 
   const updatedTasks = run.tasks.map((task) => {
     if (task.id === taskId) {
-      let newPlannedEndAt: number;
-
-      if (deltaMs > 0) {
-        // Adding time: give fresh time from 0
-        // User gets exactly the time they requested, starting from now
-        newPlannedEndAt = now + deltaMs;
-      } else {
-        // Reducing time: move deadline closer by deltaMs
-        // This works whether we're in positive time or overtime
-        newPlannedEndAt = (task.plannedEndAt || now) + deltaMs;
-      }
+      // Shift the deadline by deltaMs. Using plannedEndAt as the anchor (not now)
+      // keeps the math correct whether the run is paused or not, and correctly
+      // adds/removes time relative to what's remaining rather than replacing it.
+      const newPlannedEndAt = (task.plannedEndAt || now) + deltaMs;
 
       // Track the total extension (both positive and negative adjustments)
       const newExtension = task.extensionMs + deltaMs;

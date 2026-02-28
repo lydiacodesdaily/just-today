@@ -16,7 +16,9 @@ interface TimeDisplayProps {
 
 export function TimeDisplay({ timeRemaining, totalDurationMs, originalDurationMs }: TimeDisplayProps) {
   const [srAnnouncement, setSrAnnouncement] = useState('');
+  const [overtimeFlash, setOvertimeFlash] = useState(false);
   const lastAnnouncedMinute = useRef<number>(-1);
+  const prevIsOvertimeRef = useRef(false);
 
   // Announce timer updates every minute for screen readers
   useEffect(() => {
@@ -39,6 +41,20 @@ export function TimeDisplay({ timeRemaining, totalDurationMs, originalDurationMs
       }
     }
   }, [timeRemaining]);
+
+  // Flash the timer when crossing into overtime
+  useEffect(() => {
+    if (!timeRemaining) return;
+
+    if (timeRemaining.isOvertime && !prevIsOvertimeRef.current) {
+      prevIsOvertimeRef.current = true;
+      setOvertimeFlash(true);
+      const timer = setTimeout(() => setOvertimeFlash(false), 600);
+      return () => clearTimeout(timer);
+    } else if (!timeRemaining.isOvertime) {
+      prevIsOvertimeRef.current = false;
+    }
+  }, [timeRemaining?.isOvertime]);
 
   if (!timeRemaining) {
     return null;
@@ -89,11 +105,11 @@ export function TimeDisplay({ timeRemaining, totalDurationMs, originalDurationMs
   return (
     <div className="flex flex-col items-center gap-3">
       <div
-        className={`text-6xl font-bold tabular-nums tracking-tight ${
+        className={`text-6xl font-bold tabular-nums tracking-tight transition-transform duration-300 ${
           timeRemaining.isOvertime
             ? 'text-amber-600'
             : 'text-calm-primary'
-        }`}
+        } ${overtimeFlash ? 'scale-125' : 'scale-100'}`}
         aria-live="off"
       >
         {formatTimeRemaining(timeRemaining)}
@@ -109,7 +125,7 @@ export function TimeDisplay({ timeRemaining, totalDurationMs, originalDurationMs
         </div>
       )}
       {timeRemaining.isOvertime && (
-        <div className="flex flex-col items-center gap-1.5 mt-1">
+        <div className={`flex flex-col items-center gap-1.5 mt-1 transition-opacity duration-500 ${overtimeFlash ? 'opacity-0' : 'opacity-100'}`}>
           <div className="text-base font-semibold text-amber-600 lowercase">
             Extra time
           </div>

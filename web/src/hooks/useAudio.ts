@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { RunTask } from '@/src/models/RoutineRun';
+import { RunTask, RoutineRun } from '@/src/models/RoutineRun';
 import { TimeRemaining } from '@/src/engine/timerEngine';
 import { Settings } from '@/src/models/Settings';
 import { checkOvertimeReminder, getOvertimeMessage } from '@/src/engine/overtimeEngine';
@@ -17,8 +17,10 @@ import {
   setTickingVolume,
   setAnnouncementVolume,
   setTickingSoundType,
+  playChime,
   initAudio,
 } from '@/src/audio/soundEngine.web';
+import { getTaskCompletionMessage, getFocusTaskCompleteMessage } from '@/src/utils/transitionMessages';
 
 // Seconds at which to announce countdown (last 60s)
 const COUNTDOWN_SECONDS = [50, 40, 30, 20, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
@@ -28,6 +30,7 @@ interface UseAudioOptions {
   timeRemaining: TimeRemaining | null;
   settings: Settings;
   isPaused: boolean;
+  currentRun?: RoutineRun | null;
   onOvertimeAnnounced?: (minutes: number) => void;
 }
 
@@ -40,12 +43,15 @@ export function useAudio({
   timeRemaining,
   settings,
   isPaused,
+  currentRun,
   onOvertimeAnnounced,
 }: UseAudioOptions) {
   const lastMinuteRef = useRef<number | null>(null);
   const hasAnnouncedOvertimeRef = useRef<Set<number>>(new Set());
   const announcedCountdownRef = useRef<Set<number>>(new Set());
   const isInitializedRef = useRef(false);
+  const prevIsOvertimeRef = useRef(false);
+  const chimeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize audio on first mount
   useEffect(() => {
@@ -81,6 +87,54 @@ export function useAudio({
       stopTicking();
     };
   }, [activeTask, isPaused, settings.tickingEnabled, settings.soundMuted]);
+
+  // Time-up signal: chime + TTS when timer crosses zero into overtime
+  useEffect(() => {
+    if (!activeTask || !timeRemaining || isPaused) {
+      prevIsOvertimeRef.current = timeRemaining?.isOvertime ?? false;
+      return;
+    }
+
+    const justEnteredOvertime = timeRemaining.isOvertime && !prevIsOvertimeRef.current;
+    prevIsOvertimeRef.current = timeRemaining.isOvertime;
+
+    if (!justEnteredOvertime) return;
+
+    const tickingWasEnabled = settings.tickingEnabled && !settings.soundMuted;
+
+    // Stop ticking so the chime rings into silence — much more noticeable for ADHD
+    if (tickingWasEnabled) stopTicking();
+
+    // Play chime immediately (fires even when TTS is off, as long as sound isn't muted)
+    if (!settings.soundMuted) playChime();
+
+    // After the chime rings out, speak an encouraging time-up message
+    if (chimeTimeoutRef.current) clearTimeout(chimeTimeoutRef.current);
+    chimeTimeoutRef.current = setTimeout(async () => {
+      if (settings.ttsEnabled && !settings.soundMuted) {
+        const nextTask = currentRun?.tasks
+          .filter((t) => t.status === 'pending')
+          .sort((a, b) => a.order - b.order)[0];
+
+        const message = nextTask
+          ? getTaskCompletionMessage(activeTask.name, nextTask.name).ttsMessage
+          : getFocusTaskCompleteMessage().ttsMessage;
+
+        await speak(message);
+      }
+
+      // Resume ticking after announcement
+      if (tickingWasEnabled) startTicking();
+    }, 1200);
+  }, [
+    activeTask,
+    timeRemaining,
+    isPaused,
+    settings.soundMuted,
+    settings.ttsEnabled,
+    settings.tickingEnabled,
+    currentRun,
+  ]);
 
   // Minute announcements (respects milestoneInterval)
   useEffect(() => {
@@ -188,6 +242,11 @@ export function useAudio({
     hasAnnouncedOvertimeRef.current.clear();
     lastMinuteRef.current = null;
     announcedCountdownRef.current.clear();
+    prevIsOvertimeRef.current = false;
+    if (chimeTimeoutRef.current) {
+      clearTimeout(chimeTimeoutRef.current);
+      chimeTimeoutRef.current = null;
+    }
   }, [activeTask?.id]);
 
   // Cleanup on unmount
@@ -195,6 +254,7 @@ export function useAudio({
     return () => {
       stopSpeech();
       stopTicking();
+      if (chimeTimeoutRef.current) clearTimeout(chimeTimeoutRef.current);
     };
   }, []);
 }

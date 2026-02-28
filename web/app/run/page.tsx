@@ -94,6 +94,7 @@ export default function RunPage() {
     timeRemaining,
     settings,
     isPaused: isPaused || false,
+    currentRun,
   });
 
   // Auto-advance when timer reaches 0 (only for tasks with autoAdvance enabled)
