@@ -14,9 +14,10 @@ interface RoutineCardProps {
   onStart: () => void;
   onEdit: () => void;
   pace?: Pace; // Optional: if provided, shows task count for that pace
+  canResume?: boolean;
 }
 
-export function RoutineCard({ routine, onStart, onEdit, pace }: RoutineCardProps) {
+export function RoutineCard({ routine, onStart, onEdit, pace, canResume }: RoutineCardProps) {
   const theme = useTheme();
 
   // Calculate filtered tasks based on pace
@@ -88,7 +89,7 @@ export function RoutineCard({ routine, onStart, onEdit, pace }: RoutineCardProps
           activeOpacity={0.8}
         >
           <Text style={[styles.startButtonText, { color: theme.colors.surface }]}>
-            Start Routine
+            {canResume ? 'Resume' : 'Start Routine'}
           </Text>
         </TouchableOpacity>
       )}

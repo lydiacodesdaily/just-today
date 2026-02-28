@@ -474,6 +474,7 @@ export default function HomeScreen() {
                       key={template.id}
                       routine={template}
                       pace={currentPace}
+                      canResume={canResumeAbandonedRun(currentRun, template.id)}
                       onStart={() => handleStartRoutine(template)}
                       onEdit={() => handleEditRoutine(template)}
                     />
@@ -487,8 +488,8 @@ export default function HomeScreen() {
               <CheckInIndicator onOpenFirstEntry={() => setShowFirstEntry(true)} />
             </View>
 
-            {/* Resume routine banner */}
-            {currentRun && (
+            {/* Resume routine banner - only for active/paused runs, not abandoned */}
+            {currentRun && currentRun.status !== 'abandoned' && (
               <View style={styles.resumeSection}>
                 <TouchableOpacity
                   style={[

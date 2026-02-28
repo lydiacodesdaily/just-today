@@ -188,27 +188,16 @@ export default function RunScreen() {
         setShowCheckInSheet(true);
       }
     } else if (currentRun?.status === 'abandoned') {
-      // If this was a focus item run, just end the session (don't complete)
-      const handleAbandon = async () => {
-        if (currentRun.templateId === 'focus-item' && currentRun.tasks[0]?.templateTaskId) {
-          const focusItemId = currentRun.tasks[0].templateTaskId;
-          await endItemFocus(focusItemId);
-        }
-
-        setCurrentRun(null);
-        router.replace('/');
-      };
-
-      Alert.alert(
-        'Routine Ended',
-        "That's okay. You can try again whenever you're ready.",
-        [
-          {
-            text: 'Done',
-            onPress: handleAbandon,
-          },
-        ]
-      );
+      if (currentRun.templateId === 'focus-item' && currentRun.tasks[0]?.templateTaskId) {
+        // For focus item runs, clean up focus state and clear the run
+        const focusItemId = currentRun.tasks[0].templateTaskId;
+        endItemFocus(focusItemId).then(() => {
+          setCurrentRun(null);
+          router.replace('/');
+        });
+      }
+      // For regular routines: keep the run as abandoned so it can be resumed from the routine card.
+      // Navigation is already handled by handleEnd.
     }
   }, [currentRun?.status, completeFocusItem, endItemFocus, setCurrentRun, router]);
 
