@@ -17,6 +17,7 @@ import { SectionLabel } from './SectionLabel';
 interface RoutineCardProps {
   routine: RoutineTemplate;
   pace: Pace;
+  canResume?: boolean;
   onStart: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -32,7 +33,7 @@ function formatDuration(ms: number): string {
   return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 }
 
-export function RoutineCard({ routine, pace, onStart, onEdit, onDelete }: RoutineCardProps) {
+export function RoutineCard({ routine, pace, canResume, onStart, onEdit, onDelete }: RoutineCardProps) {
   const filteredTasks = deriveTasksForPace(routine.tasks, pace);
   const totalDuration = filteredTasks.reduce((sum, task) => sum + task.durationMs, 0);
 
@@ -105,7 +106,7 @@ export function RoutineCard({ routine, pace, onStart, onEdit, onDelete }: Routin
           onClick={onStart}
           className="w-full px-4 py-2.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
         >
-          Start Routine
+          {canResume ? 'Resume' : 'Start Routine'}
         </button>
       )}
     </div>
@@ -216,6 +217,7 @@ export function RoutinesList({ pace }: RoutinesListProps) {
               key={routine.id}
               routine={routine}
               pace={pace}
+              canResume={canResumeAbandonedRun(currentRun, routine.id)}
               onStart={() => handleStartRoutine(routine)}
               onEdit={() => handleEditRoutine(routine)}
               onDelete={() => handleDeleteRoutine(routine)}

@@ -69,17 +69,12 @@ export default function RunPage() {
         setShowCheckIn(true);
       }, 1000);
     } else if (currentRun?.status === 'abandoned') {
-      // Mark that we're completing to prevent double redirect
+      // Keep the run as abandoned so it can be resumed from the routine card
       isCompletingRef.current = true;
-      // Show abandon message
       setTimeout(() => {
         router.push('/today');
-        // Clear run after navigation starts to prevent blank screen
-        setTimeout(() => {
-          setCurrentRun(null);
-          isCompletingRef.current = false;
-        }, 100);
-      }, 2000);
+        isCompletingRef.current = false;
+      }, 1500);
     }
   }, [currentRun?.status, setCurrentRun, router]);
 
@@ -160,7 +155,7 @@ export default function RunPage() {
           <h1 className="text-3xl font-bold text-calm-text mb-4">Taking a break</h1>
           <p className="text-lg text-calm-muted mb-2">That's part of the process</p>
           <p className="text-base text-calm-muted">
-            You can come back to this anytime you're ready
+            {completedCount} of {totalCount} {totalCount === 1 ? 'task' : 'tasks'} done
           </p>
         </div>
       </div>
