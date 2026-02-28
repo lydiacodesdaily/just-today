@@ -37,77 +37,75 @@ export function RoutineCard({ routine, pace, canResume, onStart, onEdit, onDelet
   const filteredTasks = deriveTasksForPace(routine.tasks, pace);
   const totalDuration = filteredTasks.reduce((sum, task) => sum + task.durationMs, 0);
 
-  // Get pace name for display
   const paceName = pace.charAt(0).toUpperCase() + pace.slice(1);
   const hasNoTasks = filteredTasks.length === 0;
   const isFiltered = filteredTasks.length < routine.tasks.length;
 
   return (
-    <div className="bg-calm-surface border border-calm-border rounded-lg p-5 hover:border-calm-text/30 transition-colors">
-      {/* Info section */}
-      <div className={hasNoTasks ? 'mb-0' : 'mb-4'}>
-        <div className="flex items-start justify-between mb-1">
-          <h3 className="text-lg font-semibold text-calm-text">{routine.name}</h3>
-          <div className="flex items-center gap-2 ml-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-              className="p-1.5 text-calm-muted hover:text-calm-text transition-colors"
-              title="Edit routine"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="p-1.5 text-calm-muted hover:text-red-600 transition-colors"
-              title="Delete routine"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
+    <div
+      className={`bg-calm-surface border border-calm-border rounded-lg p-5 transition-colors ${
+        !hasNoTasks ? 'hover:border-calm-text/30 cursor-pointer' : ''
+      }`}
+      onClick={!hasNoTasks ? onStart : undefined}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-1">
+        <h3 className="text-base font-semibold text-calm-text leading-snug">{routine.name}</h3>
+        <div
+          className="flex items-center gap-1 ml-2 shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={onEdit}
+            className="p-1.5 text-calm-muted hover:text-calm-text transition-colors"
+            title="Edit routine"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-1.5 text-calm-muted hover:text-red-600 transition-colors"
+            title="Delete routine"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
-        {routine.description && (
-          <p className="text-sm text-calm-muted mb-3">{routine.description}</p>
-        )}
+      </div>
 
-        <div className="flex items-center gap-4 text-sm text-calm-muted">
+      {routine.description && (
+        <p className="text-sm text-calm-muted mb-2">{routine.description}</p>
+      )}
+
+      {/* Metadata + start hint */}
+      <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center gap-3 text-sm text-calm-muted">
           <span>
-            {filteredTasks.length} {routine.tasks.length !== filteredTasks.length && `of ${routine.tasks.length}`} task{filteredTasks.length === 1 ? '' : 's'}
+            {filteredTasks.length}{routine.tasks.length !== filteredTasks.length && ` of ${routine.tasks.length}`} task{filteredTasks.length === 1 ? '' : 's'}
           </span>
-          <span>•</span>
-          <span>{formatDuration(totalDuration)}</span>
+          {!hasNoTasks && (
+            <>
+              <span>·</span>
+              <span>{formatDuration(totalDuration)}</span>
+            </>
+          )}
         </div>
-
-        {/* Empty state guidance when no tasks available */}
-        {isFiltered && hasNoTasks && (
-          <div className="mt-3 pt-3 border-t border-calm-border/50">
-            <p className="text-sm text-calm-muted leading-relaxed">
-              No tasks for {paceName} pace
-            </p>
-            <p className="text-xs text-calm-muted/75 italic mt-1">
-              Tap edit to add tasks
-            </p>
-          </div>
+        {!hasNoTasks && (
+          <span className="text-sm text-calm-muted">
+            {canResume ? 'Resume' : 'Start'} →
+          </span>
         )}
       </div>
 
-      {/* Only show Start Routine button if there are tasks available */}
-      {!hasNoTasks && (
-        <button
-          onClick={onStart}
-          className="w-full px-4 py-2.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-sm"
-        >
-          {canResume ? 'Resume' : 'Start Routine'}
-        </button>
+      {/* Empty state */}
+      {isFiltered && hasNoTasks && (
+        <div className="mt-3 pt-3 border-t border-calm-border/50">
+          <p className="text-sm text-calm-muted">No tasks for {paceName} pace</p>
+          <p className="text-xs text-calm-muted/75 italic mt-1">Tap edit to add tasks</p>
+        </div>
       )}
     </div>
   );
@@ -205,9 +203,9 @@ export function RoutinesList({ pace }: RoutinesListProps) {
           <SectionLabel>Routines</SectionLabel>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-3 py-1.5 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium text-xs"
+            className="px-3 py-1.5 text-xs text-calm-muted border border-calm-border rounded-lg hover:text-calm-text hover:border-calm-text/30 transition-colors"
           >
-            New
+            + New
           </button>
         </div>
 

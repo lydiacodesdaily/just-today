@@ -571,14 +571,16 @@ export function addQuickTask(
 
 /**
  * Ends the run immediately (marks as abandoned if not completed).
+ * The active task is reset to 'pending' (not 'skipped') so it can be
+ * resumed later without auto-completing the run.
  */
 export function endRun(run: RoutineRun): RoutineRun {
   const now = Date.now();
 
-  // Mark active task as skipped
+  // Reset active task back to pending so it can be resumed
   const updatedTasks = run.tasks.map((task) =>
     task.id === run.activeTaskId
-      ? { ...task, status: 'skipped' as const, completedAt: now }
+      ? { ...task, status: 'pending' as const, startedAt: null, plannedEndAt: null, completedAt: null }
       : task
   );
 
