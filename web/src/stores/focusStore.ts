@@ -26,6 +26,9 @@ interface FocusStore {
   completedToday: CompletedTodayEntry[];
   completedTodayDate: string; // YYYY-MM-DD for day reset
 
+  // Persistent completed items - kept long-term for project history
+  completedItems: FocusItem[];
+
   // Actions
   addToToday: (title: string, duration: FocusDuration, projectId?: string | null) => void;
   addToLater: (title: string, duration: FocusDuration, reminderTiming?: ReminderTiming, customDate?: Date, projectId?: string | null) => void;
@@ -92,6 +95,9 @@ export const useFocusStore = create<FocusStore>()(
       // Completed Today state
       completedToday: [],
       completedTodayDate: getTodayDateString(),
+
+      // Persistent completed items for project history
+      completedItems: [],
 
       // Add to Today
       addToToday: (title, duration, projectId) => {
@@ -237,6 +243,9 @@ export const useFocusStore = create<FocusStore>()(
           laterItems: state.laterItems.map((item) =>
             item.projectId === projectId ? { ...item, projectId: null } : item
           ),
+          completedItems: state.completedItems.map((item) =>
+            item.projectId === projectId ? { ...item, projectId: null } : item
+          ),
         }));
       },
 
@@ -269,14 +278,15 @@ export const useFocusStore = create<FocusStore>()(
             }, 0);
           }
 
-          // Create completed today entry
-          const completedEntry = createCompletedTaskEntry(item.id, item.title);
+          // Create completed today entry (stores full item snapshot for undo)
+          const completedEntry = createCompletedTaskEntry(item);
 
-          // Remove from today/later and add to completedToday
+          // Remove from today/later, add to completedToday and completedItems
           return {
             todayItems: state.todayItems.filter((i) => i.id !== itemId),
             laterItems: state.laterItems.filter((i) => i.id !== itemId),
             completedToday: [...state.completedToday, completedEntry],
+            completedItems: [...state.completedItems, { ...item, completedAt: new Date().toISOString() }],
           };
         });
       },
@@ -461,18 +471,21 @@ export const useFocusStore = create<FocusStore>()(
         }
       },
 
-      // Undo a completed task (restore to Today)
+      // Undo a completed task (restore to Today with all original fields)
       undoComplete: (entryId) => {
         set((state) => {
           const entry = state.completedToday.find((e) => e.id === entryId);
-          if (!entry || entry.type !== 'task' || !entry.sourceItemId) return state;
+          if (!entry || entry.type !== 'task') return state;
 
-          // Create a new focus item from the completed entry
-          const restoredItem = createFocusItem(entry.title, '~15 min', 'today');
+          // Restore original item if we have the snapshot, otherwise fall back to title-only
+          const restoredItem: FocusItem = entry.sourceItem
+            ? { ...entry.sourceItem, completedAt: undefined, location: 'today' as const }
+            : createFocusItem(entry.title, '~15 min', 'today');
 
           return {
             completedToday: state.completedToday.filter((e) => e.id !== entryId),
             todayItems: [...state.todayItems, restoredItem],
+            completedItems: state.completedItems.filter((i) => i.id !== restoredItem.id),
           };
         });
       },

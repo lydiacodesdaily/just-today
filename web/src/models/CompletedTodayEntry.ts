@@ -4,6 +4,8 @@
  * Shows evidence of work for the day - both tasks and routine completions
  */
 
+import type { FocusItem } from './FocusItem';
+
 /**
  * Entry types for Completed Today
  * - task: A completed Today focus item
@@ -20,8 +22,8 @@ export interface CompletedTodayEntry {
   title: string;
   completedAt: string; // ISO date string
 
-  // For tasks - reference to original item for undo
-  sourceItemId?: string;
+  // For tasks - full snapshot of original item for undo (restores all fields including projectId)
+  sourceItem?: FocusItem;
 
   // For routines - reference to the routine template
   routineTemplateId?: string;
@@ -31,15 +33,14 @@ export interface CompletedTodayEntry {
  * Create a completed task entry
  */
 export function createCompletedTaskEntry(
-  sourceItemId: string,
-  title: string
+  sourceItem: FocusItem
 ): CompletedTodayEntry {
   return {
     id: `completed-task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     type: 'task',
-    title,
+    title: sourceItem.title,
     completedAt: new Date().toISOString(),
-    sourceItemId,
+    sourceItem,
   };
 }
 

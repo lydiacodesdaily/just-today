@@ -324,14 +324,16 @@ interface ProjectCardProps {
   project: Project;
   todayItems: FocusItem[];
   laterItems: FocusItem[];
+  completedItems: FocusItem[];
   onRename: () => void;
   onDelete: () => void;
   initialExpanded?: boolean;
 }
 
-function ProjectCard({ project, todayItems, laterItems, onRename, onDelete, initialExpanded = false }: ProjectCardProps) {
+function ProjectCard({ project, todayItems, laterItems, completedItems, onRename, onDelete, initialExpanded = false }: ProjectCardProps) {
   const { moveToToday, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem } = useFocusStore();
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
+  const [showCompleted, setShowCompleted] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -469,6 +471,46 @@ function ProjectCard({ project, todayItems, laterItems, onRename, onDelete, init
               + Add next action
             </button>
           )}
+
+          {/* Completed items */}
+          {completedItems.length > 0 && (
+            <div className="mt-3">
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="flex items-center gap-1.5 px-3 py-1 text-xs text-calm-muted hover:text-calm-text transition-colors"
+              >
+                <svg
+                  className={`w-3 h-3 transition-transform ${showCompleted ? 'rotate-90' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span>{completedItems.length} completed</span>
+              </button>
+              {showCompleted && (
+                <div className="mt-1 space-y-0.5">
+                  {[...completedItems]
+                    .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
+                    .map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-calm-muted"
+                      >
+                        <svg className="w-3.5 h-3.5 flex-shrink-0 text-calm-steady" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="line-through truncate">{item.title}</span>
+                        {item.completedAt && (
+                          <span className="ml-auto flex-shrink-0 text-xs text-calm-muted/60">
+                            {new Date(item.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -541,7 +583,7 @@ function ProjectFormModal({ project, onSave, onCancel }: ProjectFormModalProps) 
 
 export default function ProjectsPage() {
   const { projects, addProject, renameProject, deleteProject } = useProjectsStore();
-  const { todayItems, laterItems, moveToToday, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem, setItemProject } = useFocusStore();
+  const { todayItems, laterItems, completedItems, moveToToday, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem, setItemProject } = useFocusStore();
 
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -553,6 +595,7 @@ export default function ProjectsPage() {
   const getProjectItems = (projectId: string) => ({
     today: todayItems.filter((i) => i.projectId === projectId && !i.completedAt),
     later: laterItems.filter((i) => i.projectId === projectId && !i.completedAt),
+    completed: completedItems.filter((i) => i.projectId === projectId),
   });
 
   // Unassigned items (no projectId or null)
@@ -627,13 +670,14 @@ export default function ProjectsPage() {
         {/* Project Cards */}
         <div className="mt-6 space-y-4">
           {sortedProjects.map((project) => {
-            const { today, later } = getProjectItems(project.id);
+            const { today, later, completed } = getProjectItems(project.id);
             return (
               <ProjectCard
                 key={project.id}
                 project={project}
                 todayItems={today}
                 laterItems={later}
+                completedItems={completed}
                 onRename={() => handleRename(project)}
                 onDelete={() => setDeleteConfirm(project)}
                 initialExpanded={project.id === newlyCreatedId}

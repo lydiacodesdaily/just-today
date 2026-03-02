@@ -146,7 +146,7 @@ export const useWeeklyIntentStore = create<WeeklyIntentStore>()(
           if (item.completedAt) completedIds.add(item.id);
         });
         completedEntries.forEach((entry) => {
-          if (entry.sourceItemId) completedIds.add(entry.sourceItemId);
+          if (entry.sourceItem?.id) completedIds.add(entry.sourceItem.id);
         });
 
         let changed = false;
