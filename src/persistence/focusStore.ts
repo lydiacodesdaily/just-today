@@ -40,6 +40,14 @@ export async function loadLaterItems(): Promise<FocusItem[]> {
 }
 
 /**
+ * Load all completed items (across Today and Later)
+ */
+export async function loadCompletedFocusItems(): Promise<FocusItem[]> {
+  const allItems = await loadFocusItems();
+  return allItems.filter((item) => !!item.completedAt);
+}
+
+/**
  * Save all focus items
  */
 async function saveFocusItems(items: FocusItem[]): Promise<void> {

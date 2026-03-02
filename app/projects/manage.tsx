@@ -18,13 +18,31 @@ import {
 import { router } from 'expo-router';
 import { useTheme } from '../../src/constants/theme';
 import { useProjects } from '../../src/context/ProjectsContext';
+import { useFocus } from '../../src/context/FocusContext';
 import { Project } from '../../src/models/Project';
+import { FocusItem } from '../../src/models/FocusItem';
 
 export default function ProjectsManage() {
   const theme = useTheme();
   const { projects, addProject, renameProject, deleteProject } = useProjects();
+  const { completedItems } = useFocus();
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [expandedCompleted, setExpandedCompleted] = useState<Set<string>>(new Set());
+
+  const getCompletedForProject = (projectId: string): FocusItem[] =>
+    completedItems
+      .filter((i) => i.projectId === projectId)
+      .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''));
+
+  const toggleCompleted = (projectId: string) => {
+    setExpandedCompleted((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
+  };
 
   const handleAdd = () => {
     setEditingProject(null);
@@ -82,23 +100,57 @@ export default function ProjectsManage() {
               </Text>
             </View>
           ) : (
-            projects.map((project) => (
-              <TouchableOpacity
-                key={project.id}
-                style={[styles.item, { backgroundColor: theme.colors.surface }]}
-                onPress={() => handleEdit(project)}
-              >
-                <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-                  {project.name}
-                </Text>
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => handleDelete(project)}
-                >
-                  <Text style={[styles.deleteButtonText, { color: theme.colors.danger }]}>×</Text>
-                </TouchableOpacity>
-              </TouchableOpacity>
-            ))
+            projects.map((project) => {
+              const projectCompleted = getCompletedForProject(project.id);
+              const isExpanded = expandedCompleted.has(project.id);
+              return (
+                <View key={project.id}>
+                  <TouchableOpacity
+                    style={[styles.item, { backgroundColor: theme.colors.surface }]}
+                    onPress={() => handleEdit(project)}
+                  >
+                    <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+                      {project.name}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDelete(project)}
+                    >
+                      <Text style={[styles.deleteButtonText, { color: theme.colors.danger }]}>×</Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+
+                  {projectCompleted.length > 0 && (
+                    <View style={[styles.completedSection, { backgroundColor: theme.colors.surface }]}>
+                      <TouchableOpacity
+                        style={styles.completedToggle}
+                        onPress={() => toggleCompleted(project.id)}
+                      >
+                        <Text style={[styles.completedToggleText, { color: theme.colors.textSecondary }]}>
+                          {isExpanded ? '▾' : '▸'} {projectCompleted.length} completed
+                        </Text>
+                      </TouchableOpacity>
+                      {isExpanded && projectCompleted.map((item) => (
+                        <View key={item.id} style={styles.completedRow}>
+                          <Text style={[styles.completedCheck, { color: theme.colors.textTertiary }]}>✓</Text>
+                          <Text
+                            style={[styles.completedTitle, { color: theme.colors.textSecondary }]}
+                            numberOfLines={1}
+                          >
+                            {item.title}
+                          </Text>
+                          {item.completedAt && (
+                            <Text style={[styles.completedDate, { color: theme.colors.textTertiary }]}>
+                              {new Date(item.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            </Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })
           )}
 
           <TouchableOpacity
@@ -268,6 +320,38 @@ const styles = StyleSheet.create({
   addRowText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  completedSection: {
+    marginTop: 2,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  completedToggle: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  completedToggleText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  completedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    gap: 8,
+  },
+  completedCheck: {
+    fontSize: 12,
+    width: 16,
+  },
+  completedTitle: {
+    fontSize: 14,
+    flex: 1,
+    textDecorationLine: 'line-through',
+  },
+  completedDate: {
+    fontSize: 12,
   },
   bottomSpace: {
     height: 40,

@@ -8,6 +8,7 @@ import { FocusItem, FocusDuration, TimeBucket } from '../models/FocusItem';
 import {
   loadTodayFocusItems,
   loadLaterItems,
+  loadCompletedFocusItems,
   createTodayFocusItem,
   createLaterItem,
   moveToLater,
@@ -30,6 +31,7 @@ interface FocusContextValue {
   // State
   todayItems: FocusItem[];
   laterItems: FocusItem[];
+  completedItems: FocusItem[];
   isLoading: boolean;
   rolloverCount: number;
 
@@ -73,6 +75,7 @@ const FocusContext = createContext<FocusContextValue | undefined>(undefined);
 export function FocusProvider({ children }: { children: ReactNode }) {
   const [todayItems, setTodayItems] = useState<FocusItem[]>([]);
   const [laterItems, setLaterItems] = useState<FocusItem[]>([]);
+  const [completedItems, setCompletedItems] = useState<FocusItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [rolloverCount, setRolloverCount] = useState<number>(0);
 
@@ -84,14 +87,16 @@ export function FocusProvider({ children }: { children: ReactNode }) {
       await checkAndRolloverIfNewDay();
 
       // Load items
-      const [today, later, rollover] = await Promise.all([
+      const [today, later, completed, rollover] = await Promise.all([
         loadTodayFocusItems(),
         loadLaterItems(),
+        loadCompletedFocusItems(),
         getRolloverCount(),
       ]);
 
       setTodayItems(today);
       setLaterItems(later);
+      setCompletedItems(completed);
       setRolloverCount(rollover);
     } catch (error) {
       console.error('Failed to load focus items:', error);
@@ -142,8 +147,17 @@ export function FocusProvider({ children }: { children: ReactNode }) {
 
   const completeItem = useCallback(async (itemId: string): Promise<void> => {
     await markFocusItemComplete(itemId);
-    setTodayItems((prev) => prev.filter((i) => i.id !== itemId));
-    setLaterItems((prev) => prev.filter((i) => i.id !== itemId));
+    const completedAt = new Date().toISOString();
+    setTodayItems((prev) => {
+      const item = prev.find((i) => i.id === itemId);
+      if (item) setCompletedItems((c) => [...c, { ...item, completedAt }]);
+      return prev.filter((i) => i.id !== itemId);
+    });
+    setLaterItems((prev) => {
+      const item = prev.find((i) => i.id === itemId);
+      if (item) setCompletedItems((c) => [...c, { ...item, completedAt }]);
+      return prev.filter((i) => i.id !== itemId);
+    });
   }, []);
 
   const deleteItem = useCallback(async (itemId: string): Promise<void> => {
@@ -286,6 +300,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     () => ({
       todayItems,
       laterItems,
+      completedItems,
       isLoading,
       rolloverCount,
       addToToday,
@@ -310,6 +325,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     [
       todayItems,
       laterItems,
+      completedItems,
       isLoading,
       rolloverCount,
       addToToday,
