@@ -36,7 +36,7 @@ function AddActionForm({ projectId, onClose }: AddActionFormProps) {
   const { addToToday, addToLater } = useFocusStore();
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState<FocusDuration>('~15 min');
-  const [location, setLocation] = useState<'today' | 'later'>('later');
+  const [location, setLocation] = useState<'today' | 'tomorrow' | 'later'>('later');
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -52,6 +52,8 @@ function AddActionForm({ projectId, onClose }: AddActionFormProps) {
     }
     if (location === 'today') {
       addToToday(title.trim(), duration, projectId);
+    } else if (location === 'tomorrow') {
+      addToLater(title.trim(), duration, undefined, undefined, projectId, 'TOMORROW');
     } else {
       addToLater(title.trim(), duration, undefined, undefined, projectId);
     }
@@ -103,6 +105,17 @@ function AddActionForm({ projectId, onClose }: AddActionFormProps) {
           </button>
           <button
             type="button"
+            onClick={() => setLocation('tomorrow')}
+            className={`px-3 py-2 text-sm font-medium transition-colors border-l border-calm-border ${
+              location === 'tomorrow'
+                ? 'bg-calm-primary text-white'
+                : 'bg-calm-surface text-calm-muted hover:text-calm-text'
+            }`}
+          >
+            Tomorrow
+          </button>
+          <button
+            type="button"
             onClick={() => setLocation('later')}
             className={`px-3 py-2 text-sm font-medium transition-colors border-l border-calm-border ${
               location === 'later'
@@ -139,6 +152,7 @@ function AddActionForm({ projectId, onClose }: AddActionFormProps) {
 interface ActionRowProps {
   item: FocusItem;
   onMoveToToday?: () => void;
+  onMoveToTomorrow?: () => void;
   onMoveToLater?: () => void;
   onMarkDone: () => void;
   onDelete: () => void;
@@ -147,7 +161,7 @@ interface ActionRowProps {
   availableProjects?: { id: string; name: string }[];
 }
 
-function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete, onEdit, onAssignProject, availableProjects }: ActionRowProps) {
+function ActionRow({ item, onMoveToToday, onMoveToTomorrow, onMoveToLater, onMarkDone, onDelete, onEdit, onAssignProject, availableProjects }: ActionRowProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showAssignMenu, setShowAssignMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -242,6 +256,15 @@ function ActionRow({ item, onMoveToToday, onMoveToLater, onMarkDone, onDelete, o
             → Today
           </button>
         )}
+        {onMoveToTomorrow && (
+          <button
+            onClick={onMoveToTomorrow}
+            className="px-2 py-1 text-xs text-calm-muted hover:bg-calm-border/50 rounded transition-colors"
+            title="Move to Tomorrow"
+          >
+            → Tomorrow
+          </button>
+        )}
         {onMoveToLater && (
           <button
             onClick={onMoveToLater}
@@ -331,7 +354,10 @@ interface ProjectCardProps {
 }
 
 function ProjectCard({ project, todayItems, laterItems, completedItems, onRename, onDelete, initialExpanded = false }: ProjectCardProps) {
-  const { moveToToday, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem } = useFocusStore();
+  const { moveToToday, moveToTomorrow, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem, setItemTimeBucket } = useFocusStore();
+
+  const tomorrowItems = laterItems.filter((i) => i.timeBucket === 'TOMORROW');
+  const genericLaterItems = laterItems.filter((i) => i.timeBucket !== 'TOMORROW');
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [showCompleted, setShowCompleted] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -339,6 +365,7 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
   const menuRef = useRef<HTMLDivElement>(null);
 
   const totalActions = todayItems.length + laterItems.length;
+
   const hasNoNextAction = todayItems.length === 0;
 
   useEffect(() => {
@@ -431,6 +458,7 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
                 <ActionRow
                   key={item.id}
                   item={item}
+                  onMoveToTomorrow={() => moveToTomorrow(item.id)}
                   onMoveToLater={() => moveToLater(item.id)}
                   onMarkDone={() => completeItem(item.id)}
                   onDelete={() => deleteItem(item.id)}
@@ -440,15 +468,34 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
             </div>
           )}
 
-          {/* Later items */}
-          {laterItems.length > 0 && (
+          {/* Tomorrow items */}
+          {tomorrowItems.length > 0 && (
             <div className="mt-3">
-              <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Later</p>
-              {laterItems.map((item) => (
+              <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Tomorrow</p>
+              {tomorrowItems.map((item) => (
                 <ActionRow
                   key={item.id}
                   item={item}
                   onMoveToToday={() => moveToToday(item.id)}
+                  onMoveToLater={() => setItemTimeBucket(item.id, 'NONE')}
+                  onMarkDone={() => completeItem(item.id)}
+                  onDelete={() => deleteItem(item.id)}
+                  onEdit={(title, duration) => updateLaterItem(item.id, title, duration)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Later items */}
+          {genericLaterItems.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Later</p>
+              {genericLaterItems.map((item) => (
+                <ActionRow
+                  key={item.id}
+                  item={item}
+                  onMoveToToday={() => moveToToday(item.id)}
+                  onMoveToTomorrow={() => setItemTimeBucket(item.id, 'TOMORROW')}
                   onMarkDone={() => completeItem(item.id)}
                   onDelete={() => deleteItem(item.id)}
                   onEdit={(title, duration) => updateLaterItem(item.id, title, duration)}
@@ -583,7 +630,7 @@ function ProjectFormModal({ project, onSave, onCancel }: ProjectFormModalProps) 
 
 export default function ProjectsPage() {
   const { projects, addProject, renameProject, deleteProject } = useProjectsStore();
-  const { todayItems, laterItems, completedItems, moveToToday, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem, setItemProject } = useFocusStore();
+  const { todayItems, laterItems, completedItems, moveToToday, moveToTomorrow, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem, setItemProject, setItemTimeBucket } = useFocusStore();
 
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -600,8 +647,9 @@ export default function ProjectsPage() {
 
   // Unassigned items (no projectId or null)
   const unassignedToday = todayItems.filter((i) => !i.projectId && !i.completedAt);
-  const unassignedLater = laterItems.filter((i) => !i.projectId && !i.completedAt);
-  const hasUnassigned = unassignedToday.length > 0 || unassignedLater.length > 0;
+  const unassignedTomorrow = laterItems.filter((i) => !i.projectId && !i.completedAt && i.timeBucket === 'TOMORROW');
+  const unassignedLater = laterItems.filter((i) => !i.projectId && !i.completedAt && i.timeBucket !== 'TOMORROW');
+  const hasUnassigned = unassignedToday.length > 0 || unassignedTomorrow.length > 0 || unassignedLater.length > 0;
 
   const handleSave = (name: string) => {
     if (editingProject) {
@@ -702,7 +750,7 @@ export default function ProjectsPage() {
                 </svg>
                 <span className="text-sm font-medium text-calm-text">Unassigned</span>
                 <span className="text-xs text-calm-muted">
-                  {unassignedToday.length + unassignedLater.length} item{unassignedToday.length + unassignedLater.length === 1 ? '' : 's'}
+                  {unassignedToday.length + unassignedTomorrow.length + unassignedLater.length} item{unassignedToday.length + unassignedTomorrow.length + unassignedLater.length === 1 ? '' : 's'}
                 </span>
               </div>
               <span className="text-xs text-calm-muted">not in any project</span>
@@ -717,10 +765,29 @@ export default function ProjectsPage() {
                       <ActionRow
                         key={item.id}
                         item={item}
+                        onMoveToTomorrow={() => moveToTomorrow(item.id)}
                         onMoveToLater={() => moveToLater(item.id)}
                         onMarkDone={() => completeItem(item.id)}
                         onDelete={() => deleteItem(item.id)}
                         onEdit={(title, duration) => updateTodayItem(item.id, title, duration)}
+                        onAssignProject={(projectId) => setItemProject(item.id, projectId)}
+                        availableProjects={projects}
+                      />
+                    ))}
+                  </div>
+                )}
+                {unassignedTomorrow.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Tomorrow</p>
+                    {unassignedTomorrow.map((item) => (
+                      <ActionRow
+                        key={item.id}
+                        item={item}
+                        onMoveToToday={() => moveToToday(item.id)}
+                        onMoveToLater={() => setItemTimeBucket(item.id, 'NONE')}
+                        onMarkDone={() => completeItem(item.id)}
+                        onDelete={() => deleteItem(item.id)}
+                        onEdit={(title, duration) => updateLaterItem(item.id, title, duration)}
                         onAssignProject={(projectId) => setItemProject(item.id, projectId)}
                         availableProjects={projects}
                       />
@@ -735,6 +802,7 @@ export default function ProjectsPage() {
                         key={item.id}
                         item={item}
                         onMoveToToday={() => moveToToday(item.id)}
+                        onMoveToTomorrow={() => setItemTimeBucket(item.id, 'TOMORROW')}
                         onMarkDone={() => completeItem(item.id)}
                         onDelete={() => deleteItem(item.id)}
                         onEdit={(title, duration) => updateLaterItem(item.id, title, duration)}

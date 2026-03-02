@@ -183,6 +183,15 @@ function LaterItemCard({ item, projectName, onEdit, onMoveToToday, onDelete, onS
                 </button>
                 <button
                   onClick={() => {
+                    onSetTimeBucket('TOMORROW');
+                    setShowMoreMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
+                >
+                  → Move to Tomorrow
+                </button>
+                <button
+                  onClick={() => {
                     setShowTimeBucketMenu(true);
                     setShowMoreMenu(false);
                   }}
@@ -264,13 +273,16 @@ export function LaterList({ defaultExpanded = false }: LaterListProps) {
   const weeklySelectedIds = new Set(
     activeIntent?.items.filter((i) => i.outcome === 'pending').map((i) => i.focusItemId) ?? []
   );
+  const [isTomorrowExpanded, setIsTomorrowExpanded] = useState(true);
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [isCheckOnExpanded, setIsCheckOnExpanded] = useState(defaultExpanded);
   const [editingItem, setEditingItem] = useState<FocusItem | null>(null);
   const [checkOnceItemId, setCheckOnceItemId] = useState<string | null>(null);
 
   const incompleteItems = laterItems.filter((item) => !item.completedAt);
-  const { scheduled, due, none } = useCheckOnce(incompleteItems);
+  const tomorrowItems = incompleteItems.filter((item) => item.timeBucket === 'TOMORROW');
+  const nonTomorrowItems = incompleteItems.filter((item) => item.timeBucket !== 'TOMORROW');
+  const { scheduled, due, none } = useCheckOnce(nonTomorrowItems);
 
   // Trigger check once for due items (mark as triggered on first render when due)
   useEffect(() => {
@@ -301,6 +313,47 @@ export function LaterList({ defaultExpanded = false }: LaterListProps) {
 
   return (
     <section className="space-y-3">
+      {/* Tomorrow Section */}
+      {tomorrowItems.length > 0 && (
+        <>
+          <button
+            onClick={() => setIsTomorrowExpanded(!isTomorrowExpanded)}
+            className="w-full flex items-center justify-between p-3 hover:bg-calm-surface/50 rounded-lg transition-colors"
+            aria-expanded={isTomorrowExpanded}
+          >
+            <SectionLabel>Tomorrow</SectionLabel>
+            <div className="flex items-center gap-2">
+              {!isTomorrowExpanded && (
+                <span className="text-[11px] text-calm-muted">{tomorrowItems.length}</span>
+              )}
+              <svg
+                className={`w-3 h-3 text-calm-muted transition-transform ${isTomorrowExpanded ? 'transform rotate-180' : ''}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+          {isTomorrowExpanded && (
+            <div className="space-y-3 pl-0">
+              {tomorrowItems.map((item) => (
+                <LaterItemCard
+                  key={item.id}
+                  item={item}
+                  projectName={item.projectId ? projects.find((p) => p.id === item.projectId)?.name : undefined}
+                  onEdit={() => setEditingItem(item)}
+                  onMoveToToday={() => moveToToday(item.id)}
+                  onDelete={() => deleteItem(item.id)}
+                  onSetTimeBucket={(bucket) => setItemTimeBucket(item.id, bucket)}
+                  onCheckOnceLater={() => handleCheckOnceLater(item.id)}
+                  isOnWeeklyPlan={weeklySelectedIds.has(item.id)}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
       {/* Check On Section */}
       {hasCheckOnItems && (
         <>

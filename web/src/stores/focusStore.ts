@@ -31,9 +31,10 @@ interface FocusStore {
 
   // Actions
   addToToday: (title: string, duration: FocusDuration, projectId?: string | null) => void;
-  addToLater: (title: string, duration: FocusDuration, reminderTiming?: ReminderTiming, customDate?: Date, projectId?: string | null) => void;
+  addToLater: (title: string, duration: FocusDuration, reminderTiming?: ReminderTiming, customDate?: Date, projectId?: string | null, timeBucket?: TimeBucket) => void;
   addFromBrainDump: (item: BrainDumpItem, location: 'today' | 'later') => void;
   moveToLater: (itemId: string, reminderTiming?: ReminderTiming, customDate?: Date) => void;
+  moveToTomorrow: (itemId: string) => void;
   moveToToday: (itemId: string) => void;
   updateTodayItem: (itemId: string, title: string, duration: FocusDuration, projectId?: string | null) => void;
   updateLaterItem: (itemId: string, title: string, duration: FocusDuration, timeBucket?: TimeBucket, projectId?: string | null) => void;
@@ -109,7 +110,7 @@ export const useFocusStore = create<FocusStore>()(
       },
 
       // Add to Later
-      addToLater: (title, duration, reminderTiming, customDate, projectId) => {
+      addToLater: (title, duration, reminderTiming, customDate, projectId, timeBucket) => {
         const item = createFocusItem(title, duration, 'later');
         if (projectId !== undefined) item.projectId = projectId;
         const now = new Date().toISOString();
@@ -118,6 +119,10 @@ export const useFocusStore = create<FocusStore>()(
           const reminderDate = calculateReminderDate(reminderTiming, customDate);
           item.reminderDate = reminderDate?.toISOString();
           item.reminderTiming = reminderTiming;
+        }
+
+        if (timeBucket) {
+          item.timeBucket = timeBucket;
         }
 
         item.movedToLaterAt = now;
@@ -166,6 +171,32 @@ export const useFocusStore = create<FocusStore>()(
         });
       },
 
+      // Move item to Tomorrow (Later with TOMORROW time bucket)
+      moveToTomorrow: (itemId) => {
+        const now = new Date().toISOString();
+
+        set((state) => {
+          const item = state.todayItems.find((i) => i.id === itemId);
+          if (!item) return state;
+
+          const updatedItem: FocusItem = {
+            ...item,
+            location: 'later',
+            movedToLaterAt: now,
+            timeBucket: 'TOMORROW',
+            reminderDate: undefined,
+            reminderTiming: undefined,
+          };
+
+          useSnapshotStore.getState().incrementTodayCounter('itemsMovedToLater');
+
+          return {
+            todayItems: state.todayItems.filter((i) => i.id !== itemId),
+            laterItems: [...state.laterItems, updatedItem],
+          };
+        });
+      },
+
       // Move item to Today
       moveToToday: (itemId) => {
         const now = new Date().toISOString();
@@ -180,6 +211,7 @@ export const useFocusStore = create<FocusStore>()(
             addedToTodayAt: now,
             reminderDate: undefined,
             reminderTiming: undefined,
+            timeBucket: undefined,
           };
 
           return {
@@ -428,38 +460,49 @@ export const useFocusStore = create<FocusStore>()(
         const { lastCheckDate, todayItems, completedTodayDate } = get();
 
         if (currentDate !== lastCheckDate) {
-          // New day detected - rollover incomplete items to Later
+          // New day detected - rollover incomplete Today items to Later,
+          // and promote Tomorrow-tagged Later items to Today
           const now = new Date().toISOString();
           const incompleteItems = todayItems.filter((item) => !item.completedAt);
 
-          if (incompleteItems.length > 0) {
-            set((state) => {
-              const rolledItems = incompleteItems.map((item) => ({
-                ...item,
-                location: 'later' as const,
-                movedToLaterAt: now,
-                rolledOverFromDate: lastCheckDate,
-                rolloverCount: (item.rolloverCount || 0) + 1,
-              }));
+          set((state) => {
+            const rolledItems = incompleteItems.map((item) => ({
+              ...item,
+              location: 'later' as const,
+              movedToLaterAt: now,
+              rolledOverFromDate: lastCheckDate,
+              rolloverCount: (item.rolloverCount || 0) + 1,
+            }));
 
-              return {
-                todayItems: state.todayItems.filter((item) => item.completedAt),
-                laterItems: [...state.laterItems, ...rolledItems],
-                rolloverCount: incompleteItems.length,
-                lastCheckDate: currentDate,
-                // Reset CompletedToday on new day
-                completedToday: [],
-                completedTodayDate: currentDate,
-              };
-            });
-          } else {
-            set({
+            // Promote Later items tagged TOMORROW → Today
+            const tomorrowItems = state.laterItems.filter(
+              (item) => item.timeBucket === 'TOMORROW' && !item.completedAt
+            );
+            const promotedItems = tomorrowItems.map((item) => ({
+              ...item,
+              location: 'today' as const,
+              addedToTodayAt: now,
+              timeBucket: undefined,
+              reminderDate: undefined,
+              reminderTiming: undefined,
+            }));
+            const tomorrowIds = new Set(tomorrowItems.map((i) => i.id));
+
+            return {
+              todayItems: [
+                ...state.todayItems.filter((item) => item.completedAt),
+                ...promotedItems,
+              ],
+              laterItems: [
+                ...state.laterItems.filter((item) => !tomorrowIds.has(item.id)),
+                ...rolledItems,
+              ],
+              rolloverCount: incompleteItems.length,
               lastCheckDate: currentDate,
-              // Reset CompletedToday on new day
               completedToday: [],
               completedTodayDate: currentDate,
-            });
-          }
+            };
+          });
         }
 
         // Also check if completedTodayDate is stale (separate from rollover)
