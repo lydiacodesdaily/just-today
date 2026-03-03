@@ -9,6 +9,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRunStore } from '@/src/stores/runStore';
 import { useSettingsStore } from '@/src/stores/settingsStore';
+import { useFocusStore } from '@/src/stores/focusStore';
+import { createRunFromFocusItem } from '@/src/engine/runEngine';
+import { FocusItem } from '@/src/models/FocusItem';
 import { useTimer } from '@/src/hooks/useTimer';
 import { useTaskTransition } from '@/src/hooks/useTaskTransition';
 import { useAudio } from '@/src/hooks/useAudio';
@@ -18,6 +21,9 @@ import { SubtaskList } from '@/src/components/SubtaskList';
 import { ConfirmDialog } from '@/src/components/Dialog';
 import { CheckInModal } from '@/src/components/CheckInModal';
 import { TickingSoundType, MilestoneInterval } from '@/src/models/Settings';
+
+// Only auto-prompt check-in for sessions at or above this duration
+const MIN_CHECKIN_DURATION_MS = 45 * 60 * 1000;
 
 export default function RunPage() {
   const router = useRouter();
@@ -64,10 +70,13 @@ export default function RunPage() {
     if (currentRun?.status === 'completed') {
       // Mark that we're completing to prevent double redirect
       isCompletingRef.current = true;
-      // Show check-in modal after a brief pause
-      setTimeout(() => {
-        setShowCheckIn(true);
-      }, 1000);
+      // Only auto-prompt check-in for longer sessions
+      const sessionDurationMs = currentRun.startedAt ? Date.now() - currentRun.startedAt : 0;
+      if (sessionDurationMs >= MIN_CHECKIN_DURATION_MS) {
+        setTimeout(() => {
+          setShowCheckIn(true);
+        }, 1000);
+      }
     } else if (currentRun?.status === 'abandoned') {
       // Keep the run as abandoned so it can be resumed from the routine card
       isCompletingRef.current = true;
@@ -120,7 +129,7 @@ export default function RunPage() {
     ];
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
 
-    const handleCheckInClose = () => {
+    const handleDone = () => {
       setShowCheckIn(false);
       router.push('/today');
       setTimeout(() => {
@@ -129,18 +138,69 @@ export default function RunPage() {
       }, 100);
     };
 
+    const handleStartNextTask = (item: FocusItem) => {
+      const newRun = createRunFromFocusItem(item);
+      setCurrentRun(newRun);
+      isCompletingRef.current = false;
+      router.push('/run');
+    };
+
+    // Remaining today items (excludes the one we just completed via sourceFocusItemId)
+    const remainingTodayItems = useFocusStore.getState().todayItems.filter(
+      (i) => !i.completedAt
+    );
+
     return (
-      <div className="min-h-screen bg-calm-bg flex items-center justify-center animate-in fade-in duration-300">
-        <div className="text-center px-4 animate-in slide-in-from-bottom-4 duration-500">
-          <h1 className="text-4xl font-bold text-calm-text mb-4">{randomMessage}</h1>
-          <p className="text-lg text-calm-muted mb-2">{currentRun.templateName} complete</p>
-          <p className="text-base text-calm-muted">
-            {completedCount} of {totalCount} {totalCount === 1 ? 'task' : 'tasks'} done
-          </p>
+      <div className="min-h-screen bg-calm-bg flex flex-col items-center justify-center animate-in fade-in duration-300">
+        <div className="w-full max-w-sm px-4">
+          {/* Celebration */}
+          <div className="text-center mb-8 animate-in slide-in-from-bottom-4 duration-500">
+            <h1 className="text-4xl font-bold text-calm-text mb-4">{randomMessage}</h1>
+            <p className="text-lg text-calm-muted mb-2">{currentRun.templateName} complete</p>
+            <p className="text-base text-calm-muted">
+              {completedCount} of {totalCount} {totalCount === 1 ? 'task' : 'tasks'} done
+            </p>
+          </div>
+
+          {/* Next tasks */}
+          {remainingTodayItems.length > 0 && (
+            <div className="mb-8">
+              <p className="text-sm text-calm-muted mb-3 text-center">What's next?</p>
+              <div className="space-y-2">
+                {remainingTodayItems.slice(0, 4).map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleStartNextTask(item)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-calm-surface border border-calm-border rounded-xl hover:border-calm-text/30 transition-colors text-left"
+                  >
+                    <span className="text-calm-text text-sm truncate mr-3">{item.title}</span>
+                    <span className="text-xs text-calm-muted shrink-0">{item.estimatedDuration}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Footer actions */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowCheckIn(true)}
+              className="text-sm text-calm-muted hover:text-calm-text transition-colors"
+            >
+              Add check-in
+            </button>
+            <button
+              onClick={handleDone}
+              className="text-sm text-calm-muted hover:text-calm-text transition-colors"
+            >
+              {remainingTodayItems.length > 0 ? 'Back to today' : 'Done'}
+            </button>
+          </div>
         </div>
+
         <CheckInModal
           isOpen={showCheckIn}
-          onClose={handleCheckInClose}
+          onClose={handleDone}
           title="How did that go?"
         />
       </div>
