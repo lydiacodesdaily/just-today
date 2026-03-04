@@ -319,11 +319,13 @@ export async function advanceToNextTask(run: RoutineRun): Promise<RoutineRun> {
   speak(transitionMessage.ttsMessage);
   sendTaskTransitionNotification(currentTaskName, nextTask.name);
 
-  // Start the next task
+  // Start the next task (also unpause the run if it was paused)
   return startTask(
     {
       ...run,
       tasks: updatedTasks,
+      status: 'running',
+      pausedAt: null,
     },
     nextTask.id
   );

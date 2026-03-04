@@ -322,8 +322,14 @@ function TaskInput({ task, dragHandleProps, onUpdate, onDelete, autoFocus }: Tas
     }
   }, [autoFocus]);
 
-  const minutes = Math.floor((task.durationMs || 0) / 60000);
-  const [minutesInput, setMinutesInput] = useState(String(minutes));
+  const [minutesInput, setMinutesInput] = useState(() =>
+    String(Math.floor((task.durationMs || 0) / 60000))
+  );
+
+  // Sync input when task.durationMs changes from outside (e.g. modal reopens)
+  useEffect(() => {
+    setMinutesInput(String(Math.floor((task.durationMs || 0) / 60000)));
+  }, [task.durationMs]);
 
   return (
     <div className="bg-calm-background border border-calm-border rounded-lg p-4 space-y-3">
