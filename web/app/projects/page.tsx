@@ -381,7 +381,7 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
   }, [showMenu]);
 
   return (
-    <div className="bg-calm-surface border border-calm-border rounded-xl overflow-hidden">
+    <div className="bg-calm-surface border border-calm-border rounded-xl">
       {/* Project Header */}
       <div className="flex items-center gap-2 px-4 py-3">
         <button
