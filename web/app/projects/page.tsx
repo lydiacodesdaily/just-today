@@ -1,15 +1,17 @@
 /**
  * /projects page
- * GTD-style Projects view — containers for multi-step outcomes.
- * Each project shows its associated focus items (next actions).
+ * GTD-style Projects view grouped by Area.
+ * Area > Project > Next Actions
  */
 
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { useProjectsStore } from '@/src/stores/projectsStore';
+import { useAreaStore } from '@/src/stores/areaStore';
 import { useFocusStore } from '@/src/stores/focusStore';
 import { Project } from '@/src/models/Project';
+import { Area } from '@/src/models/Area';
 import { FocusItem, FocusDuration } from '@/src/models/FocusItem';
 import { ConfirmDialog } from '@/src/components/Dialog';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/src/components/Modal';
@@ -24,6 +26,31 @@ const DURATIONS: FocusDuration[] = [
   '~1 hour',
   '~2 hours',
 ];
+
+// ─── Chevron Icon ─────────────────────────────────────────────────────────────
+
+function Chevron({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      className={`w-4 h-4 text-calm-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+// ─── Kebab Menu Icon ──────────────────────────────────────────────────────────
+
+function KebabIcon() {
+  return (
+    <svg className="w-4 h-4 text-calm-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+    </svg>
+  );
+}
 
 // ─── Add Action Inline Form ───────────────────────────────────────────────────
 
@@ -92,39 +119,20 @@ function AddActionForm({ projectId, onClose }: AddActionFormProps) {
         </select>
 
         <div className="flex rounded-lg border border-calm-border overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setLocation('today')}
-            className={`px-3 py-2 text-sm font-medium transition-colors ${
-              location === 'today'
-                ? 'bg-calm-primary text-white'
-                : 'bg-calm-surface text-calm-muted hover:text-calm-text'
-            }`}
-          >
-            Today
-          </button>
-          <button
-            type="button"
-            onClick={() => setLocation('tomorrow')}
-            className={`px-3 py-2 text-sm font-medium transition-colors border-l border-calm-border ${
-              location === 'tomorrow'
-                ? 'bg-calm-primary text-white'
-                : 'bg-calm-surface text-calm-muted hover:text-calm-text'
-            }`}
-          >
-            Tomorrow
-          </button>
-          <button
-            type="button"
-            onClick={() => setLocation('later')}
-            className={`px-3 py-2 text-sm font-medium transition-colors border-l border-calm-border ${
-              location === 'later'
-                ? 'bg-calm-primary text-white'
-                : 'bg-calm-surface text-calm-muted hover:text-calm-text'
-            }`}
-          >
-            Later
-          </button>
+          {(['today', 'tomorrow', 'later'] as const).map((loc) => (
+            <button
+              key={loc}
+              type="button"
+              onClick={() => setLocation(loc)}
+              className={`px-3 py-2 text-sm font-medium transition-colors first:border-none border-l border-calm-border capitalize ${
+                location === loc
+                  ? 'bg-calm-primary text-white'
+                  : 'bg-calm-surface text-calm-muted hover:text-calm-text'
+              }`}
+            >
+              {loc.charAt(0).toUpperCase() + loc.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -191,13 +199,7 @@ function ActionRow({ item, onMoveToToday, onMoveToTomorrow, onMoveToLater, onMar
 
   const saveEdit = () => {
     const trimmed = editTitle.trim();
-    if (trimmed) {
-      onEdit(trimmed, editDuration);
-    }
-    setIsEditing(false);
-  };
-
-  const cancelEdit = () => {
+    if (trimmed) onEdit(trimmed, editDuration);
     setIsEditing(false);
   };
 
@@ -210,7 +212,7 @@ function ActionRow({ item, onMoveToToday, onMoveToTomorrow, onMoveToLater, onMar
           onChange={(e) => setEditTitle(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
-            else if (e.key === 'Escape') { canceledByEscapeRef.current = true; cancelEdit(); }
+            else if (e.key === 'Escape') { canceledByEscapeRef.current = true; setIsEditing(false); }
           }}
           onBlur={() => {
             if (!canceledByEscapeRef.current) saveEdit();
@@ -248,88 +250,42 @@ function ActionRow({ item, onMoveToToday, onMoveToTomorrow, onMoveToLater, onMar
 
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {onMoveToToday && (
-          <button
-            onClick={onMoveToToday}
-            className="px-2 py-1 text-xs text-calm-primary hover:bg-calm-primary/10 rounded transition-colors"
-            title="Move to Today"
-          >
+          <button onClick={onMoveToToday} className="px-2 py-1 text-xs text-calm-primary hover:bg-calm-primary/10 rounded transition-colors" title="Move to Today">
             → Today
           </button>
         )}
         {onMoveToTomorrow && (
-          <button
-            onClick={onMoveToTomorrow}
-            className="px-2 py-1 text-xs text-calm-muted hover:bg-calm-border/50 rounded transition-colors"
-            title="Move to Tomorrow"
-          >
+          <button onClick={onMoveToTomorrow} className="px-2 py-1 text-xs text-calm-muted hover:bg-calm-border/50 rounded transition-colors" title="Move to Tomorrow">
             → Tomorrow
           </button>
         )}
         {onMoveToLater && (
-          <button
-            onClick={onMoveToLater}
-            className="px-2 py-1 text-xs text-calm-muted hover:bg-calm-border/50 rounded transition-colors"
-            title="Move to Later"
-          >
+          <button onClick={onMoveToLater} className="px-2 py-1 text-xs text-calm-muted hover:bg-calm-border/50 rounded transition-colors" title="Move to Later">
             → Later
           </button>
         )}
-        <button
-          onClick={onMarkDone}
-          className="px-2 py-1 text-xs text-calm-muted hover:bg-calm-border/50 rounded transition-colors"
-          title="Mark done"
-        >
+        <button onClick={onMarkDone} className="px-2 py-1 text-xs text-calm-muted hover:bg-calm-border/50 rounded transition-colors" title="Mark done">
           ✓ Done
         </button>
 
         <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-1 hover:bg-calm-border/50 rounded transition-colors"
-            aria-label="Options"
-          >
-            <svg className="w-4 h-4 text-calm-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-            </svg>
+          <button onClick={() => setShowMenu(!showMenu)} className="p-1 hover:bg-calm-border/50 rounded transition-colors" aria-label="Options">
+            <KebabIcon />
           </button>
           {showMenu && !showAssignMenu && (
             <div className="absolute right-0 top-full mt-1 w-44 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
-              <button
-                onClick={() => { startEditing(); setShowMenu(false); }}
-                className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
-              >
-                Edit
-              </button>
+              <button onClick={() => { startEditing(); setShowMenu(false); }} className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors">Edit</button>
               {onAssignProject && availableProjects && availableProjects.length > 0 && (
-                <button
-                  onClick={() => setShowAssignMenu(true)}
-                  className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors border-t border-calm-border"
-                >
-                  Assign to project...
-                </button>
+                <button onClick={() => setShowAssignMenu(true)} className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors border-t border-calm-border">Assign to project...</button>
               )}
-              <button
-                onClick={() => { onDelete(); setShowMenu(false); }}
-                className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors border-t border-calm-border"
-              >
-                Remove
-              </button>
+              <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors border-t border-calm-border">Remove</button>
             </div>
           )}
           {showAssignMenu && (
             <div className="absolute right-0 top-full mt-1 w-44 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
-              <button
-                onClick={() => { setShowAssignMenu(false); setShowMenu(true); }}
-                className="w-full px-3 py-2 text-left text-sm text-calm-muted hover:bg-calm-bg transition-colors border-b border-calm-border"
-              >
-                ← Back
-              </button>
+              <button onClick={() => { setShowAssignMenu(false); setShowMenu(true); }} className="w-full px-3 py-2 text-left text-sm text-calm-muted hover:bg-calm-bg transition-colors border-b border-calm-border">← Back</button>
               {availableProjects?.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => { onAssignProject?.(p.id); setShowAssignMenu(false); }}
-                  className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
-                >
+                <button key={p.id} onClick={() => { onAssignProject?.(p.id); setShowAssignMenu(false); }} className="w-full px-3 py-2 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors">
                   {p.name}
                 </button>
               ))}
@@ -350,10 +306,22 @@ interface ProjectCardProps {
   completedItems: FocusItem[];
   onRename: () => void;
   onDelete: () => void;
+  onMoveToArea: (areaId: string | undefined) => void;
+  areas: Area[];
   initialExpanded?: boolean;
 }
 
-function ProjectCard({ project, todayItems, laterItems, completedItems, onRename, onDelete, initialExpanded = false }: ProjectCardProps) {
+function ProjectCard({
+  project,
+  todayItems,
+  laterItems,
+  completedItems,
+  onRename,
+  onDelete,
+  onMoveToArea,
+  areas,
+  initialExpanded = false,
+}: ProjectCardProps) {
   const { moveToToday, moveToTomorrow, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem, setItemTimeBucket } = useFocusStore();
 
   const tomorrowItems = laterItems.filter((i) => i.timeBucket === 'TOMORROW');
@@ -362,23 +330,26 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
   const [showCompleted, setShowCompleted] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showMoveMenu, setShowMoveMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const totalActions = todayItems.length + laterItems.length;
-
   const hasNoNextAction = todayItems.length === 0;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
+        setShowMoveMenu(false);
       }
     }
-    if (showMenu) {
+    if (showMenu || showMoveMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showMenu]);
+  }, [showMenu, showMoveMenu]);
+
+  const otherAreas = areas.filter((a) => a.id !== project.areaId);
 
   return (
     <div className="bg-calm-surface border border-calm-border rounded-xl">
@@ -388,14 +359,7 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex-1 flex items-center gap-2 text-left hover:opacity-80 transition-opacity min-w-0"
         >
-          <svg
-            className={`w-4 h-4 text-calm-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <Chevron expanded={isExpanded} />
           <span className="font-medium text-calm-text truncate">{project.name}</span>
           <span className="text-xs text-calm-muted flex-shrink-0">
             {totalActions === 0 ? 'no actions' : `${totalActions} action${totalActions === 1 ? '' : 's'}`}
@@ -403,29 +367,31 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
         </button>
 
         <div className="relative flex-shrink-0" ref={menuRef}>
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 hover:bg-calm-bg rounded-lg transition-colors"
-            aria-label="Project options"
-          >
-            <svg className="w-4 h-4 text-calm-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-            </svg>
+          <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 hover:bg-calm-bg rounded-lg transition-colors" aria-label="Project options">
+            <KebabIcon />
           </button>
-          {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-44 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
-              <button
-                onClick={() => { onRename(); setShowMenu(false); }}
-                className="w-full px-4 py-2.5 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors"
-              >
-                Rename
-              </button>
-              <button
-                onClick={() => { onDelete(); setShowMenu(false); }}
-                className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors border-t border-calm-border"
-              >
-                Delete project
-              </button>
+          {showMenu && !showMoveMenu && (
+            <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+              <button onClick={() => { onRename(); setShowMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors">Rename</button>
+              {areas.length > 0 && (
+                <button onClick={() => setShowMoveMenu(true)} className="w-full px-4 py-2.5 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors border-t border-calm-border">Move to area...</button>
+              )}
+              <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors border-t border-calm-border">Delete project</button>
+            </div>
+          )}
+          {showMoveMenu && (
+            <div className="absolute right-0 top-full mt-1 w-48 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+              <button onClick={() => { setShowMoveMenu(false); setShowMenu(true); }} className="w-full px-4 py-2.5 text-left text-sm text-calm-muted hover:bg-calm-bg transition-colors border-b border-calm-border">← Back</button>
+              {otherAreas.map((a) => (
+                <button key={a.id} onClick={() => { onMoveToArea(a.id); setShowMoveMenu(false); setShowMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors">
+                  {a.name}
+                </button>
+              ))}
+              {project.areaId && (
+                <button onClick={() => { onMoveToArea(undefined); setShowMoveMenu(false); setShowMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm text-calm-muted hover:bg-calm-bg transition-colors border-t border-calm-border">
+                  Remove from area
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -434,12 +400,9 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
       {/* Expanded Content */}
       {isExpanded && (
         <div className="border-t border-calm-border px-4 pb-4">
-          {/* No next action nudge */}
           {hasNoNextAction && totalActions > 0 && (
             <div className="mt-3 px-3 py-2 bg-calm-steady/10 border border-calm-steady/20 rounded-lg">
-              <p className="text-xs text-calm-text/70">
-                No actions in Today — consider pulling one in when you have capacity.
-              </p>
+              <p className="text-xs text-calm-text/70">No actions in Today — consider pulling one in when you have capacity.</p>
             </div>
           )}
 
@@ -450,7 +413,6 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
             </div>
           )}
 
-          {/* Today items */}
           {todayItems.length > 0 && (
             <div className="mt-3">
               <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Today</p>
@@ -468,7 +430,6 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
             </div>
           )}
 
-          {/* Tomorrow items */}
           {tomorrowItems.length > 0 && (
             <div className="mt-3">
               <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Tomorrow</p>
@@ -486,7 +447,6 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
             </div>
           )}
 
-          {/* Later items */}
           {genericLaterItems.length > 0 && (
             <div className="mt-3">
               <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Later</p>
@@ -504,12 +464,8 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
             </div>
           )}
 
-          {/* Add action form / button */}
           {showAddForm ? (
-            <AddActionForm
-              projectId={project.id}
-              onClose={() => setShowAddForm(false)}
-            />
+            <AddActionForm projectId={project.id} onClose={() => setShowAddForm(false)} />
           ) : (
             <button
               onClick={() => setShowAddForm(true)}
@@ -519,19 +475,13 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
             </button>
           )}
 
-          {/* Completed items */}
           {completedItems.length > 0 && (
             <div className="mt-3">
               <button
                 onClick={() => setShowCompleted(!showCompleted)}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-calm-muted hover:text-calm-text transition-colors"
               >
-                <svg
-                  className={`w-3 h-3 transition-transform ${showCompleted ? 'rotate-90' : ''}`}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <Chevron expanded={showCompleted} />
                 <span>{completedItems.length} completed</span>
               </button>
               {showCompleted && (
@@ -539,10 +489,7 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
                   {[...completedItems]
                     .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
                     .map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-calm-muted"
-                      >
+                      <div key={item.id} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-calm-muted">
                         <svg className="w-3.5 h-3.5 flex-shrink-0 text-calm-steady" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -564,16 +511,175 @@ function ProjectCard({ project, todayItems, laterItems, completedItems, onRename
   );
 }
 
-// ─── Project Form Modal ───────────────────────────────────────────────────────
+// ─── Area Section ─────────────────────────────────────────────────────────────
 
-interface ProjectFormModalProps {
-  project: Project | null;
+interface AreaSectionProps {
+  area: Area;
+  projects: Project[];
+  areas: Area[];
+  getProjectItems: (id: string) => { today: FocusItem[]; later: FocusItem[]; completed: FocusItem[] };
+  newlyCreatedProjectId: string | null;
+  onRenameProject: (project: Project) => void;
+  onDeleteProject: (project: Project) => void;
+  onMoveProjectToArea: (projectId: string, areaId: string | undefined) => void;
+  onRenameArea: () => void;
+  onDeleteArea: () => void;
+}
+
+function AreaSection({
+  area,
+  projects,
+  areas,
+  getProjectItems,
+  newlyCreatedProjectId,
+  onRenameProject,
+  onDeleteProject,
+  onMoveProjectToArea,
+  onRenameArea,
+  onDeleteArea,
+}: AreaSectionProps) {
+  const { toggleCollapsed } = useAreaStore();
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const isCollapsed = area.collapsed;
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showMenu]);
+
+  return (
+    <div>
+      {/* Area Header */}
+      <div className="flex items-center gap-2 px-1 py-2">
+        <button
+          onClick={() => toggleCollapsed(area.id)}
+          className="flex-1 flex items-center gap-2 text-left hover:opacity-80 transition-opacity min-w-0"
+        >
+          <Chevron expanded={!isCollapsed} />
+          <span className="font-semibold text-calm-text">{area.name}</span>
+          <span className="text-xs text-calm-muted">
+            {projects.length === 0 ? 'no projects' : `${projects.length} project${projects.length === 1 ? '' : 's'}`}
+          </span>
+        </button>
+
+        <div className="relative flex-shrink-0" ref={menuRef}>
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-1.5 hover:bg-calm-border/50 rounded-lg transition-colors"
+            aria-label="Area options"
+          >
+            <KebabIcon />
+          </button>
+          {showMenu && (
+            <div className="absolute right-0 top-full mt-1 w-44 bg-calm-surface border border-calm-border rounded-lg shadow-lg overflow-hidden z-50">
+              <button onClick={() => { onRenameArea(); setShowMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm text-calm-text hover:bg-calm-bg transition-colors">Rename</button>
+              <button onClick={() => { onDeleteArea(); setShowMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-calm-bg transition-colors border-t border-calm-border">Delete area</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Projects inside area */}
+      {!isCollapsed && (
+        <div className="ml-4 space-y-3 mb-2">
+          {projects.length === 0 ? (
+            <div className="px-3 py-3 rounded-xl border border-dashed border-calm-border text-center">
+              <p className="text-sm text-calm-muted italic">No projects in this area.</p>
+            </div>
+          ) : (
+            projects.map((project) => {
+              const { today, later, completed } = getProjectItems(project.id);
+              return (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  todayItems={today}
+                  laterItems={later}
+                  completedItems={completed}
+                  onRename={() => onRenameProject(project)}
+                  onDelete={() => onDeleteProject(project)}
+                  onMoveToArea={(areaId) => onMoveProjectToArea(project.id, areaId)}
+                  areas={areas}
+                  initialExpanded={project.id === newlyCreatedProjectId}
+                />
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Area Form Modal ──────────────────────────────────────────────────────────
+
+interface AreaFormModalProps {
+  area: Area | null;
   onSave: (name: string) => void;
   onCancel: () => void;
 }
 
-function ProjectFormModal({ project, onSave, onCancel }: ProjectFormModalProps) {
+function AreaFormModal({ area, onSave, onCancel }: AreaFormModalProps) {
+  const [name, setName] = useState(area?.name ?? '');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setError('Give your area a name');
+      return;
+    }
+    onSave(name.trim());
+  };
+
+  return (
+    <Modal isOpen onClose={onCancel} maxWidth="md">
+      <ModalHeader title={area ? 'Rename area' : 'New area'} />
+      <form onSubmit={handleSubmit}>
+        <ModalBody>
+          <label htmlFor="area-name" className="block text-sm font-medium text-calm-text mb-2">Name</label>
+          <input
+            id="area-name"
+            type="text"
+            value={name}
+            onChange={(e) => { setName(e.target.value); if (error) setError(''); }}
+            placeholder="e.g., Career, Learning, Personal"
+            className={`w-full px-4 py-2 bg-calm-bg border rounded-lg text-calm-text placeholder:text-calm-muted/50 focus:outline-none focus:ring-2 focus:ring-calm-text/30 ${error ? 'border-red-500' : 'border-calm-border'}`}
+            autoFocus
+          />
+          {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+        </ModalBody>
+        <ModalFooter>
+          <button type="button" onClick={onCancel} className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text/10 transition-colors font-medium">Cancel</button>
+          <button type="submit" className="flex-1 min-h-[48px] px-4 py-3 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium">Save</button>
+        </ModalFooter>
+      </form>
+    </Modal>
+  );
+}
+
+// ─── Project Form Modal ───────────────────────────────────────────────────────
+
+interface ProjectFormModalProps {
+  project: Project | null;
+  areas: Area[];
+  defaultAreaId?: string;
+  onSave: (name: string, areaId?: string) => void;
+  onCancel: () => void;
+}
+
+function ProjectFormModal({ project, areas, defaultAreaId, onSave, onCancel }: ProjectFormModalProps) {
   const [name, setName] = useState(project?.name ?? '');
+  const [areaId, setAreaId] = useState<string>(project?.areaId ?? defaultAreaId ?? '');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -582,7 +688,7 @@ function ProjectFormModal({ project, onSave, onCancel }: ProjectFormModalProps) 
       setError('Give your project a short name');
       return;
     }
-    onSave(name.trim());
+    onSave(name.trim(), areaId || undefined);
   };
 
   return (
@@ -590,36 +696,42 @@ function ProjectFormModal({ project, onSave, onCancel }: ProjectFormModalProps) 
       <ModalHeader title={project ? 'Rename project' : 'New project'} />
       <form onSubmit={handleSubmit}>
         <ModalBody>
-          <label htmlFor="project-name" className="block text-sm font-medium text-calm-text mb-2">
-            Name
-          </label>
-          <input
-            id="project-name"
-            type="text"
-            value={name}
-            onChange={(e) => { setName(e.target.value); if (error) setError(''); }}
-            placeholder="e.g., Home Reno, Side Hustle, Product Launch"
-            className={`w-full px-4 py-2 bg-calm-bg border rounded-lg text-calm-text placeholder:text-calm-muted/50 focus:outline-none focus:ring-2 focus:ring-calm-text/30 ${
-              error ? 'border-red-500' : 'border-calm-border'
-            }`}
-            autoFocus
-          />
-          {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="project-name" className="block text-sm font-medium text-calm-text mb-2">Name</label>
+              <input
+                id="project-name"
+                type="text"
+                value={name}
+                onChange={(e) => { setName(e.target.value); if (error) setError(''); }}
+                placeholder="e.g., Home Reno, Side Hustle, Product Launch"
+                className={`w-full px-4 py-2 bg-calm-bg border rounded-lg text-calm-text placeholder:text-calm-muted/50 focus:outline-none focus:ring-2 focus:ring-calm-text/30 ${error ? 'border-red-500' : 'border-calm-border'}`}
+                autoFocus
+              />
+              {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+            </div>
+
+            {areas.length > 0 && (
+              <div>
+                <label htmlFor="project-area" className="block text-sm font-medium text-calm-text mb-2">Area</label>
+                <select
+                  id="project-area"
+                  value={areaId}
+                  onChange={(e) => setAreaId(e.target.value)}
+                  className="w-full px-4 py-2 bg-calm-bg border border-calm-border rounded-lg text-calm-text focus:outline-none focus:ring-2 focus:ring-calm-text/30"
+                >
+                  <option value="">Unsorted</option>
+                  {areas.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </ModalBody>
         <ModalFooter>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text/10 transition-colors font-medium"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="flex-1 min-h-[48px] px-4 py-3 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
-          >
-            Save
-          </button>
+          <button type="button" onClick={onCancel} className="flex-1 min-h-[48px] px-4 py-3 bg-calm-border text-calm-text rounded-lg hover:bg-calm-text/10 transition-colors font-medium">Cancel</button>
+          <button type="submit" className="flex-1 min-h-[48px] px-4 py-3 bg-calm-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium">Save</button>
         </ModalFooter>
       </form>
     </Modal>
@@ -629,56 +741,100 @@ function ProjectFormModal({ project, onSave, onCancel }: ProjectFormModalProps) 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ProjectsPage() {
-  const { projects, addProject, renameProject, deleteProject } = useProjectsStore();
+  const { projects, addProject, renameProject, deleteProject, setProjectArea } = useProjectsStore();
+  const { areas, addArea, renameArea, deleteArea } = useAreaStore();
   const { todayItems, laterItems, completedItems, moveToToday, moveToTomorrow, moveToLater, completeItem, deleteItem, updateTodayItem, updateLaterItem, setItemProject, setItemTimeBucket } = useFocusStore();
 
-  const [showModal, setShowModal] = useState(false);
+  // Project modal state
+  const [showProjectModal, setShowProjectModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<Project | null>(null);
-  const [showUnassigned, setShowUnassigned] = useState(false);
-  const [newlyCreatedId, setNewlyCreatedId] = useState<string | null>(null);
+  const [defaultAreaForNewProject, setDefaultAreaForNewProject] = useState<string | undefined>(undefined);
+  const [deleteProjectConfirm, setDeleteProjectConfirm] = useState<Project | null>(null);
+  const [newlyCreatedProjectId, setNewlyCreatedProjectId] = useState<string | null>(null);
 
-  // Items grouped by project
+  // Area modal state
+  const [showAreaModal, setShowAreaModal] = useState(false);
+  const [editingArea, setEditingArea] = useState<Area | null>(null);
+  const [deleteAreaConfirm, setDeleteAreaConfirm] = useState<Area | null>(null);
+
+  // Unassigned items (no projectId)
+  const [showUnassigned, setShowUnassigned] = useState(false);
+
   const getProjectItems = (projectId: string) => ({
     today: todayItems.filter((i) => i.projectId === projectId && !i.completedAt),
     later: laterItems.filter((i) => i.projectId === projectId && !i.completedAt),
     completed: completedItems.filter((i) => i.projectId === projectId),
   });
 
-  // Unassigned items (no projectId or null)
   const unassignedToday = todayItems.filter((i) => !i.projectId && !i.completedAt);
   const unassignedTomorrow = laterItems.filter((i) => !i.projectId && !i.completedAt && i.timeBucket === 'TOMORROW');
   const unassignedLater = laterItems.filter((i) => !i.projectId && !i.completedAt && i.timeBucket !== 'TOMORROW');
   const hasUnassigned = unassignedToday.length > 0 || unassignedTomorrow.length > 0 || unassignedLater.length > 0;
 
-  const handleSave = (name: string) => {
+  // Projects grouped by area
+  const sortedAreas = [...areas].sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt));
+  const unsortedProjects = projects.filter((p) => !p.areaId);
+
+  const getAreaProjects = (areaId: string) =>
+    projects.filter((p) => p.areaId === areaId);
+
+  const isEmpty = projects.length === 0 && areas.length === 0 && !hasUnassigned;
+
+  // Handlers: Project
+  const handleSaveProject = (name: string, areaId?: string) => {
     if (editingProject) {
       renameProject(editingProject.id, name);
+      if (areaId !== editingProject.areaId) {
+        setProjectArea(editingProject.id, areaId);
+      }
     } else {
-      const newId = addProject(name);
-      setNewlyCreatedId(newId);
+      const newId = addProject(name, areaId);
+      setNewlyCreatedProjectId(newId);
     }
-    setShowModal(false);
+    setShowProjectModal(false);
     setEditingProject(null);
+    setDefaultAreaForNewProject(undefined);
   };
 
-  // Sort projects: most recently created or renamed first
-  const sortedProjects = [...projects].sort((a, b) => {
-    const aTime = a.updatedAt ?? a.createdAt;
-    const bTime = b.updatedAt ?? b.createdAt;
-    return bTime.localeCompare(aTime);
-  });
-
-  const handleRename = (project: Project) => {
+  const handleRenameProject = (project: Project) => {
     setEditingProject(project);
-    setShowModal(true);
+    setShowProjectModal(true);
   };
 
-  const handleDeleteConfirmed = () => {
-    if (deleteConfirm) {
-      deleteProject(deleteConfirm.id);
-      setDeleteConfirm(null);
+  const handleDeleteProjectConfirmed = () => {
+    if (deleteProjectConfirm) {
+      deleteProject(deleteProjectConfirm.id);
+      setDeleteProjectConfirm(null);
     }
+  };
+
+  // Handlers: Area
+  const handleSaveArea = (name: string) => {
+    if (editingArea) {
+      renameArea(editingArea.id, name);
+    } else {
+      addArea(name);
+    }
+    setShowAreaModal(false);
+    setEditingArea(null);
+  };
+
+  const handleRenameArea = (area: Area) => {
+    setEditingArea(area);
+    setShowAreaModal(true);
+  };
+
+  const handleDeleteAreaConfirmed = () => {
+    if (deleteAreaConfirm) {
+      deleteArea(deleteAreaConfirm.id);
+      setDeleteAreaConfirm(null);
+    }
+  };
+
+  const openNewProject = (areaId?: string) => {
+    setEditingProject(null);
+    setDefaultAreaForNewProject(areaId);
+    setShowProjectModal(true);
   };
 
   return (
@@ -689,19 +845,27 @@ export default function ProjectsPage() {
           <div>
             <h1 className="text-3xl font-semibold text-calm-text">Projects</h1>
             <p className="text-sm text-calm-muted mt-1">
-              Containers for multi-step outcomes. Each task below is a next action.
+              Grouped by area. Each project contains next actions.
             </p>
           </div>
-          <button
-            onClick={() => { setEditingProject(null); setShowModal(true); }}
-            className="flex-shrink-0 px-4 py-2 bg-calm-text text-calm-bg rounded-lg hover:bg-calm-text/90 transition-colors font-medium text-sm"
-          >
-            + New Project
-          </button>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={() => { setEditingArea(null); setShowAreaModal(true); }}
+              className="px-3 py-2 bg-calm-surface border border-calm-border text-calm-text rounded-lg hover:border-calm-text/30 transition-colors font-medium text-sm"
+            >
+              + Area
+            </button>
+            <button
+              onClick={() => openNewProject()}
+              className="px-4 py-2 bg-calm-text text-calm-bg rounded-lg hover:bg-calm-text/90 transition-colors font-medium text-sm"
+            >
+              + Project
+            </button>
+          </div>
         </div>
 
         {/* Empty state */}
-        {projects.length === 0 && !hasUnassigned && (
+        {isEmpty && (
           <div className="mt-12 text-center space-y-3">
             <div className="w-14 h-14 mx-auto rounded-xl bg-calm-surface border border-calm-border flex items-center justify-center">
               <svg className="w-7 h-7 text-calm-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -710,31 +874,64 @@ export default function ProjectsPage() {
             </div>
             <p className="text-calm-text font-medium">No projects yet</p>
             <p className="text-sm text-calm-muted max-w-xs mx-auto">
-              A project is any outcome that takes more than one action step. Add one to start grouping your tasks.
+              Create an area to group related projects, then add projects inside it.
             </p>
           </div>
         )}
 
-        {/* Project Cards */}
-        <div className="mt-6 space-y-4">
-          {sortedProjects.map((project) => {
-            const { today, later, completed } = getProjectItems(project.id);
-            return (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                todayItems={today}
-                laterItems={later}
-                completedItems={completed}
-                onRename={() => handleRename(project)}
-                onDelete={() => setDeleteConfirm(project)}
-                initialExpanded={project.id === newlyCreatedId}
+        {/* Area sections */}
+        {(sortedAreas.length > 0 || unsortedProjects.length > 0) && (
+          <div className="mt-6 space-y-6">
+            {sortedAreas.map((area) => (
+              <AreaSection
+                key={area.id}
+                area={area}
+                projects={getAreaProjects(area.id)}
+                areas={areas}
+                getProjectItems={getProjectItems}
+                newlyCreatedProjectId={newlyCreatedProjectId}
+                onRenameProject={handleRenameProject}
+                onDeleteProject={(p) => setDeleteProjectConfirm(p)}
+                onMoveProjectToArea={(projectId, areaId) => setProjectArea(projectId, areaId)}
+                onRenameArea={() => handleRenameArea(area)}
+                onDeleteArea={() => setDeleteAreaConfirm(area)}
               />
-            );
-          })}
-        </div>
+            ))}
 
-        {/* Unassigned Items */}
+            {/* Unsorted projects */}
+            {unsortedProjects.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 px-1 py-2">
+                  <span className="font-semibold text-calm-muted text-sm">Unsorted</span>
+                  <span className="text-xs text-calm-muted">
+                    {unsortedProjects.length} project{unsortedProjects.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+                <div className="ml-4 space-y-3 mb-2">
+                  {unsortedProjects.map((project) => {
+                    const { today, later, completed } = getProjectItems(project.id);
+                    return (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        todayItems={today}
+                        laterItems={later}
+                        completedItems={completed}
+                        onRename={() => handleRenameProject(project)}
+                        onDelete={() => setDeleteProjectConfirm(project)}
+                        onMoveToArea={(areaId) => setProjectArea(project.id, areaId)}
+                        areas={areas}
+                        initialExpanded={project.id === newlyCreatedProjectId}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Unassigned focus items (no project) */}
         {hasUnassigned && (
           <div className="mt-8">
             <button
@@ -742,13 +939,8 @@ export default function ProjectsPage() {
               className="w-full flex items-center justify-between px-4 py-3 bg-calm-surface border border-calm-border rounded-xl hover:border-calm-text/30 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <svg
-                  className={`w-4 h-4 text-calm-muted transition-transform ${showUnassigned ? 'rotate-90' : ''}`}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-                <span className="text-sm font-medium text-calm-text">Unassigned</span>
+                <Chevron expanded={showUnassigned} />
+                <span className="text-sm font-medium text-calm-text">Unassigned actions</span>
                 <span className="text-xs text-calm-muted">
                   {unassignedToday.length + unassignedTomorrow.length + unassignedLater.length} item{unassignedToday.length + unassignedTomorrow.length + unassignedLater.length === 1 ? '' : 's'}
                 </span>
@@ -762,9 +954,7 @@ export default function ProjectsPage() {
                   <div className="mt-3">
                     <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Today</p>
                     {unassignedToday.map((item) => (
-                      <ActionRow
-                        key={item.id}
-                        item={item}
+                      <ActionRow key={item.id} item={item}
                         onMoveToTomorrow={() => moveToTomorrow(item.id)}
                         onMoveToLater={() => moveToLater(item.id)}
                         onMarkDone={() => completeItem(item.id)}
@@ -780,9 +970,7 @@ export default function ProjectsPage() {
                   <div className="mt-3">
                     <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Tomorrow</p>
                     {unassignedTomorrow.map((item) => (
-                      <ActionRow
-                        key={item.id}
-                        item={item}
+                      <ActionRow key={item.id} item={item}
                         onMoveToToday={() => moveToToday(item.id)}
                         onMoveToLater={() => setItemTimeBucket(item.id, 'NONE')}
                         onMarkDone={() => completeItem(item.id)}
@@ -798,9 +986,7 @@ export default function ProjectsPage() {
                   <div className="mt-3">
                     <p className="text-xs font-medium text-calm-muted uppercase tracking-wide mb-1 px-3">Later</p>
                     {unassignedLater.map((item) => (
-                      <ActionRow
-                        key={item.id}
-                        item={item}
+                      <ActionRow key={item.id} item={item}
                         onMoveToToday={() => moveToToday(item.id)}
                         onMoveToTomorrow={() => setItemTimeBucket(item.id, 'TOMORROW')}
                         onMarkDone={() => completeItem(item.id)}
@@ -817,26 +1003,48 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {/* Bottom spacing for mobile nav */}
         <div className="h-24 md:h-8" />
       </div>
 
       {/* Project Form Modal */}
-      {showModal && (
+      {showProjectModal && (
         <ProjectFormModal
           project={editingProject}
-          onSave={handleSave}
-          onCancel={() => { setShowModal(false); setEditingProject(null); }}
+          areas={areas}
+          defaultAreaId={defaultAreaForNewProject}
+          onSave={handleSaveProject}
+          onCancel={() => { setShowProjectModal(false); setEditingProject(null); setDefaultAreaForNewProject(undefined); }}
         />
       )}
 
-      {/* Delete Confirmation */}
+      {/* Area Form Modal */}
+      {showAreaModal && (
+        <AreaFormModal
+          area={editingArea}
+          onSave={handleSaveArea}
+          onCancel={() => { setShowAreaModal(false); setEditingArea(null); }}
+        />
+      )}
+
+      {/* Delete Project Confirmation */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        onConfirm={handleDeleteConfirmed}
+        isOpen={!!deleteProjectConfirm}
+        onClose={() => setDeleteProjectConfirm(null)}
+        onConfirm={handleDeleteProjectConfirmed}
         title="Delete project?"
-        message={`"${deleteConfirm?.name}" will be removed. Any tasks in this project will stay — they just won't be grouped anymore.`}
+        message={`"${deleteProjectConfirm?.name}" will be removed. Any tasks in this project will stay — they just won't be grouped anymore.`}
+        confirmLabel="Delete"
+        cancelLabel="Keep it"
+        variant="danger"
+      />
+
+      {/* Delete Area Confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteAreaConfirm}
+        onClose={() => setDeleteAreaConfirm(null)}
+        onConfirm={handleDeleteAreaConfirmed}
+        title="Delete area?"
+        message={`"${deleteAreaConfirm?.name}" will be removed. Projects inside it will move to Unsorted.`}
         confirmLabel="Delete"
         cancelLabel="Keep it"
         variant="danger"
