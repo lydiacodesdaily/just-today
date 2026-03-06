@@ -25,6 +25,49 @@ import {
 } from '@/src/engine/runEngine';
 import { useSnapshotStore } from './snapshotStore';
 
+/**
+ * Syncs edits made during a run back to the source routine template.
+ * - Updates name/durationMs for tasks that came from the template.
+ * - Adds newly created tasks (added during the run) to the template.
+ * - Does NOT sync order or removals, since a run only contains
+ *   pace-filtered tasks and reordering/removing would corrupt the template.
+ */
+async function syncRunToTemplate(run: RoutineRun) {
+  if (run.templateId === 'focus-item' || run.templateId === 'optional-item') return;
+
+  const { useRoutineStore } = await import('./routineStore');
+  const routineStore = useRoutineStore.getState();
+  const template = routineStore.templates.find((t) => t.id === run.templateId);
+  if (!template) return;
+
+  for (const runTask of run.tasks) {
+    const isNewTask = runTask.templateTaskId === 'manual' || runTask.templateTaskId === 'quick';
+    if (isNewTask) {
+      // Add newly-created tasks to the template, included in all paces
+      routineStore.addTask(run.templateId, {
+        name: runTask.name,
+        durationMs: runTask.durationMs,
+        lowIncluded: true,
+        steadyIncluded: true,
+        flowIncluded: true,
+        autoAdvance: false,
+      });
+    } else {
+      // Update existing template task if name or duration changed
+      const templateTask = template.tasks.find((t) => t.id === runTask.templateTaskId);
+      if (
+        templateTask &&
+        (templateTask.name !== runTask.name || templateTask.durationMs !== runTask.durationMs)
+      ) {
+        routineStore.updateTask(run.templateId, runTask.templateTaskId, {
+          name: runTask.name,
+          durationMs: runTask.durationMs,
+        });
+      }
+    }
+  }
+}
+
 interface RunStore {
   // State
   currentRun: RoutineRun | null;
@@ -95,6 +138,9 @@ export const useRunStore = create<RunStore>()(
       endCurrentRun: async () => {
         const { currentRun } = get();
         if (currentRun) {
+          // Sync any edits made during the run back to the template before abandoning
+          await syncRunToTemplate(currentRun);
+
           const updatedRun = endRun(currentRun);
 
           // Log partial completions when routine is abandoned
@@ -117,8 +163,9 @@ export const useRunStore = create<RunStore>()(
           const previousStatus = currentRun.status;
           const updatedRun = await advanceToNextTask(currentRun);
 
-          // If run just completed, count it in snapshot and add to CompletedToday
+          // If run just completed, sync edits back to template and count in snapshot
           if (previousStatus !== 'completed' && updatedRun.status === 'completed') {
+            await syncRunToTemplate(currentRun);
             // Mark source FocusItem or OptionalItem as completed
             if (updatedRun.sourceFocusItemId) {
               const { useFocusStore } = await import('./focusStore');
