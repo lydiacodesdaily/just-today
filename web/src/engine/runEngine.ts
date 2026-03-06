@@ -572,6 +572,115 @@ export function addQuickTask(
 }
 
 /**
+ * Appends a new task to the end of the pending queue.
+ */
+export function appendTaskToRun(
+  run: RoutineRun,
+  name: string,
+  durationMs: number
+): RoutineRun {
+  const newTask: RunTask = {
+    id: `quick-task-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    templateTaskId: 'manual',
+    name,
+    durationMs,
+    status: 'pending',
+    order: 0,
+    startedAt: null,
+    plannedEndAt: null,
+    extensionMs: 0,
+    completedAt: null,
+    overtimeAnnouncedMinutes: [],
+    milestoneAnnouncedMinutes: [],
+    autoAdvance: false,
+    autoAdvanceWarningAnnounced: false,
+    timeUpAnnounced: false,
+  };
+
+  const completedTasks = run.tasks.filter(
+    (t) => t.status === 'completed' || t.status === 'skipped'
+  );
+  const activeTask = run.tasks.find((t) => t.status === 'active');
+  const pendingTasks = run.tasks.filter((t) => t.status === 'pending');
+
+  const rebuiltTasks = [
+    ...completedTasks,
+    ...(activeTask ? [activeTask] : []),
+    ...pendingTasks,
+    newTask,
+  ].map((t, index) => ({ ...t, order: index }));
+
+  return { ...run, tasks: rebuiltTasks };
+}
+
+/**
+ * Removes a pending task from the run queue.
+ */
+export function removeRunTask(run: RoutineRun, taskId: string): RoutineRun {
+  const task = run.tasks.find((t) => t.id === taskId);
+  if (!task || task.status !== 'pending') {
+    throw new Error('Can only remove pending tasks');
+  }
+
+  const rebuiltTasks = run.tasks
+    .filter((t) => t.id !== taskId)
+    .map((t, index) => ({ ...t, order: index }));
+
+  return { ...run, tasks: rebuiltTasks };
+}
+
+/**
+ * Updates a pending task's name and/or duration.
+ */
+export function updateRunTask(
+  run: RoutineRun,
+  taskId: string,
+  updates: { name?: string; durationMs?: number }
+): RoutineRun {
+  const updatedTasks = run.tasks.map((task) => {
+    if (task.id === taskId && task.status === 'pending') {
+      return { ...task, ...updates };
+    }
+    return task;
+  });
+
+  return { ...run, tasks: updatedTasks };
+}
+
+/**
+ * Duplicates a pending task, inserting the copy right after the original.
+ */
+export function duplicateRunTask(run: RoutineRun, taskId: string): RoutineRun {
+  const taskIndex = run.tasks.findIndex((t) => t.id === taskId);
+  const task = run.tasks[taskIndex];
+  if (!task || task.status !== 'pending') {
+    throw new Error('Can only duplicate pending tasks');
+  }
+
+  const duplicate: RunTask = {
+    ...task,
+    id: `quick-task-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    templateTaskId: 'manual',
+    startedAt: null,
+    plannedEndAt: null,
+    completedAt: null,
+    extensionMs: 0,
+    overtimeAnnouncedMinutes: [],
+    milestoneAnnouncedMinutes: [],
+    autoAdvanceWarningAnnounced: false,
+    timeUpAnnounced: false,
+  };
+
+  const newTasks = [
+    ...run.tasks.slice(0, taskIndex + 1),
+    duplicate,
+    ...run.tasks.slice(taskIndex + 1),
+  ].map((t, index) => ({ ...t, order: index }));
+
+  return { ...run, tasks: newTasks };
+}
+
+/**
  * Ends the run immediately (marks as abandoned if not completed).
  * The active task is reset to 'pending' (not 'skipped') so it can be
  * resumed later without auto-completing the run.

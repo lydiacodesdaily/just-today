@@ -16,6 +16,10 @@ import {
   extendTask,
   moveTask,
   addQuickTask,
+  appendTaskToRun,
+  removeRunTask,
+  updateRunTask,
+  duplicateRunTask,
   toggleSubtask,
   toggleAutoAdvance,
 } from '@/src/engine/runEngine';
@@ -41,6 +45,10 @@ interface RunStore {
   addQuickTaskToRun: (name: string, durationMs: number) => void;
   toggleTaskSubtask: (taskId: string, subtaskId: string) => void;
   toggleTaskAutoAdvance: (taskId: string) => void;
+  appendTaskToQueue: (name: string, durationMs: number) => void;
+  removeTaskFromQueue: (taskId: string) => void;
+  updateTaskInQueue: (taskId: string, updates: { name?: string; durationMs?: number }) => void;
+  duplicateTaskInQueue: (taskId: string) => void;
 }
 
 export const useRunStore = create<RunStore>()(
@@ -206,6 +214,38 @@ export const useRunStore = create<RunStore>()(
         const { currentRun } = get();
         if (currentRun) {
           set({ currentRun: toggleAutoAdvance(currentRun, taskId) });
+        }
+      },
+
+      // Append a new task to the end of the pending queue
+      appendTaskToQueue: (name: string, durationMs: number) => {
+        const { currentRun } = get();
+        if (currentRun) {
+          set({ currentRun: appendTaskToRun(currentRun, name, durationMs) });
+        }
+      },
+
+      // Remove a pending task from the queue
+      removeTaskFromQueue: (taskId: string) => {
+        const { currentRun } = get();
+        if (currentRun) {
+          set({ currentRun: removeRunTask(currentRun, taskId) });
+        }
+      },
+
+      // Update a pending task's name and/or duration
+      updateTaskInQueue: (taskId: string, updates: { name?: string; durationMs?: number }) => {
+        const { currentRun } = get();
+        if (currentRun) {
+          set({ currentRun: updateRunTask(currentRun, taskId, updates) });
+        }
+      },
+
+      // Duplicate a pending task
+      duplicateTaskInQueue: (taskId: string) => {
+        const { currentRun } = get();
+        if (currentRun) {
+          set({ currentRun: duplicateRunTask(currentRun, taskId) });
         }
       },
     }),

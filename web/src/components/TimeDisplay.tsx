@@ -79,8 +79,7 @@ export function TimeDisplay({ timeRemaining, totalDurationMs, originalDurationMs
   const getProgressText = () => {
     if (!totalDurationMs || timeRemaining.isOvertime) return null;
 
-    const elapsedMs = totalDurationMs - timeRemaining.remainingMs;
-    const elapsedMinutes = Math.ceil(elapsedMs / 60000);
+    const elapsedMinutes = Math.max(0, Math.ceil(timeRemaining.elapsedMs / 60000));
     const totalMinutes = Math.ceil(totalDurationMs / 60000);
 
     return `${elapsedMinutes} of ${totalMinutes} min`;

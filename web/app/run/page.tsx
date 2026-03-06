@@ -21,9 +21,169 @@ import { SubtaskList } from '@/src/components/SubtaskList';
 import { ConfirmDialog } from '@/src/components/Dialog';
 import { CheckInModal } from '@/src/components/CheckInModal';
 import { TickingSoundType, MilestoneInterval } from '@/src/models/Settings';
+import { RunTask } from '@/src/models/RoutineRun';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Only auto-prompt check-in for sessions at or above this duration
 const MIN_CHECKIN_DURATION_MS = 45 * 60 * 1000;
+
+// ─── Sortable queue item (used in edit mode) ──────────────────────────────────
+
+interface SortableQueueItemProps {
+  task: RunTask;
+  isMenuOpen: boolean;
+  isEditing: boolean;
+  inlineEditName: string;
+  inlineEditDuration: number;
+  onMenuToggle: (id: string) => void;
+  onEdit: (task: RunTask) => void;
+  onEditSave: () => void;
+  onEditCancel: () => void;
+  onEditNameChange: (name: string) => void;
+  onEditDurationChange: (duration: number) => void;
+  onDuplicate: (id: string) => void;
+  onRemove: (id: string) => void;
+}
+
+function SortableQueueItem({
+  task,
+  isMenuOpen,
+  isEditing,
+  inlineEditName,
+  inlineEditDuration,
+  onMenuToggle,
+  onEdit,
+  onEditSave,
+  onEditCancel,
+  onEditNameChange,
+  onEditDurationChange,
+  onDuplicate,
+  onRemove,
+}: SortableQueueItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={isDragging ? 'opacity-50' : ''}>
+      <div className="flex items-center gap-2 px-3 py-2.5 bg-calm-surface/50 rounded-lg">
+        {/* Drag handle */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="text-calm-muted/40 hover:text-calm-muted/70 transition-colors touch-manipulation cursor-grab active:cursor-grabbing flex-shrink-0"
+          aria-label="Drag to reorder"
+          tabIndex={-1}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="8" cy="5" r="2"/><circle cx="16" cy="5" r="2"/>
+            <circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/>
+            <circle cx="8" cy="19" r="2"/><circle cx="16" cy="19" r="2"/>
+          </svg>
+        </button>
+
+        {/* Task name */}
+        <span className="flex-1 text-calm-text text-sm truncate">{task.name}</span>
+
+        {/* Duration */}
+        <span className="text-xs text-calm-muted shrink-0">
+          {Math.ceil(task.durationMs / 60000)} min
+        </span>
+
+        {/* Three-dot menu */}
+        <div className="relative shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); onMenuToggle(task.id); }}
+            className="p-1.5 text-calm-muted hover:text-calm-text rounded transition-colors"
+            aria-label="Task options"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
+            </svg>
+          </button>
+          {isMenuOpen && (
+            <div className="absolute right-0 bottom-full mb-1 w-36 bg-calm-surface border border-calm-border rounded-xl shadow-lg z-20 overflow-hidden">
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(task); }}
+                className="w-full text-left px-4 py-2.5 text-sm text-calm-text hover:bg-calm-bg transition-colors"
+              >
+                Edit...
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDuplicate(task.id); }}
+                className="w-full text-left px-4 py-2.5 text-sm text-calm-text hover:bg-calm-bg transition-colors"
+              >
+                Duplicate
+              </button>
+              <div className="h-px bg-calm-border" />
+              <button
+                onClick={(e) => { e.stopPropagation(); onRemove(task.id); }}
+                className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-calm-bg transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Inline edit form */}
+      {isEditing && (
+        <div className="mt-1 mb-1 flex items-center gap-2 px-3 py-2 bg-calm-bg border border-calm-primary/30 rounded-lg animate-in slide-in-from-top-1 duration-150">
+          <input
+            value={inlineEditName}
+            onChange={(e) => onEditNameChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onEditSave();
+              if (e.key === 'Escape') onEditCancel();
+            }}
+            autoFocus
+            className="flex-1 bg-transparent text-sm text-calm-text focus:outline-none min-w-0"
+            placeholder="Task name"
+          />
+          <input
+            type="number"
+            value={inlineEditDuration}
+            onChange={(e) => onEditDurationChange(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-12 text-center bg-calm-surface border border-calm-border rounded text-sm text-calm-text focus:outline-none focus:border-calm-primary px-1 py-0.5"
+            min={1}
+          />
+          <span className="text-xs text-calm-muted shrink-0">min</span>
+          <button
+            onClick={onEditSave}
+            className="text-xs text-calm-primary hover:text-calm-primary/80 transition-colors shrink-0 font-medium"
+          >
+            Save
+          </button>
+          <button
+            onClick={onEditCancel}
+            className="text-xs text-calm-muted hover:text-calm-text transition-colors shrink-0"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function RunPage() {
   const router = useRouter();
@@ -37,8 +197,13 @@ export default function RunPage() {
     advanceTask,
     skipCurrentTask,
     extendCurrentTask,
+    moveCurrentTask,
     toggleTaskSubtask,
     toggleTaskAutoAdvance,
+    appendTaskToQueue,
+    removeTaskFromQueue,
+    updateTaskInQueue,
+    duplicateTaskInQueue,
   } = useRunStore();
   const { settings, updateSettings } = useSettingsStore();
 
@@ -49,6 +214,19 @@ export default function RunPage() {
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [showAudioSettings, setShowAudioSettings] = useState(false);
+
+  // Queue edit mode state
+  const [isEditingQueue, setIsEditingQueue] = useState(false);
+  const [taskMenuOpenId, setTaskMenuOpenId] = useState<string | null>(null);
+  const [inlineEditId, setInlineEditId] = useState<string | null>(null);
+  const [inlineEditName, setInlineEditName] = useState('');
+  const [inlineEditDuration, setInlineEditDuration] = useState(5);
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [addTaskName, setAddTaskName] = useState('');
+  const [addTaskDuration, setAddTaskDuration] = useState(5);
+
+  // dnd-kit sensors for queue reordering
+  const queueSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   // Redirect if no run (but not if we just completed/abandoned - let those handle their own redirect)
   useEffect(() => {
@@ -109,6 +287,53 @@ export default function RunPage() {
     currentRun,
     onAdvanceTask: advanceTask,
   });
+
+  // Close task menu when clicking outside
+  useEffect(() => {
+    if (!taskMenuOpenId) return;
+    const handleClick = () => setTaskMenuOpenId(null);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [taskMenuOpenId]);
+
+  // Queue drag-and-drop handler
+  const handleQueueDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !currentRun) return;
+    const pendingTasks = currentRun.tasks.filter((t) => t.status === 'pending');
+    const newIndex = pendingTasks.findIndex((t) => t.id === over.id);
+    if (newIndex !== -1) {
+      moveCurrentTask(active.id as string, newIndex);
+    }
+  };
+
+  // Queue edit mode helpers
+  const handleInlineEditSave = () => {
+    if (inlineEditId && inlineEditName.trim()) {
+      updateTaskInQueue(inlineEditId, {
+        name: inlineEditName.trim(),
+        durationMs: inlineEditDuration * 60 * 1000,
+      });
+    }
+    setInlineEditId(null);
+  };
+
+  const handleAddTaskSubmit = () => {
+    if (addTaskName.trim()) {
+      appendTaskToQueue(addTaskName.trim(), addTaskDuration * 60 * 1000);
+      setAddTaskName('');
+      setAddTaskDuration(5);
+      setShowAddTask(false);
+    }
+  };
+
+  const handleCloseEditMode = () => {
+    setIsEditingQueue(false);
+    setTaskMenuOpenId(null);
+    setInlineEditId(null);
+    setShowAddTask(false);
+    setAddTaskName('');
+  };
 
   // Early return if no run at all
   if (!currentRun) {
@@ -518,30 +743,159 @@ export default function RunPage() {
             onToggleAutoAdvance={handleToggleAutoAdvance}
           />
 
-          {/* Queue preview */}
-          {pendingTasks.length > 0 && (
+          {/* Queue section */}
+          {(pendingTasks.length > 0 || isEditingQueue) && (
             <div className="pt-8 border-t border-calm-border">
-              <h3 className="text-sm font-semibold text-calm-muted mb-4">
-                Up next ({pendingTasks.length} {pendingTasks.length === 1 ? 'task' : 'tasks'})
-              </h3>
-              <div className="space-y-2">
-                {pendingTasks.slice(0, 3).map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-center justify-between px-4 py-3 bg-calm-surface/50 rounded-lg"
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-calm-muted">
+                  Up next ({pendingTasks.length} {pendingTasks.length === 1 ? 'task' : 'tasks'})
+                </h3>
+                {isEditingQueue ? (
+                  <button
+                    onClick={handleCloseEditMode}
+                    className="text-sm text-calm-primary hover:text-calm-primary/80 transition-colors font-medium"
                   >
-                    <span className="text-calm-text">{task.name}</span>
-                    <span className="text-sm text-calm-muted">
-                      {Math.ceil(task.durationMs / 60000)} min
-                    </span>
-                  </div>
-                ))}
-                {pendingTasks.length > 3 && (
-                  <div className="text-center text-sm text-calm-muted pt-2">
-                    +{pendingTasks.length - 3} more
-                  </div>
+                    Done editing
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsEditingQueue(true)}
+                    className="p-1.5 text-calm-muted hover:text-calm-text transition-colors rounded"
+                    aria-label="Edit queue"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
                 )}
               </div>
+
+              {isEditingQueue ? (
+                /* Edit mode — full list with drag handles, actions, add form */
+                <>
+                  <DndContext
+                    sensors={queueSensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleQueueDragEnd}
+                  >
+                    <SortableContext
+                      items={pendingTasks.map((t) => t.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-1">
+                        {pendingTasks.map((task) => (
+                          <SortableQueueItem
+                            key={task.id}
+                            task={task}
+                            isMenuOpen={taskMenuOpenId === task.id}
+                            isEditing={inlineEditId === task.id}
+                            inlineEditName={inlineEditName}
+                            inlineEditDuration={inlineEditDuration}
+                            onMenuToggle={(id) =>
+                              setTaskMenuOpenId((prev) => (prev === id ? null : id))
+                            }
+                            onEdit={(t) => {
+                              setInlineEditId(t.id);
+                              setInlineEditName(t.name);
+                              setInlineEditDuration(Math.ceil(t.durationMs / 60000));
+                              setTaskMenuOpenId(null);
+                            }}
+                            onEditSave={handleInlineEditSave}
+                            onEditCancel={() => setInlineEditId(null)}
+                            onEditNameChange={setInlineEditName}
+                            onEditDurationChange={setInlineEditDuration}
+                            onDuplicate={(id) => {
+                              duplicateTaskInQueue(id);
+                              setTaskMenuOpenId(null);
+                            }}
+                            onRemove={(id) => {
+                              removeTaskFromQueue(id);
+                              setTaskMenuOpenId(null);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+
+                  {/* Add task form / button */}
+                  {showAddTask ? (
+                    <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-calm-bg border border-calm-primary/30 rounded-lg animate-in slide-in-from-top-1 duration-150">
+                      <input
+                        value={addTaskName}
+                        onChange={(e) => setAddTaskName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleAddTaskSubmit();
+                          if (e.key === 'Escape') {
+                            setShowAddTask(false);
+                            setAddTaskName('');
+                            setAddTaskDuration(5);
+                          }
+                        }}
+                        autoFocus
+                        placeholder="Task name..."
+                        className="flex-1 bg-transparent text-sm text-calm-text placeholder:text-calm-muted/60 focus:outline-none min-w-0"
+                      />
+                      <input
+                        type="number"
+                        value={addTaskDuration}
+                        onChange={(e) =>
+                          setAddTaskDuration(Math.max(1, parseInt(e.target.value) || 1))
+                        }
+                        className="w-12 text-center bg-calm-surface border border-calm-border rounded text-sm text-calm-text focus:outline-none focus:border-calm-primary px-1 py-0.5"
+                        min={1}
+                      />
+                      <span className="text-xs text-calm-muted shrink-0">min</span>
+                      <button
+                        onClick={handleAddTaskSubmit}
+                        className="text-xs text-calm-primary hover:text-calm-primary/80 transition-colors shrink-0 font-medium"
+                      >
+                        Add
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowAddTask(false);
+                          setAddTaskName('');
+                          setAddTaskDuration(5);
+                        }}
+                        className="text-xs text-calm-muted hover:text-calm-text transition-colors shrink-0"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowAddTask(true)}
+                      className="mt-3 w-full flex items-center gap-2 px-4 py-2.5 text-sm text-calm-muted hover:text-calm-text hover:bg-calm-surface/50 rounded-lg border border-dashed border-calm-border transition-colors"
+                    >
+                      <span>+</span>
+                      <span>Add task</span>
+                    </button>
+                  )}
+                </>
+              ) : (
+                /* View mode — first 3 tasks */
+                <div className="space-y-2">
+                  {pendingTasks.slice(0, 3).map((task) => (
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between px-4 py-3 bg-calm-surface/50 rounded-lg"
+                    >
+                      <span className="text-calm-text">{task.name}</span>
+                      <span className="text-sm text-calm-muted">
+                        {Math.ceil(task.durationMs / 60000)} min
+                      </span>
+                    </div>
+                  ))}
+                  {pendingTasks.length > 3 && (
+                    <div className="text-center text-sm text-calm-muted pt-2">
+                      +{pendingTasks.length - 3} more
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
